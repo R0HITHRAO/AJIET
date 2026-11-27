@@ -4,6 +4,7 @@ from datetime import date, datetime, timedelta
 from typing import Any
 import numpy as np
 
+from .auth import hash_password
 from .config import KITCHEN_LAT, KITCHEN_LON, KG_PER_SERVING_AVG
 from .db import DatabaseManager
 
@@ -796,4 +797,20 @@ def ensure_seeded(db: DatabaseManager, force: bool = False) -> dict[str, int]:
         db.collection("redistributions").insert_many(redistributions)
     counts["surplus_items"] = db.collection("surplus_items").count_documents()
     counts["redistributions"] = db.collection("redistributions").count_documents()
+
+    if db.collection("users").count_documents() == 0:
+        db.collection("users").insert_many(
+            [
+                {
+                    "user_id": "user_demo_manager",
+                    "name": "Rohith Rao",
+                    "email": "manager@nourishai.edu",
+                    "password_hash": hash_password("Codeverse@2026"),
+                    "role": "Kitchen Manager",
+                    "organization": "SMVITM Central Kitchen",
+                    "created_at": "2026-11-27T09:00:00",
+                }
+            ]
+        )
+    counts["users"] = db.collection("users").count_documents()
     return counts

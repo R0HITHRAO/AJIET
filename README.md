@@ -37,6 +37,14 @@ python -m pip install -r backend/requirements.txt
 python -m uvicorn backend.app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 - Optional MongoDB: set `MONGODB_URI="mongodb://localhost:27017"` (or Atlas URI). If no MongoDB daemon is running locally, Nourish AI automatically runs in **Mongo-compatible Local Document Store** mode (`backend/data/store/`) so the prototype works zero-config out of the box.
+- Optional SMTP for live Password-Reset OTP Emails (create `backend/.env`):
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your_email@gmail.com
+SMTP_PASS=your_app_password
+```
+  If SMTP is not configured, forgot-password OTPs still work via a demo preview code for offline hackathon testing. Demo login: `manager@nourishai.edu` / `Codeverse@2026`.
 
 ### 2. Frontend (React.js + Tailwind + Recharts)
 ```powershell

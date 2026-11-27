@@ -4,11 +4,14 @@ import {
   ClipboardCheck,
   FlaskConical,
   Home,
+  LogIn,
+  LogOut,
   Menu,
   Package,
   RotateCcw,
   Sprout,
   Truck,
+  User,
   X,
 } from 'lucide-react';
 import { api } from './api';
@@ -18,6 +21,7 @@ import WhatIfSimulator from './components/WhatIfSimulator';
 import PostMealFeedback from './components/PostMealFeedback';
 import RedistributionHub from './components/RedistributionHub';
 import InventoryData from './components/InventoryData';
+import AuthModal from './components/AuthModal';
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Home', icon: Home },
@@ -35,6 +39,16 @@ export default function App() {
   const [overview, setOverview] = useState(null);
   const [resetting, setResetting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState('login');
+  const [currentUser, setCurrentUser] = useState(() => {
+    try {
+      const saved = localStorage.getItem('nourish_auth_user');
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
+  });
 
   const refreshGlobal = async () => {
     try {
@@ -48,7 +62,33 @@ export default function App() {
 
   useEffect(() => {
     refreshGlobal();
+    const token = localStorage.getItem('nourish_auth_token');
+    if (token) {
+      api
+        .me(token)
+        .then((res) => {
+          setCurrentUser(res.user);
+          localStorage.setItem('nourish_auth_user', JSON.stringify(res.user));
+        })
+        .catch(() => {
+          localStorage.removeItem('nourish_auth_token');
+          localStorage.removeItem('nourish_auth_user');
+          setCurrentUser(null);
+        });
+    }
   }, []);
+
+  const handleAuthSuccess = (token, user) => {
+    localStorage.setItem('nourish_auth_token', token);
+    localStorage.setItem('nourish_auth_user', JSON.stringify(user));
+    setCurrentUser(user);
+  };
+
+  const handleSignOut = () => {
+    localStorage.removeItem('nourish_auth_token');
+    localStorage.removeItem('nourish_auth_user');
+    setCurrentUser(null);
+  };
 
   const handleResetDemo = async () => {
     setResetting(true);
@@ -116,19 +156,56 @@ export default function App() {
           </nav>
 
           {/* Right Live Status & Actions */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-emerald-800">
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              SMVITM Kitchen
-            </div>
+          <div className="flex items-center gap-2 shrink-0">
+            {currentUser ? (
+              <div className="flex items-center gap-2">
+                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-emerald-900">
+                  <User className="w-3.5 h-3.5 text-emerald-700" />
+                  <span className="max-w-[120px] truncate">{currentUser.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200">
+                    {currentUser.role}
+                  </span>
+                </div>
+                <button
+                  onClick={handleSignOut}
+                  title="Sign out"
+                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold inline-flex items-center gap-1.5 transition"
+                >
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden md:inline">Sign Out</span>
+                </button>
+              </div>
+            ) : (
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setAuthModalMode('login');
+                    setAuthModalOpen(true);
+                  }}
+                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-emerald-700" />
+                  Sign In
+                </button>
+                <button
+                  onClick={() => {
+                    setAuthModalMode('register');
+                    setAuthModalOpen(true);
+                  }}
+                  className="hidden sm:inline-flex h-9 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold items-center transition"
+                >
+                  Register
+                </button>
+              </div>
+            )}
+
             <button
               onClick={handleResetDemo}
               disabled={resetting}
               title="Reset demo dataset"
-              className="h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold inline-flex items-center gap-1.5 transition"
+              className="h-9 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 text-xs font-semibold inline-flex items-center gap-1 transition"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
-              <span className="hidden md:inline">Reset</span>
             </button>
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -195,6 +272,14 @@ export default function App() {
           </span>
         </div>
       </footer>
+
+      <AuthModal
+        key={authModalMode + String(authModalOpen)}
+        isOpen={authModalOpen}
+        initialMode={authModalMode}
+        onClose={() => setAuthModalOpen(false)}
+        onAuthSuccess={handleAuthSuccess}
+      />
     </div>
   );
 }

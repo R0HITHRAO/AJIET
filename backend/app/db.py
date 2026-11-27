@@ -240,6 +240,8 @@ class DatabaseManager:
         "redistributions",
         "model_runs",
         "prep_plans",
+        "users",
+        "password_reset_otps",
     )
 
     def __init__(self, store_dir: Path | None = None) -> None:

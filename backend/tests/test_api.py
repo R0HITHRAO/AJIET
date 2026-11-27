@@ -182,7 +182,44 @@ def test_end_to_end_nourish_ai_workflow():
         logs_after = client.get("/api/meal-logs?limit=2000").json()["logs"]
         assert all(l["menu_item_id"] != "item_curd_rice" for l in logs_after)
 
-        # 11. Reset demo cleanly
+        # 11. Auth: Register, Login, Me, Forgot Password OTP & Reset
+        reg = client.post(
+            "/api/auth/register",
+            json={
+                "name": "Test Coordinator",
+                "email": "coord@smvitm.edu",
+                "password": "InitialPass123",
+                "role": "NGO Coordinator",
+                "organization": "Udupi Seva",
+            },
+        )
+        assert reg.status_code == 200
+        token = reg.json()["access_token"]
+        me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert me.status_code == 200
+        assert me.json()["user"]["email"] == "coord@smvitm.edu"
+
+        forgot = client.post("/api/auth/forgot-password", json={"email": "coord@smvitm.edu"})
+        assert forgot.status_code == 200
+        otp_code = forgot.json().get("demo_otp")
+        assert otp_code and len(otp_code) == 6
+
+        ver = client.post("/api/auth/verify-otp", json={"email": "coord@smvitm.edu", "otp": otp_code})
+        assert ver.status_code == 200
+
+        rst_pw = client.post(
+            "/api/auth/reset-password",
+            json={"email": "coord@smvitm.edu", "otp": otp_code, "new_password": "UpdatedPass456"},
+        )
+        assert rst_pw.status_code == 200
+
+        login_new = client.post(
+            "/api/auth/login",
+            json={"email": "coord@smvitm.edu", "password": "UpdatedPass456"},
+        )
+        assert login_new.status_code == 200
+
+        # 12. Reset demo cleanly
         rst = client.post("/api/admin/reset-demo")
         assert rst.status_code == 200
         assert rst.json()["status"] == "reset_complete"

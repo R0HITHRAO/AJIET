@@ -120,6 +120,34 @@ class MenuItemCreateRequest(BaseModel):
     recipe: dict[str, float] = Field(default_factory=dict)
 
 
+class RegisterRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=100)
+    email: str = Field(..., min_length=5, max_length=160)
+    password: str = Field(..., min_length=6, max_length=128)
+    role: Literal["Kitchen Manager", "NGO Coordinator", "Admin"] = "Kitchen Manager"
+    organization: str = Field(default="SMVITM Central Kitchen", max_length=120)
+
+
+class LoginRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=160)
+    password: str = Field(..., min_length=1, max_length=128)
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=160)
+
+
+class VerifyOtpRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=160)
+    otp: str = Field(..., min_length=6, max_length=6)
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str = Field(..., min_length=5, max_length=160)
+    otp: str = Field(..., min_length=6, max_length=6)
+    new_password: str = Field(..., min_length=6, max_length=128)
+
+
 class NGOCreateRequest(BaseModel):
     name: str
     org_type: Literal["NGO", "Food Bank", "Charitable Trust", "Community Shelter"] = "NGO"

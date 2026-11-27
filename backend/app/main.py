@@ -4,28 +4,52 @@ import csv
 import io
 import uuid
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
+import hmac
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
-from .config import CO2_KG_PER_KG_FOOD_SAVED, KITCHEN_LAT, KITCHEN_LOCATION, KITCHEN_LON, KITCHEN_NAME
+from .auth import (
+    create_access_token,
+    decode_access_token,
+    generate_otp,
+    hash_otp,
+    hash_password,
+    normalize_email,
+    public_user,
+    send_otp_email,
+    verify_password,
+)
+from .config import (
+    CO2_KG_PER_KG_FOOD_SAVED,
+    KITCHEN_LAT,
+    KITCHEN_LOCATION,
+    KITCHEN_LON,
+    KITCHEN_NAME,
+    OTP_EXPIRY_MINUTES,
+)
 from .db import db_manager
 from .ml_engine import forecast_engine
 from .models import (
     BatchOptimizationRequest,
     ForecastRequest,
+    ForgotPasswordRequest,
     IngredientUpdateRequest,
+    LoginRequest,
     MenuItemCreateRequest,
     NGOCreateRequest,
     PostMealLogRequest,
     RedistributionDispatchRequest,
     RedistributionStatusUpdateRequest,
+    RegisterRequest,
+    ResetPasswordRequest,
     SurplusManualCreateRequest,
+    VerifyOtpRequest,
     WhatIfSimulationRequest,
 )
 from .optimizer import (
@@ -128,6 +152,135 @@ def health() -> dict[str, Any]:
             "metrics": forecast_engine.metrics,
         },
     }
+
+
+def _validate_otp_record(email: str, otp: str) -> dict[str, Any]:
+    norm_email = normalize_email(email)
+    otp_col = db_manager.collection("password_reset_otps")
+    record = otp_col.find_one({"email": norm_email})
+    if not record:
+        raise HTTPException(status_code=400, detail="No active OTP found for this email. Request a new OTP.")
+
+    expires_at = datetime.fromisoformat(record["expires_at"])
+    if datetime.now(timezone.utc) > expires_at:
+        otp_col.delete_many({"email": norm_email})
+        raise HTTPException(status_code=400, detail="OTP has expired. Please request a new code.")
+
+    attempts = int(record.get("attempts", 0))
+    if attempts >= 5:
+        otp_col.delete_many({"email": norm_email})
+        raise HTTPException(status_code=429, detail="Too many invalid OTP attempts. Request a new OTP.")
+
+    expected_hash = record["otp_hash"]
+    submitted_hash = hash_otp(norm_email, otp)
+    if not hmac.compare_digest(submitted_hash, expected_hash):
+        otp_col.update_one({"email": norm_email}, {"$set": {"attempts": attempts + 1}})
+        raise HTTPException(status_code=400, detail="Invalid OTP code. Please check and try again.")
+    return record
+
+
+@app.post("/api/auth/register")
+def register_user(req: RegisterRequest) -> dict[str, Any]:
+    email = normalize_email(req.email)
+    if "@" not in email or "." not in email.split("@")[-1]:
+        raise HTTPException(status_code=400, detail="Please enter a valid email address")
+
+    users_col = db_manager.collection("users")
+    if users_col.find_one({"email": email}):
+        raise HTTPException(status_code=409, detail="An account with this email already exists")
+
+    user_doc = {
+        "user_id": f"user_{uuid.uuid4().hex[:8]}",
+        "name": req.name.strip(),
+        "email": email,
+        "password_hash": hash_password(req.password),
+        "role": req.role,
+        "organization": req.organization.strip() or "SMVITM Central Kitchen",
+        "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+    }
+    users_col.insert_one(user_doc)
+    token = create_access_token(user_doc)
+    return {"access_token": token, "token_type": "bearer", "user": public_user(user_doc)}
+
+
+@app.post("/api/auth/login")
+def login_user(req: LoginRequest) -> dict[str, Any]:
+    email = normalize_email(req.email)
+    user = db_manager.collection("users").find_one({"email": email})
+    if not user or not verify_password(req.password, user.get("password_hash", "")):
+        raise HTTPException(status_code=401, detail="Invalid email or password")
+
+    token = create_access_token(user)
+    return {"access_token": token, "token_type": "bearer", "user": public_user(user)}
+
+
+@app.get("/api/auth/me")
+def get_current_user(authorization: str | None = Header(default=None)) -> dict[str, Any]:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Missing bearer token")
+    token = authorization.split(" ", 1)[1].strip()
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired session token")
+    user = db_manager.collection("users").find_one({"user_id": payload["sub"]})
+    if not user:
+        raise HTTPException(status_code=401, detail="User account no longer exists")
+    return {"user": public_user(user)}
+
+
+@app.post("/api/auth/forgot-password")
+def forgot_password(req: ForgotPasswordRequest) -> dict[str, Any]:
+    email = normalize_email(req.email)
+    user = db_manager.collection("users").find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="No registered account found with this email address")
+
+    otp = generate_otp()
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)).isoformat()
+    otp_col = db_manager.collection("password_reset_otps")
+    otp_col.delete_many({"email": email})
+    otp_col.insert_one(
+        {
+            "email": email,
+            "otp_hash": hash_otp(email, otp),
+            "attempts": 0,
+            "expires_at": expires_at,
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+    )
+
+    try:
+        delivery = send_otp_email(email, user["name"], otp)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to send OTP email via SMTP: {exc}") from exc
+
+    return {
+        "status": "otp_issued",
+        "email": email,
+        "expires_in_minutes": OTP_EXPIRY_MINUTES,
+        **delivery,
+    }
+
+
+@app.post("/api/auth/verify-otp")
+def verify_reset_otp(req: VerifyOtpRequest) -> dict[str, Any]:
+    _validate_otp_record(req.email, req.otp)
+    return {"status": "verified", "email": normalize_email(req.email)}
+
+
+@app.post("/api/auth/reset-password")
+def reset_password(req: ResetPasswordRequest) -> dict[str, Any]:
+    email = normalize_email(req.email)
+    _validate_otp_record(email, req.otp)
+
+    users_col = db_manager.collection("users")
+    user = users_col.find_one({"email": email})
+    if not user:
+        raise HTTPException(status_code=404, detail="Account not found")
+
+    users_col.update_one({"email": email}, {"$set": {"password_hash": hash_password(req.new_password)}})
+    db_manager.collection("password_reset_otps").delete_many({"email": email})
+    return {"status": "password_reset_complete", "message": "Password reset successfully. You can now sign in."}
 
 
 @app.get("/api/dashboard/overview")
