@@ -1,0 +1,12 @@
+[
+  {
+    "user_id": "user_demo_manager",
+    "name": "Rohith Rao",
+    "email": "manager@nourishai.edu",
+    "password_hash": "19d18dcbf6cfd11fb018c52047c20c83$53139af50ad20271118d6e3535ea353dbfb6686ac071809a5d902632463f6200",
+    "role": "Kitchen Manager",
+    "organization": "SMVITM Central Kitchen",
+    "created_at": "2026-11-27T09:00:00",
+    "_id": "23614074-3d40-4fa8-9abc-57601fc57ba9"
+  }
+]

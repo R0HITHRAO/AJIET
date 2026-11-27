@@ -2,97 +2,681 @@
   {
     "version": 1,
     "reason": "demo_reset",
-    "trained_at": "2026-11-27T11:36:14",
+    "trained_at": "2026-11-27T15:40:31",
     "training_samples": 1440,
-    "validation_samples": 272,
+    "validation_samples": 240,
     "weights": {
-      "random_forest": 0.492,
-      "xgboost": 0.508
+      "random_forest": 0.491,
+      "xgboost": 0.509
     },
     "metrics": {
       "random_forest": {
-        "mae": 31.88,
-        "rmse": 42.33,
-        "mape_pct": 6.18,
-        "r2": 0.909
+        "mae": 32.63,
+        "rmse": 42.21,
+        "mape_pct": 6.96,
+        "wape_pct": 6.61,
+        "r2": 0.9042
       },
       "xgboost": {
+        "mae": 31.38,
+        "rmse": 40.69,
+        "mape_pct": 6.65,
+        "wape_pct": 6.35,
+        "r2": 0.911
+      },
+      "ensemble": {
         "mae": 31.35,
-        "rmse": 40.93,
-        "mape_pct": 6.01,
-        "r2": 0.915
+        "rmse": 40.43,
+        "mape_pct": 6.67,
+        "wape_pct": 6.35,
+        "r2": 0.9121
       },
-      "ensemble": {
-        "mae": 31.01,
-        "rmse": 40.89,
-        "mape_pct": 5.98,
-        "r2": 0.9151
+      "baseline": {
+        "mae": 34.57,
+        "rmse": 45.44,
+        "mape_pct": 7.16,
+        "wape_pct": 7.0,
+        "r2": 0.8889
+      },
+      "validation": {
+        "method": "expanding_window_by_date",
+        "fold_count": 5,
+        "folds": [
+          {
+            "train_through": "2026-09-12",
+            "validation_start": "2026-09-13",
+            "validation_end": "2026-09-27",
+            "baseline_mae": 38.85,
+            "random_forest_mae": 36.75,
+            "xgboost_mae": 35.29
+          },
+          {
+            "train_through": "2026-09-27",
+            "validation_start": "2026-09-28",
+            "validation_end": "2026-10-12",
+            "baseline_mae": 35.92,
+            "random_forest_mae": 35.53,
+            "xgboost_mae": 32.27
+          },
+          {
+            "train_through": "2026-10-12",
+            "validation_start": "2026-10-13",
+            "validation_end": "2026-10-27",
+            "baseline_mae": 31.38,
+            "random_forest_mae": 27.01,
+            "xgboost_mae": 27.97
+          },
+          {
+            "train_through": "2026-10-27",
+            "validation_start": "2026-10-28",
+            "validation_end": "2026-11-11",
+            "baseline_mae": 29.95,
+            "random_forest_mae": 31.07,
+            "xgboost_mae": 28.4
+          },
+          {
+            "train_through": "2026-11-11",
+            "validation_start": "2026-11-12",
+            "validation_end": "2026-11-26",
+            "baseline_mae": 36.77,
+            "random_forest_mae": 32.81,
+            "xgboost_mae": 32.96
+          }
+        ],
+        "required_fold_wins": 4,
+        "fold_wins": {
+          "random_forest": 4,
+          "xgboost": 5,
+          "ensemble": 5
+        },
+        "reliable_ml_models": {
+          "random_forest": true,
+          "xgboost": true,
+          "ensemble": true
+        },
+        "selected_model": "ensemble",
+        "by_meal_slot": {
+          "baseline": {
+            "Breakfast": {
+              "mae": 26.64,
+              "rmse": 35.99,
+              "mape_pct": 6.27,
+              "wape_pct": 6.28,
+              "r2": 0.8812
+            },
+            "Dinner": {
+              "mae": 34.13,
+              "rmse": 43.32,
+              "mape_pct": 6.44,
+              "wape_pct": 6.39,
+              "r2": 0.8147
+            },
+            "Lunch": {
+              "mae": 43.9,
+              "rmse": 57.01,
+              "mape_pct": 7.63,
+              "wape_pct": 7.35,
+              "r2": 0.7575
+            },
+            "Snacks": {
+              "mae": 30.19,
+              "rmse": 36.97,
+              "mape_pct": 8.52,
+              "wape_pct": 8.39,
+              "r2": 0.6861
+            }
+          },
+          "random_forest": {
+            "Breakfast": {
+              "mae": 27.81,
+              "rmse": 36.28,
+              "mape_pct": 6.98,
+              "wape_pct": 6.55,
+              "r2": 0.8792
+            },
+            "Dinner": {
+              "mae": 35.0,
+              "rmse": 43.79,
+              "mape_pct": 6.64,
+              "wape_pct": 6.55,
+              "r2": 0.8106
+            },
+            "Lunch": {
+              "mae": 39.87,
+              "rmse": 50.26,
+              "mape_pct": 6.99,
+              "wape_pct": 6.67,
+              "r2": 0.8115
+            },
+            "Snacks": {
+              "mae": 23.83,
+              "rmse": 31.26,
+              "mape_pct": 7.3,
+              "wape_pct": 6.62,
+              "r2": 0.7755
+            }
+          },
+          "xgboost": {
+            "Breakfast": {
+              "mae": 27.46,
+              "rmse": 35.61,
+              "mape_pct": 6.86,
+              "wape_pct": 6.47,
+              "r2": 0.8837
+            },
+            "Dinner": {
+              "mae": 33.85,
+              "rmse": 42.47,
+              "mape_pct": 6.35,
+              "wape_pct": 6.33,
+              "r2": 0.8218
+            },
+            "Lunch": {
+              "mae": 38.36,
+              "rmse": 48.1,
+              "mape_pct": 6.69,
+              "wape_pct": 6.42,
+              "r2": 0.8274
+            },
+            "Snacks": {
+              "mae": 21.67,
+              "rmse": 29.59,
+              "mape_pct": 6.72,
+              "wape_pct": 6.02,
+              "r2": 0.7989
+            }
+          },
+          "ensemble": {
+            "Breakfast": {
+              "mae": 27.18,
+              "rmse": 35.4,
+              "mape_pct": 6.81,
+              "wape_pct": 6.4,
+              "r2": 0.885
+            },
+            "Dinner": {
+              "mae": 33.61,
+              "rmse": 41.53,
+              "mape_pct": 6.36,
+              "wape_pct": 6.29,
+              "r2": 0.8297
+            },
+            "Lunch": {
+              "mae": 38.32,
+              "rmse": 48.11,
+              "mape_pct": 6.7,
+              "wape_pct": 6.41,
+              "r2": 0.8273
+            },
+            "Snacks": {
+              "mae": 22.26,
+              "rmse": 29.84,
+              "mape_pct": 6.87,
+              "wape_pct": 6.18,
+              "r2": 0.7955
+            }
+          }
+        },
+        "by_dish": {
+          "baseline": {
+            "Crispy Masala Dosa": {
+              "mae": 31.72,
+              "rmse": 42.63,
+              "mape_pct": 6.13,
+              "wape_pct": 6.3,
+              "r2": 0.7888
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 27.7,
+              "rmse": 33.99,
+              "mape_pct": 7.97,
+              "wape_pct": 7.82,
+              "r2": 0.6793
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 42.18,
+              "rmse": 54.37,
+              "mape_pct": 7.24,
+              "wape_pct": 7.14,
+              "r2": 0.7269
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 44.4,
+              "rmse": 57.84,
+              "mape_pct": 6.99,
+              "wape_pct": 6.92,
+              "r2": 0.7327
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 27.19,
+              "rmse": 37.32,
+              "mape_pct": 5.55,
+              "wape_pct": 5.7,
+              "r2": 0.8009
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 35.42,
+              "rmse": 46.12,
+              "mape_pct": 6.52,
+              "wape_pct": 6.6,
+              "r2": 0.78
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 31.3,
+              "rmse": 40.76,
+              "mape_pct": 6.3,
+              "wape_pct": 6.22,
+              "r2": 0.8083
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 24.89,
+              "rmse": 33.01,
+              "mape_pct": 6.52,
+              "wape_pct": 6.41,
+              "r2": 0.7835
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 26.72,
+              "rmse": 33.31,
+              "mape_pct": 6.93,
+              "wape_pct": 6.94,
+              "r2": 0.7484
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 36.15,
+              "rmse": 42.84,
+              "mape_pct": 10.67,
+              "wape_pct": 10.63,
+              "r2": 0.5399
+            },
+            "Paneer Butter Masala": {
+              "mae": 36.26,
+              "rmse": 46.72,
+              "mape_pct": 5.99,
+              "wape_pct": 5.97,
+              "r2": 0.8042
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 34.93,
+              "rmse": 43.96,
+              "mape_pct": 6.24,
+              "wape_pct": 6.17,
+              "r2": 0.8232
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 33.83,
+              "rmse": 42.13,
+              "mape_pct": 5.42,
+              "wape_pct": 5.38,
+              "r2": 0.8403
+            },
+            "Tempered Curd Rice": {
+              "mae": 62.8,
+              "rmse": 77.42,
+              "mape_pct": 12.5,
+              "wape_pct": 12.12,
+              "r2": 0.501
+            },
+            "Veg Rava Upma": {
+              "mae": 22.78,
+              "rmse": 29.7,
+              "mape_pct": 6.89,
+              "wape_pct": 6.93,
+              "r2": 0.7433
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 34.89,
+              "rmse": 42.24,
+              "mape_pct": 6.7,
+              "wape_pct": 6.57,
+              "r2": 0.8062
+            }
+          },
+          "random_forest": {
+            "Crispy Masala Dosa": {
+              "mae": 31.71,
+              "rmse": 40.34,
+              "mape_pct": 6.49,
+              "wape_pct": 6.29,
+              "r2": 0.8109
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 22.41,
+              "rmse": 29.57,
+              "mape_pct": 7.03,
+              "wape_pct": 6.32,
+              "r2": 0.7573
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 40.35,
+              "rmse": 49.56,
+              "mape_pct": 7.1,
+              "wape_pct": 6.83,
+              "r2": 0.773
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 45.3,
+              "rmse": 56.27,
+              "mape_pct": 7.14,
+              "wape_pct": 7.06,
+              "r2": 0.747
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 27.6,
+              "rmse": 35.73,
+              "mape_pct": 5.99,
+              "wape_pct": 5.78,
+              "r2": 0.8175
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 34.88,
+              "rmse": 44.6,
+              "mape_pct": 6.48,
+              "wape_pct": 6.5,
+              "r2": 0.7942
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 31.37,
+              "rmse": 38.97,
+              "mape_pct": 6.28,
+              "wape_pct": 6.24,
+              "r2": 0.8248
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 26.44,
+              "rmse": 32.72,
+              "mape_pct": 7.39,
+              "wape_pct": 6.81,
+              "r2": 0.7872
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 22.69,
+              "rmse": 30.78,
+              "mape_pct": 6.48,
+              "wape_pct": 5.89,
+              "r2": 0.7852
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 26.38,
+              "rmse": 33.33,
+              "mape_pct": 8.41,
+              "wape_pct": 7.76,
+              "r2": 0.7216
+            },
+            "Paneer Butter Masala": {
+              "mae": 34.18,
+              "rmse": 42.05,
+              "mape_pct": 5.77,
+              "wape_pct": 5.62,
+              "r2": 0.8414
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 36.69,
+              "rmse": 45.45,
+              "mape_pct": 6.48,
+              "wape_pct": 6.48,
+              "r2": 0.811
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 35.19,
+              "rmse": 45.62,
+              "mape_pct": 5.71,
+              "wape_pct": 5.6,
+              "r2": 0.8128
+            },
+            "Tempered Curd Rice": {
+              "mae": 44.34,
+              "rmse": 56.22,
+              "mape_pct": 9.21,
+              "wape_pct": 8.56,
+              "r2": 0.7369
+            },
+            "Veg Rava Upma": {
+              "mae": 25.5,
+              "rmse": 35.92,
+              "mape_pct": 8.06,
+              "wape_pct": 7.76,
+              "r2": 0.6244
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 37.07,
+              "rmse": 45.81,
+              "mape_pct": 7.33,
+              "wape_pct": 6.98,
+              "r2": 0.7721
+            }
+          },
+          "xgboost": {
+            "Crispy Masala Dosa": {
+              "mae": 31.06,
+              "rmse": 40.42,
+              "mape_pct": 6.31,
+              "wape_pct": 6.17,
+              "r2": 0.8102
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 19.93,
+              "rmse": 27.35,
+              "mape_pct": 6.31,
+              "wape_pct": 5.62,
+              "r2": 0.7923
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 39.47,
+              "rmse": 48.68,
+              "mape_pct": 6.79,
+              "wape_pct": 6.68,
+              "r2": 0.781
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 43.39,
+              "rmse": 54.09,
+              "mape_pct": 6.91,
+              "wape_pct": 6.76,
+              "r2": 0.7662
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 28.1,
+              "rmse": 36.6,
+              "mape_pct": 6.05,
+              "wape_pct": 5.89,
+              "r2": 0.8085
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 33.82,
+              "rmse": 44.32,
+              "mape_pct": 6.19,
+              "wape_pct": 6.3,
+              "r2": 0.7968
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 31.84,
+              "rmse": 39.14,
+              "mape_pct": 6.28,
+              "wape_pct": 6.33,
+              "r2": 0.8233
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 26.35,
+              "rmse": 31.89,
+              "mape_pct": 7.33,
+              "wape_pct": 6.78,
+              "r2": 0.7979
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 21.69,
+              "rmse": 29.75,
+              "mape_pct": 6.26,
+              "wape_pct": 5.63,
+              "r2": 0.7993
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 23.4,
+              "rmse": 31.52,
+              "mape_pct": 7.58,
+              "wape_pct": 6.88,
+              "r2": 0.7509
+            },
+            "Paneer Butter Masala": {
+              "mae": 33.92,
+              "rmse": 42.51,
+              "mape_pct": 5.71,
+              "wape_pct": 5.58,
+              "r2": 0.838
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 36.0,
+              "rmse": 44.45,
+              "mape_pct": 6.33,
+              "wape_pct": 6.36,
+              "r2": 0.8192
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 36.35,
+              "rmse": 44.34,
+              "mape_pct": 5.88,
+              "wape_pct": 5.78,
+              "r2": 0.8231
+            },
+            "Tempered Curd Rice": {
+              "mae": 38.67,
+              "rmse": 50.01,
+              "mape_pct": 8.18,
+              "wape_pct": 7.46,
+              "r2": 0.7917
+            },
+            "Veg Rava Upma": {
+              "mae": 24.31,
+              "rmse": 32.91,
+              "mape_pct": 7.75,
+              "wape_pct": 7.39,
+              "r2": 0.6849
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 33.73,
+              "rmse": 41.77,
+              "mape_pct": 6.59,
+              "wape_pct": 6.35,
+              "r2": 0.8106
+            }
+          },
+          "ensemble": {
+            "Crispy Masala Dosa": {
+              "mae": 31.04,
+              "rmse": 39.94,
+              "mape_pct": 6.32,
+              "wape_pct": 6.16,
+              "r2": 0.8147
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 20.7,
+              "rmse": 27.94,
+              "mape_pct": 6.55,
+              "wape_pct": 5.84,
+              "r2": 0.7833
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 39.33,
+              "rmse": 48.24,
+              "mape_pct": 6.83,
+              "wape_pct": 6.66,
+              "r2": 0.7849
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 43.52,
+              "rmse": 54.35,
+              "mape_pct": 6.9,
+              "wape_pct": 6.78,
+              "r2": 0.764
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 27.5,
+              "rmse": 35.69,
+              "mape_pct": 5.94,
+              "wape_pct": 5.76,
+              "r2": 0.8179
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 33.7,
+              "rmse": 42.8,
+              "mape_pct": 6.22,
+              "wape_pct": 6.28,
+              "r2": 0.8104
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 30.29,
+              "rmse": 37.21,
+              "mape_pct": 6.07,
+              "wape_pct": 6.02,
+              "r2": 0.8403
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 25.85,
+              "rmse": 31.5,
+              "mape_pct": 7.22,
+              "wape_pct": 6.66,
+              "r2": 0.8028
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 21.57,
+              "rmse": 29.67,
+              "mape_pct": 6.2,
+              "wape_pct": 5.6,
+              "r2": 0.8003
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 24.5,
+              "rmse": 31.78,
+              "mape_pct": 7.87,
+              "wape_pct": 7.2,
+              "r2": 0.7469
+            },
+            "Paneer Butter Masala": {
+              "mae": 33.35,
+              "rmse": 41.24,
+              "mape_pct": 5.62,
+              "wape_pct": 5.49,
+              "r2": 0.8475
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 35.35,
+              "rmse": 43.25,
+              "mape_pct": 6.24,
+              "wape_pct": 6.24,
+              "r2": 0.8289
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 35.23,
+              "rmse": 43.84,
+              "mape_pct": 5.71,
+              "wape_pct": 5.6,
+              "r2": 0.8271
+            },
+            "Tempered Curd Rice": {
+              "mae": 40.16,
+              "rmse": 51.66,
+              "mape_pct": 8.45,
+              "wape_pct": 7.75,
+              "r2": 0.7778
+            },
+            "Veg Rava Upma": {
+              "mae": 24.34,
+              "rmse": 33.94,
+              "mape_pct": 7.75,
+              "wape_pct": 7.4,
+              "r2": 0.6648
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 35.09,
+              "rmse": 42.56,
+              "mape_pct": 6.9,
+              "wape_pct": 6.61,
+              "r2": 0.8033
+            }
+          }
+        }
       }
     },
-    "_id": "a0353d44-dee6-41cf-a51c-914fd41ac723"
-  },
-  {
-    "version": 2,
-    "reason": "manual_retrain",
-    "trained_at": "2026-11-27T11:53:24",
-    "training_samples": 1440,
-    "validation_samples": 272,
-    "weights": {
-      "random_forest": 0.492,
-      "xgboost": 0.508
-    },
-    "metrics": {
-      "random_forest": {
-        "mae": 31.88,
-        "rmse": 42.33,
-        "mape_pct": 6.18,
-        "r2": 0.909
-      },
-      "xgboost": {
-        "mae": 31.35,
-        "rmse": 40.93,
-        "mape_pct": 6.01,
-        "r2": 0.915
-      },
-      "ensemble": {
-        "mae": 31.01,
-        "rmse": 40.89,
-        "mape_pct": 5.98,
-        "r2": 0.9151
-      }
-    },
-    "_id": "a535898e-9ce9-4564-a8b0-37f5cd12a9a4"
-  },
-  {
-    "version": 3,
-    "reason": "post_meal_feedback",
-    "trained_at": "2026-11-27T11:56:35",
-    "training_samples": 1445,
-    "validation_samples": 261,
-    "weights": {
-      "random_forest": 0.497,
-      "xgboost": 0.503
-    },
-    "metrics": {
-      "random_forest": {
-        "mae": 31.66,
-        "rmse": 42.01,
-        "mape_pct": 6.19,
-        "r2": 0.9089
-      },
-      "xgboost": {
-        "mae": 31.48,
-        "rmse": 41.49,
-        "mape_pct": 6.04,
-        "r2": 0.9112
-      },
-      "ensemble": {
-        "mae": 30.99,
-        "rmse": 40.94,
-        "mape_pct": 6.0,
-        "r2": 0.9135
-      }
-    },
-    "_id": "b832a6d1-1eeb-43b0-b232-7c4e1a35f49c"
+    "_id": "94ad7b26-54b0-4e8f-8244-040910de71ed"
   }
 ]
