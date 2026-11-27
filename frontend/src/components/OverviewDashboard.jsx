@@ -65,7 +65,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
           <div className="lg:col-span-7 space-y-5">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-xs font-semibold text-emerald-100">
               <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              SMVITM Institutional Kitchen &bull; AI Operations
+              SMVITM Institutional Kitchen &bull; Sample-data demo
             </div>
 
             <h1 className="font-display text-3xl sm:text-[42px] font-extrabold tracking-tight leading-[1.12]">
@@ -75,7 +75,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
 
             <p className="text-sm sm:text-base text-emerald-100/85 max-w-xl leading-relaxed">
               Forecast institutional meal demand with Random Forest &amp; XGBoost, optimize two-stage batch cooking via
-              Google OR-Tools, and route verified surplus food to nearby NGOs.
+              Google OR-Tools, and screen surplus before recommending nearby NGO matches.
             </p>
 
             <div className="pt-1 flex flex-wrap items-center gap-3">
@@ -97,36 +97,36 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
             </div>
           </div>
 
-          {/* Glassmorphic Live Impact Tiles */}
+          {/* Illustrative impact estimates based on the checked-in demo dataset. */}
           <div className="lg:col-span-5 grid grid-cols-2 gap-3.5">
             {[
               {
                 icon: TrendingDown,
                 iconColor: 'text-emerald-300',
-                label: 'Waste Prevented / mo',
+                label: 'Projected Waste Prevented / mo',
                 value: `${kpis.monthly_waste_prevented_kg.toLocaleString()} kg`,
-                sub: `${kpis.waste_reduction_pct}% less over-prep`,
+                sub: `Illustrative estimate · ${kpis.waste_reduction_pct}%`,
               },
               {
                 icon: Wallet,
                 iconColor: 'text-sky-300',
-                label: 'Cost Saved / mo',
+                label: 'Projected Cost Saved / mo',
                 value: `₹${Math.round(kpis.monthly_cost_saved_inr).toLocaleString('en-IN')}`,
-                sub: `${kpis.meal_sufficiency_pct}% meal sufficiency`,
+                sub: `Demo-data sufficiency · ${kpis.meal_sufficiency_pct}%`,
               },
               {
                 icon: HeartHandshake,
                 iconColor: 'text-amber-300',
-                label: 'Meals Rescued',
+                label: 'Demo Meals Rescued',
                 value: kpis.meals_redistributed.toLocaleString(),
-                sub: `${kpis.active_ngo_partners} active NGO partners`,
+                sub: `${kpis.active_ngo_partners} demo NGO partners`,
               },
               {
                 icon: Leaf,
                 iconColor: 'text-emerald-300',
-                label: 'CO₂ Avoided',
+                label: 'Estimated CO₂ Avoided',
                 value: `${kpis.co2_avoided_kg.toLocaleString()} kg`,
-                sub: `Model v${ml?.model_version || 1} active`,
+                sub: `Illustrative estimate · Model v${ml?.model_version || 1}`,
               },
             ].map((tile) => {
               const TileIcon = tile.icon;
@@ -180,7 +180,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
                     <Icon className="w-5 h-5" />
                   </span>
                   <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 stat-value">
-                    {slot.ai_projected_waste_pct}% AI waste
+                    {slot.ai_projected_waste_pct}% projected waste
                   </span>
                 </div>
 
