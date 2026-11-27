@@ -3,6 +3,7 @@ from __future__ import annotations
 import copy
 import json
 import threading
+import time
 import uuid
 from pathlib import Path
 from typing import Any
@@ -66,7 +67,14 @@ class LocalCollection:
         tmp = self.path.with_suffix(".tmp")
         with tmp.open("w", encoding="utf-8") as f:
             json.dump(self._docs, f, indent=2, default=str)
-        tmp.replace(self.path)
+        for attempt in range(5):
+            try:
+                tmp.replace(self.path)
+                return
+            except PermissionError:
+                if attempt == 4:
+                    raise
+                time.sleep(0.05 * (attempt + 1))
 
     def count_documents(self, filt: dict[str, Any] | None = None) -> int:
         with self._lock:

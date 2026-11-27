@@ -2310,5 +2310,1637 @@
       }
     },
     "_id": "14acb55a-97f0-4793-837e-ea5799d79059"
+  },
+  {
+    "version": 3,
+    "reason": "calibration_sync",
+    "trained_at": "2026-11-27T19:12:14",
+    "training_samples": 4443,
+    "validation_samples": 787,
+    "weights": {
+      "random_forest": 0.504,
+      "xgboost": 0.496
+    },
+    "metrics": {
+      "random_forest": {
+        "mae": 25.78,
+        "rmse": 36.83,
+        "mape_pct": 5.88,
+        "wape_pct": 5.25,
+        "r2": 0.9452
+      },
+      "xgboost": {
+        "mae": 25.48,
+        "rmse": 37.41,
+        "mape_pct": 5.74,
+        "wape_pct": 5.19,
+        "r2": 0.9435
+      },
+      "ensemble": {
+        "mae": 25.07,
+        "rmse": 36.13,
+        "mape_pct": 5.67,
+        "wape_pct": 5.11,
+        "r2": 0.9473
+      },
+      "baseline": {
+        "mae": 30.39,
+        "rmse": 43.58,
+        "mape_pct": 7.03,
+        "wape_pct": 6.19,
+        "r2": 0.9233
+      },
+      "validation": {
+        "method": "expanding_window_by_date",
+        "fold_count": 5,
+        "folds": [
+          {
+            "train_through": "2026-08-19",
+            "validation_start": "2026-08-20",
+            "validation_end": "2026-09-08",
+            "baseline_mae": 40.79,
+            "random_forest_mae": 31.5,
+            "xgboost_mae": 34.38
+          },
+          {
+            "train_through": "2026-09-08",
+            "validation_start": "2026-09-09",
+            "validation_end": "2026-09-28",
+            "baseline_mae": 30.17,
+            "random_forest_mae": 27.34,
+            "xgboost_mae": 26.53
+          },
+          {
+            "train_through": "2026-09-28",
+            "validation_start": "2026-09-29",
+            "validation_end": "2026-10-18",
+            "baseline_mae": 28.07,
+            "random_forest_mae": 25.1,
+            "xgboost_mae": 24.04
+          },
+          {
+            "train_through": "2026-10-18",
+            "validation_start": "2026-10-19",
+            "validation_end": "2026-11-07",
+            "baseline_mae": 25.61,
+            "random_forest_mae": 22.81,
+            "xgboost_mae": 21.44
+          },
+          {
+            "train_through": "2026-11-07",
+            "validation_start": "2026-11-08",
+            "validation_end": "2026-11-27",
+            "baseline_mae": 29.17,
+            "random_forest_mae": 23.14,
+            "xgboost_mae": 22.57
+          }
+        ],
+        "required_fold_wins": 4,
+        "fold_wins": {
+          "random_forest": 5,
+          "xgboost": 5,
+          "ensemble": 5
+        },
+        "reliable_ml_models": {
+          "random_forest": true,
+          "xgboost": true,
+          "ensemble": true
+        },
+        "selected_model": "ensemble",
+        "by_meal_slot": {
+          "baseline": {
+            "Breakfast": {
+              "mae": 29.71,
+              "rmse": 41.16,
+              "mape_pct": 7.37,
+              "wape_pct": 6.54,
+              "r2": 0.9275
+            },
+            "Dinner": {
+              "mae": 27.26,
+              "rmse": 38.36,
+              "mape_pct": 6.45,
+              "wape_pct": 5.7,
+              "r2": 0.9387
+            },
+            "Lunch": {
+              "mae": 30.49,
+              "rmse": 43.35,
+              "mape_pct": 5.93,
+              "wape_pct": 5.49,
+              "r2": 0.914
+            },
+            "Snacks": {
+              "mae": 46.9,
+              "rmse": 68.77,
+              "mape_pct": 14.08,
+              "wape_pct": 13.05,
+              "r2": -0.0093
+            }
+          },
+          "random_forest": {
+            "Breakfast": {
+              "mae": 24.49,
+              "rmse": 33.22,
+              "mape_pct": 6.08,
+              "wape_pct": 5.39,
+              "r2": 0.9527
+            },
+            "Dinner": {
+              "mae": 23.26,
+              "rmse": 32.17,
+              "mape_pct": 5.67,
+              "wape_pct": 4.86,
+              "r2": 0.9569
+            },
+            "Lunch": {
+              "mae": 28.52,
+              "rmse": 42.64,
+              "mape_pct": 5.44,
+              "wape_pct": 5.14,
+              "r2": 0.9168
+            },
+            "Snacks": {
+              "mae": 28.44,
+              "rmse": 38.03,
+              "mape_pct": 8.32,
+              "wape_pct": 7.91,
+              "r2": 0.6914
+            }
+          },
+          "xgboost": {
+            "Breakfast": {
+              "mae": 23.91,
+              "rmse": 32.41,
+              "mape_pct": 5.95,
+              "wape_pct": 5.26,
+              "r2": 0.955
+            },
+            "Dinner": {
+              "mae": 24.8,
+              "rmse": 36.39,
+              "mape_pct": 5.91,
+              "wape_pct": 5.19,
+              "r2": 0.9448
+            },
+            "Lunch": {
+              "mae": 27.28,
+              "rmse": 41.7,
+              "mape_pct": 5.17,
+              "wape_pct": 4.91,
+              "r2": 0.9204
+            },
+            "Snacks": {
+              "mae": 25.22,
+              "rmse": 36.03,
+              "mape_pct": 7.09,
+              "wape_pct": 7.01,
+              "r2": 0.7229
+            }
+          },
+          "ensemble": {
+            "Breakfast": {
+              "mae": 23.84,
+              "rmse": 32.32,
+              "mape_pct": 5.92,
+              "wape_pct": 5.25,
+              "r2": 0.9553
+            },
+            "Dinner": {
+              "mae": 23.49,
+              "rmse": 32.91,
+              "mape_pct": 5.67,
+              "wape_pct": 4.91,
+              "r2": 0.9548
+            },
+            "Lunch": {
+              "mae": 27.26,
+              "rmse": 41.34,
+              "mape_pct": 5.16,
+              "wape_pct": 4.91,
+              "r2": 0.9218
+            },
+            "Snacks": {
+              "mae": 25.84,
+              "rmse": 35.3,
+              "mape_pct": 7.37,
+              "wape_pct": 7.19,
+              "r2": 0.7341
+            }
+          }
+        },
+        "by_dish": {
+          "baseline": {
+            "Avalakki Uppittu": {
+              "mae": 18.65,
+              "rmse": 23.83,
+              "mape_pct": 8.8,
+              "wape_pct": 8.15,
+              "r2": 0.9345
+            },
+            "Bendekai Gojju & Palya": {
+              "mae": 28.67,
+              "rmse": 34.81,
+              "mape_pct": 8.56,
+              "wape_pct": 6.4,
+              "r2": 0.9703
+            },
+            "Cabbage Coconut Palya": {
+              "mae": 19.21,
+              "rmse": 24.39,
+              "mape_pct": 3.67,
+              "wape_pct": 3.72,
+              "r2": 0.7687
+            },
+            "Chapati & Dal Fry": {
+              "mae": 20.78,
+              "rmse": 25.31,
+              "mape_pct": 9.76,
+              "wape_pct": 8.12,
+              "r2": 0.942
+            },
+            "Chapati & Dal Tadka": {
+              "mae": 20.22,
+              "rmse": 26.74,
+              "mape_pct": 3.8,
+              "wape_pct": 3.67,
+              "r2": 0.8996
+            },
+            "Coastal Boiled Rice": {
+              "mae": 23.49,
+              "rmse": 28.24,
+              "mape_pct": 4.07,
+              "wape_pct": 4.04,
+              "r2": 0.7044
+            },
+            "Coastal Veg Pulao": {
+              "mae": 26.82,
+              "rmse": 33.46,
+              "mape_pct": 5.62,
+              "wape_pct": 5.66,
+              "r2": -0.7923
+            },
+            "Crispy Masala Dosa": {
+              "mae": 30.91,
+              "rmse": 39.77,
+              "mape_pct": 5.69,
+              "wape_pct": 5.62,
+              "r2": 0.8515
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 44.29,
+              "rmse": 66.84,
+              "mape_pct": 13.36,
+              "wape_pct": 12.5,
+              "r2": -0.1434
+            },
+            "Curd Rice & Pickle": {
+              "mae": 21.28,
+              "rmse": 26.64,
+              "mape_pct": 9.88,
+              "wape_pct": 8.14,
+              "r2": 0.9377
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 29.26,
+              "rmse": 42.45,
+              "mape_pct": 4.93,
+              "wape_pct": 5.09,
+              "r2": 0.7937
+            },
+            "Ghee Rice & Rasam": {
+              "mae": 24.07,
+              "rmse": 29.91,
+              "mape_pct": 4.48,
+              "wape_pct": 4.39,
+              "r2": 0.8725
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 44.61,
+              "rmse": 59.24,
+              "mape_pct": 6.94,
+              "wape_pct": 7.02,
+              "r2": 0.7468
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 29.46,
+              "rmse": 37.98,
+              "mape_pct": 5.76,
+              "wape_pct": 5.67,
+              "r2": 0.8575
+            },
+            "Idli Vada & Sambar": {
+              "mae": 21.28,
+              "rmse": 25.97,
+              "mape_pct": 3.67,
+              "wape_pct": 3.64,
+              "r2": 0.9065
+            },
+            "Jackfruit Kadgi Chakko": {
+              "mae": 28.16,
+              "rmse": 33.69,
+              "mape_pct": 8.22,
+              "wape_pct": 5.83,
+              "r2": 0.9803
+            },
+            "Jeera Ghee Rice": {
+              "mae": 23.83,
+              "rmse": 28.91,
+              "mape_pct": 6.9,
+              "wape_pct": 4.84,
+              "r2": 0.9851
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 44.1,
+              "rmse": 63.73,
+              "mape_pct": 8.04,
+              "wape_pct": 8.21,
+              "r2": 0.601
+            },
+            "Jeera Rice": {
+              "mae": 23.77,
+              "rmse": 30.29,
+              "mape_pct": 4.49,
+              "wape_pct": 4.47,
+              "r2": 0.844
+            },
+            "Jeera Rice & Dal": {
+              "mae": 24.89,
+              "rmse": 29.11,
+              "mape_pct": 4.78,
+              "wape_pct": 4.72,
+              "r2": 0.8682
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 38.27,
+              "rmse": 53.75,
+              "mape_pct": 7.77,
+              "wape_pct": 7.61,
+              "r2": 0.6753
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 44.83,
+              "rmse": 53.8,
+              "mape_pct": 10.66,
+              "wape_pct": 10.03,
+              "r2": 0.7291
+            },
+            "Kotte Kadubu & Chutney": {
+              "mae": 20.91,
+              "rmse": 27.16,
+              "mape_pct": 8.27,
+              "wape_pct": 7.79,
+              "r2": 0.9395
+            },
+            "Kuchlakki Boiled Red Rice": {
+              "mae": 17.98,
+              "rmse": 22.04,
+              "mape_pct": 3.12,
+              "wape_pct": 3.04,
+              "r2": 0.916
+            },
+            "Malabar Parotta & Veg Kurma": {
+              "mae": 24.18,
+              "rmse": 30.2,
+              "mape_pct": 4.22,
+              "wape_pct": 4.14,
+              "r2": 0.8844
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 41.13,
+              "rmse": 60.32,
+              "mape_pct": 11.31,
+              "wape_pct": 10.69,
+              "r2": 0.2393
+            },
+            "Mangalore Buns & Kurma": {
+              "mae": 25.38,
+              "rmse": 30.87,
+              "mape_pct": 4.37,
+              "wape_pct": 4.35,
+              "r2": 0.8801
+            },
+            "Mangalore Buns & Sagu": {
+              "mae": 26.03,
+              "rmse": 32.14,
+              "mape_pct": 9.2,
+              "wape_pct": 8.75,
+              "r2": 0.897
+            },
+            "Mangalore Sambar": {
+              "mae": 21.17,
+              "rmse": 25.77,
+              "mape_pct": 3.97,
+              "wape_pct": 3.85,
+              "r2": 0.8903
+            },
+            "Masala Dosa & Sambar": {
+              "mae": 20.36,
+              "rmse": 26.69,
+              "mape_pct": 8.38,
+              "wape_pct": 7.55,
+              "r2": 0.9391
+            },
+            "Mixed Veg Kurma": {
+              "mae": 22.11,
+              "rmse": 28.0,
+              "mape_pct": 4.12,
+              "wape_pct": 4.02,
+              "r2": 0.8602
+            },
+            "Neer Dosa & Coconut Chutney": {
+              "mae": 20.81,
+              "rmse": 26.56,
+              "mape_pct": 3.49,
+              "wape_pct": 3.46,
+              "r2": 0.9081
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 55.29,
+              "rmse": 77.99,
+              "mape_pct": 17.56,
+              "wape_pct": 16.3,
+              "r2": -0.4178
+            },
+            "Paneer Butter Masala": {
+              "mae": 30.55,
+              "rmse": 40.05,
+              "mape_pct": 5.08,
+              "wape_pct": 5.09,
+              "r2": 0.8405
+            },
+            "Paneer Ghee Roast": {
+              "mae": 22.13,
+              "rmse": 28.9,
+              "mape_pct": 3.9,
+              "wape_pct": 3.68,
+              "r2": 0.8829
+            },
+            "Paneer Tikka Masala": {
+              "mae": 29.27,
+              "rmse": 40.33,
+              "mape_pct": 7.61,
+              "wape_pct": 6.04,
+              "r2": 0.9741
+            },
+            "Parboiled Red Rice": {
+              "mae": 24.34,
+              "rmse": 30.31,
+              "mape_pct": 6.96,
+              "wape_pct": 5.13,
+              "r2": 0.984
+            },
+            "Rava Upma & Chutney": {
+              "mae": 21.41,
+              "rmse": 26.93,
+              "mape_pct": 4.04,
+              "wape_pct": 4.0,
+              "r2": 0.8258
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 27.21,
+              "rmse": 35.91,
+              "mape_pct": 4.8,
+              "wape_pct": 4.8,
+              "r2": 0.852
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 30.82,
+              "rmse": 40.71,
+              "mape_pct": 4.94,
+              "wape_pct": 5.02,
+              "r2": 0.8236
+            },
+            "Steamed White Rice": {
+              "mae": 22.76,
+              "rmse": 29.2,
+              "mape_pct": 4.07,
+              "wape_pct": 3.91,
+              "r2": 0.8018
+            },
+            "Tempered Curd Rice": {
+              "mae": 74.6,
+              "rmse": 94.55,
+              "mape_pct": 14.35,
+              "wape_pct": 14.26,
+              "r2": 0.311
+            },
+            "Tendli Cashew Palya": {
+              "mae": 24.19,
+              "rmse": 28.09,
+              "mape_pct": 4.59,
+              "wape_pct": 4.65,
+              "r2": 0.8404
+            },
+            "Udupi Sambar & Rasam": {
+              "mae": 21.95,
+              "rmse": 28.06,
+              "mape_pct": 6.64,
+              "wape_pct": 4.77,
+              "r2": 0.9849
+            },
+            "Udupi Tomato Rasam": {
+              "mae": 17.15,
+              "rmse": 21.5,
+              "mape_pct": 3.3,
+              "wape_pct": 3.24,
+              "r2": 0.8897
+            },
+            "Uppittu & Kesari Sheera": {
+              "mae": 23.39,
+              "rmse": 30.1,
+              "mape_pct": 4.45,
+              "wape_pct": 4.44,
+              "r2": 0.8264
+            },
+            "Veg Fried Rice": {
+              "mae": 23.99,
+              "rmse": 28.14,
+              "mape_pct": 11.08,
+              "wape_pct": 9.65,
+              "r2": 0.9219
+            },
+            "Veg Rava Upma": {
+              "mae": 42.71,
+              "rmse": 69.99,
+              "mape_pct": 13.69,
+              "wape_pct": 12.97,
+              "r2": -0.2652
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 45.97,
+              "rmse": 64.47,
+              "mape_pct": 8.59,
+              "wape_pct": 8.61,
+              "r2": 0.5878
+            },
+            "Wheat Parotta & Kurma": {
+              "mae": 20.94,
+              "rmse": 26.48,
+              "mape_pct": 9.2,
+              "wape_pct": 7.84,
+              "r2": 0.941
+            }
+          },
+          "random_forest": {
+            "Avalakki Uppittu": {
+              "mae": 17.31,
+              "rmse": 22.98,
+              "mape_pct": 8.77,
+              "wape_pct": 7.57,
+              "r2": 0.9391
+            },
+            "Bendekai Gojju & Palya": {
+              "mae": 22.13,
+              "rmse": 26.64,
+              "mape_pct": 6.26,
+              "wape_pct": 4.94,
+              "r2": 0.9826
+            },
+            "Cabbage Coconut Palya": {
+              "mae": 17.62,
+              "rmse": 21.72,
+              "mape_pct": 3.43,
+              "wape_pct": 3.41,
+              "r2": 0.8166
+            },
+            "Chapati & Dal Fry": {
+              "mae": 19.12,
+              "rmse": 23.21,
+              "mape_pct": 9.44,
+              "wape_pct": 7.47,
+              "r2": 0.9512
+            },
+            "Chapati & Dal Tadka": {
+              "mae": 16.19,
+              "rmse": 20.23,
+              "mape_pct": 3.03,
+              "wape_pct": 2.93,
+              "r2": 0.9425
+            },
+            "Coastal Boiled Rice": {
+              "mae": 18.77,
+              "rmse": 23.21,
+              "mape_pct": 3.28,
+              "wape_pct": 3.23,
+              "r2": 0.8003
+            },
+            "Coastal Veg Pulao": {
+              "mae": 16.57,
+              "rmse": 20.66,
+              "mape_pct": 3.49,
+              "wape_pct": 3.5,
+              "r2": 0.3169
+            },
+            "Crispy Masala Dosa": {
+              "mae": 31.7,
+              "rmse": 42.89,
+              "mape_pct": 5.99,
+              "wape_pct": 5.77,
+              "r2": 0.8273
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 25.84,
+              "rmse": 34.4,
+              "mape_pct": 7.61,
+              "wape_pct": 7.29,
+              "r2": 0.6972
+            },
+            "Curd Rice & Pickle": {
+              "mae": 20.35,
+              "rmse": 23.76,
+              "mape_pct": 9.87,
+              "wape_pct": 7.79,
+              "r2": 0.9504
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 30.14,
+              "rmse": 50.12,
+              "mape_pct": 5.08,
+              "wape_pct": 5.24,
+              "r2": 0.7123
+            },
+            "Ghee Rice & Rasam": {
+              "mae": 17.49,
+              "rmse": 22.38,
+              "mape_pct": 3.2,
+              "wape_pct": 3.19,
+              "r2": 0.9286
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 49.39,
+              "rmse": 68.44,
+              "mape_pct": 7.69,
+              "wape_pct": 7.77,
+              "r2": 0.6621
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 30.57,
+              "rmse": 41.16,
+              "mape_pct": 5.95,
+              "wape_pct": 5.88,
+              "r2": 0.8325
+            },
+            "Idli Vada & Sambar": {
+              "mae": 18.5,
+              "rmse": 22.46,
+              "mape_pct": 3.18,
+              "wape_pct": 3.16,
+              "r2": 0.93
+            },
+            "Jackfruit Kadgi Chakko": {
+              "mae": 26.35,
+              "rmse": 35.37,
+              "mape_pct": 5.64,
+              "wape_pct": 5.46,
+              "r2": 0.9783
+            },
+            "Jeera Ghee Rice": {
+              "mae": 24.02,
+              "rmse": 28.79,
+              "mape_pct": 6.33,
+              "wape_pct": 4.88,
+              "r2": 0.9852
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 34.04,
+              "rmse": 48.37,
+              "mape_pct": 6.24,
+              "wape_pct": 6.34,
+              "r2": 0.7701
+            },
+            "Jeera Rice": {
+              "mae": 18.84,
+              "rmse": 23.75,
+              "mape_pct": 3.65,
+              "wape_pct": 3.54,
+              "r2": 0.904
+            },
+            "Jeera Rice & Dal": {
+              "mae": 16.65,
+              "rmse": 20.33,
+              "mape_pct": 3.2,
+              "wape_pct": 3.16,
+              "r2": 0.9357
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 32.73,
+              "rmse": 41.85,
+              "mape_pct": 6.61,
+              "wape_pct": 6.51,
+              "r2": 0.8031
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 25.5,
+              "rmse": 32.16,
+              "mape_pct": 6.12,
+              "wape_pct": 5.7,
+              "r2": 0.9032
+            },
+            "Kotte Kadubu & Chutney": {
+              "mae": 18.51,
+              "rmse": 24.3,
+              "mape_pct": 7.71,
+              "wape_pct": 6.89,
+              "r2": 0.9516
+            },
+            "Kuchlakki Boiled Red Rice": {
+              "mae": 15.96,
+              "rmse": 20.81,
+              "mape_pct": 2.71,
+              "wape_pct": 2.7,
+              "r2": 0.925
+            },
+            "Malabar Parotta & Veg Kurma": {
+              "mae": 21.21,
+              "rmse": 25.02,
+              "mape_pct": 3.72,
+              "wape_pct": 3.64,
+              "r2": 0.9207
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 26.25,
+              "rmse": 36.61,
+              "mape_pct": 6.98,
+              "wape_pct": 6.82,
+              "r2": 0.7198
+            },
+            "Mangalore Buns & Kurma": {
+              "mae": 18.29,
+              "rmse": 24.52,
+              "mape_pct": 3.11,
+              "wape_pct": 3.13,
+              "r2": 0.9243
+            },
+            "Mangalore Buns & Sagu": {
+              "mae": 21.89,
+              "rmse": 26.75,
+              "mape_pct": 8.17,
+              "wape_pct": 7.36,
+              "r2": 0.9286
+            },
+            "Mangalore Sambar": {
+              "mae": 17.25,
+              "rmse": 21.7,
+              "mape_pct": 3.17,
+              "wape_pct": 3.14,
+              "r2": 0.9222
+            },
+            "Masala Dosa & Sambar": {
+              "mae": 19.48,
+              "rmse": 25.46,
+              "mape_pct": 7.96,
+              "wape_pct": 7.23,
+              "r2": 0.9446
+            },
+            "Mixed Veg Kurma": {
+              "mae": 17.46,
+              "rmse": 23.29,
+              "mape_pct": 3.27,
+              "wape_pct": 3.18,
+              "r2": 0.9033
+            },
+            "Neer Dosa & Coconut Chutney": {
+              "mae": 18.05,
+              "rmse": 21.76,
+              "mape_pct": 2.99,
+              "wape_pct": 3.0,
+              "r2": 0.9383
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 33.23,
+              "rmse": 42.6,
+              "mape_pct": 10.36,
+              "wape_pct": 9.79,
+              "r2": 0.577
+            },
+            "Paneer Butter Masala": {
+              "mae": 31.66,
+              "rmse": 46.4,
+              "mape_pct": 5.29,
+              "wape_pct": 5.27,
+              "r2": 0.7859
+            },
+            "Paneer Ghee Roast": {
+              "mae": 19.09,
+              "rmse": 23.87,
+              "mape_pct": 3.27,
+              "wape_pct": 3.18,
+              "r2": 0.9201
+            },
+            "Paneer Tikka Masala": {
+              "mae": 23.71,
+              "rmse": 27.83,
+              "mape_pct": 6.63,
+              "wape_pct": 4.89,
+              "r2": 0.9877
+            },
+            "Parboiled Red Rice": {
+              "mae": 23.64,
+              "rmse": 29.42,
+              "mape_pct": 6.29,
+              "wape_pct": 4.98,
+              "r2": 0.9849
+            },
+            "Rava Upma & Chutney": {
+              "mae": 16.68,
+              "rmse": 19.42,
+              "mape_pct": 3.15,
+              "wape_pct": 3.12,
+              "r2": 0.9094
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 28.82,
+              "rmse": 41.11,
+              "mape_pct": 5.03,
+              "wape_pct": 5.08,
+              "r2": 0.806
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 32.28,
+              "rmse": 47.05,
+              "mape_pct": 5.22,
+              "wape_pct": 5.26,
+              "r2": 0.7643
+            },
+            "Steamed White Rice": {
+              "mae": 18.96,
+              "rmse": 22.48,
+              "mape_pct": 3.27,
+              "wape_pct": 3.25,
+              "r2": 0.8826
+            },
+            "Tempered Curd Rice": {
+              "mae": 54.8,
+              "rmse": 70.81,
+              "mape_pct": 10.95,
+              "wape_pct": 10.48,
+              "r2": 0.6135
+            },
+            "Tendli Cashew Palya": {
+              "mae": 19.37,
+              "rmse": 23.5,
+              "mape_pct": 3.73,
+              "wape_pct": 3.73,
+              "r2": 0.8883
+            },
+            "Udupi Sambar & Rasam": {
+              "mae": 22.11,
+              "rmse": 28.13,
+              "mape_pct": 6.31,
+              "wape_pct": 4.81,
+              "r2": 0.9848
+            },
+            "Udupi Tomato Rasam": {
+              "mae": 15.51,
+              "rmse": 18.21,
+              "mape_pct": 2.98,
+              "wape_pct": 2.93,
+              "r2": 0.9209
+            },
+            "Uppittu & Kesari Sheera": {
+              "mae": 21.09,
+              "rmse": 26.1,
+              "mape_pct": 4.08,
+              "wape_pct": 4.0,
+              "r2": 0.8695
+            },
+            "Veg Fried Rice": {
+              "mae": 18.15,
+              "rmse": 23.48,
+              "mape_pct": 9.04,
+              "wape_pct": 7.3,
+              "r2": 0.9456
+            },
+            "Veg Rava Upma": {
+              "mae": 29.69,
+              "rmse": 41.8,
+              "mape_pct": 9.37,
+              "wape_pct": 9.02,
+              "r2": 0.5488
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 35.91,
+              "rmse": 47.4,
+              "mape_pct": 7.05,
+              "wape_pct": 6.72,
+              "r2": 0.7771
+            },
+            "Wheat Parotta & Kurma": {
+              "mae": 18.2,
+              "rmse": 22.94,
+              "mape_pct": 8.49,
+              "wape_pct": 6.81,
+              "r2": 0.9557
+            }
+          },
+          "xgboost": {
+            "Avalakki Uppittu": {
+              "mae": 14.31,
+              "rmse": 20.06,
+              "mape_pct": 7.24,
+              "wape_pct": 6.25,
+              "r2": 0.9536
+            },
+            "Bendekai Gojju & Palya": {
+              "mae": 17.15,
+              "rmse": 20.95,
+              "mape_pct": 4.52,
+              "wape_pct": 3.82,
+              "r2": 0.9892
+            },
+            "Cabbage Coconut Palya": {
+              "mae": 16.04,
+              "rmse": 19.3,
+              "mape_pct": 3.15,
+              "wape_pct": 3.1,
+              "r2": 0.8551
+            },
+            "Chapati & Dal Fry": {
+              "mae": 18.62,
+              "rmse": 22.69,
+              "mape_pct": 9.41,
+              "wape_pct": 7.28,
+              "r2": 0.9534
+            },
+            "Chapati & Dal Tadka": {
+              "mae": 16.7,
+              "rmse": 20.57,
+              "mape_pct": 3.1,
+              "wape_pct": 3.03,
+              "r2": 0.9406
+            },
+            "Coastal Boiled Rice": {
+              "mae": 19.39,
+              "rmse": 23.21,
+              "mape_pct": 3.38,
+              "wape_pct": 3.34,
+              "r2": 0.8002
+            },
+            "Coastal Veg Pulao": {
+              "mae": 19.74,
+              "rmse": 23.71,
+              "mape_pct": 4.11,
+              "wape_pct": 4.17,
+              "r2": 0.1
+            },
+            "Crispy Masala Dosa": {
+              "mae": 29.96,
+              "rmse": 41.37,
+              "mape_pct": 5.63,
+              "wape_pct": 5.45,
+              "r2": 0.8393
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 23.76,
+              "rmse": 32.98,
+              "mape_pct": 6.71,
+              "wape_pct": 6.71,
+              "r2": 0.7217
+            },
+            "Curd Rice & Pickle": {
+              "mae": 19.56,
+              "rmse": 24.24,
+              "mape_pct": 9.43,
+              "wape_pct": 7.48,
+              "r2": 0.9484
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 29.82,
+              "rmse": 51.08,
+              "mape_pct": 5.04,
+              "wape_pct": 5.19,
+              "r2": 0.7012
+            },
+            "Ghee Rice & Rasam": {
+              "mae": 17.76,
+              "rmse": 21.75,
+              "mape_pct": 3.24,
+              "wape_pct": 3.24,
+              "r2": 0.9326
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 48.06,
+              "rmse": 67.45,
+              "mape_pct": 7.53,
+              "wape_pct": 7.56,
+              "r2": 0.6717
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 29.85,
+              "rmse": 39.86,
+              "mape_pct": 5.9,
+              "wape_pct": 5.74,
+              "r2": 0.843
+            },
+            "Idli Vada & Sambar": {
+              "mae": 18.68,
+              "rmse": 22.45,
+              "mape_pct": 3.23,
+              "wape_pct": 3.19,
+              "r2": 0.9301
+            },
+            "Jackfruit Kadgi Chakko": {
+              "mae": 25.82,
+              "rmse": 34.09,
+              "mape_pct": 5.75,
+              "wape_pct": 5.35,
+              "r2": 0.9798
+            },
+            "Jeera Ghee Rice": {
+              "mae": 21.7,
+              "rmse": 28.19,
+              "mape_pct": 5.57,
+              "wape_pct": 4.41,
+              "r2": 0.9859
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 40.08,
+              "rmse": 57.8,
+              "mape_pct": 7.24,
+              "wape_pct": 7.47,
+              "r2": 0.6718
+            },
+            "Jeera Rice": {
+              "mae": 17.35,
+              "rmse": 22.04,
+              "mape_pct": 3.32,
+              "wape_pct": 3.26,
+              "r2": 0.9174
+            },
+            "Jeera Rice & Dal": {
+              "mae": 15.31,
+              "rmse": 19.2,
+              "mape_pct": 2.93,
+              "wape_pct": 2.9,
+              "r2": 0.9427
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 37.61,
+              "rmse": 49.98,
+              "mape_pct": 7.39,
+              "wape_pct": 7.48,
+              "r2": 0.7193
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 27.65,
+              "rmse": 34.6,
+              "mape_pct": 6.7,
+              "wape_pct": 6.18,
+              "r2": 0.888
+            },
+            "Kotte Kadubu & Chutney": {
+              "mae": 18.12,
+              "rmse": 22.2,
+              "mape_pct": 7.66,
+              "wape_pct": 6.75,
+              "r2": 0.9596
+            },
+            "Kuchlakki Boiled Red Rice": {
+              "mae": 15.32,
+              "rmse": 18.75,
+              "mape_pct": 2.62,
+              "wape_pct": 2.59,
+              "r2": 0.9392
+            },
+            "Malabar Parotta & Veg Kurma": {
+              "mae": 20.6,
+              "rmse": 24.7,
+              "mape_pct": 3.59,
+              "wape_pct": 3.53,
+              "r2": 0.9227
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 24.09,
+              "rmse": 36.03,
+              "mape_pct": 6.18,
+              "wape_pct": 6.26,
+              "r2": 0.7287
+            },
+            "Mangalore Buns & Kurma": {
+              "mae": 17.65,
+              "rmse": 24.21,
+              "mape_pct": 2.96,
+              "wape_pct": 3.02,
+              "r2": 0.9262
+            },
+            "Mangalore Buns & Sagu": {
+              "mae": 19.75,
+              "rmse": 24.92,
+              "mape_pct": 7.29,
+              "wape_pct": 6.64,
+              "r2": 0.9381
+            },
+            "Mangalore Sambar": {
+              "mae": 17.94,
+              "rmse": 22.03,
+              "mape_pct": 3.3,
+              "wape_pct": 3.26,
+              "r2": 0.9198
+            },
+            "Masala Dosa & Sambar": {
+              "mae": 17.4,
+              "rmse": 21.6,
+              "mape_pct": 7.42,
+              "wape_pct": 6.45,
+              "r2": 0.9601
+            },
+            "Mixed Veg Kurma": {
+              "mae": 17.6,
+              "rmse": 23.03,
+              "mape_pct": 3.27,
+              "wape_pct": 3.2,
+              "r2": 0.9055
+            },
+            "Neer Dosa & Coconut Chutney": {
+              "mae": 16.99,
+              "rmse": 21.12,
+              "mape_pct": 2.8,
+              "wape_pct": 2.82,
+              "r2": 0.9419
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 27.8,
+              "rmse": 38.85,
+              "mape_pct": 8.39,
+              "wape_pct": 8.19,
+              "r2": 0.6481
+            },
+            "Paneer Butter Masala": {
+              "mae": 30.2,
+              "rmse": 45.29,
+              "mape_pct": 5.06,
+              "wape_pct": 5.03,
+              "r2": 0.7961
+            },
+            "Paneer Ghee Roast": {
+              "mae": 17.36,
+              "rmse": 21.49,
+              "mape_pct": 2.95,
+              "wape_pct": 2.89,
+              "r2": 0.9352
+            },
+            "Paneer Tikka Masala": {
+              "mae": 23.02,
+              "rmse": 28.18,
+              "mape_pct": 6.48,
+              "wape_pct": 4.75,
+              "r2": 0.9874
+            },
+            "Parboiled Red Rice": {
+              "mae": 22.98,
+              "rmse": 28.64,
+              "mape_pct": 6.2,
+              "wape_pct": 4.84,
+              "r2": 0.9857
+            },
+            "Rava Upma & Chutney": {
+              "mae": 16.19,
+              "rmse": 19.46,
+              "mape_pct": 3.06,
+              "wape_pct": 3.03,
+              "r2": 0.909
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 31.55,
+              "rmse": 47.73,
+              "mape_pct": 5.43,
+              "wape_pct": 5.56,
+              "r2": 0.7386
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 33.45,
+              "rmse": 50.23,
+              "mape_pct": 5.42,
+              "wape_pct": 5.45,
+              "r2": 0.7314
+            },
+            "Steamed White Rice": {
+              "mae": 18.42,
+              "rmse": 21.84,
+              "mape_pct": 3.16,
+              "wape_pct": 3.16,
+              "r2": 0.8891
+            },
+            "Tempered Curd Rice": {
+              "mae": 44.91,
+              "rmse": 61.45,
+              "mape_pct": 8.84,
+              "wape_pct": 8.59,
+              "r2": 0.7089
+            },
+            "Tendli Cashew Palya": {
+              "mae": 17.0,
+              "rmse": 20.96,
+              "mape_pct": 3.26,
+              "wape_pct": 3.27,
+              "r2": 0.9112
+            },
+            "Udupi Sambar & Rasam": {
+              "mae": 21.62,
+              "rmse": 27.7,
+              "mape_pct": 6.03,
+              "wape_pct": 4.7,
+              "r2": 0.9853
+            },
+            "Udupi Tomato Rasam": {
+              "mae": 16.33,
+              "rmse": 19.92,
+              "mape_pct": 3.11,
+              "wape_pct": 3.08,
+              "r2": 0.9054
+            },
+            "Uppittu & Kesari Sheera": {
+              "mae": 19.42,
+              "rmse": 23.77,
+              "mape_pct": 3.74,
+              "wape_pct": 3.69,
+              "r2": 0.8917
+            },
+            "Veg Fried Rice": {
+              "mae": 19.3,
+              "rmse": 23.83,
+              "mape_pct": 9.72,
+              "wape_pct": 7.76,
+              "r2": 0.944
+            },
+            "Veg Rava Upma": {
+              "mae": 30.0,
+              "rmse": 40.73,
+              "mape_pct": 9.59,
+              "wape_pct": 9.11,
+              "r2": 0.5717
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 42.5,
+              "rmse": 58.6,
+              "mape_pct": 8.03,
+              "wape_pct": 7.96,
+              "r2": 0.6594
+            },
+            "Wheat Parotta & Kurma": {
+              "mae": 18.01,
+              "rmse": 22.03,
+              "mape_pct": 8.5,
+              "wape_pct": 6.74,
+              "r2": 0.9592
+            }
+          },
+          "ensemble": {
+            "Avalakki Uppittu": {
+              "mae": 15.43,
+              "rmse": 20.93,
+              "mape_pct": 7.83,
+              "wape_pct": 6.74,
+              "r2": 0.9495
+            },
+            "Bendekai Gojju & Palya": {
+              "mae": 18.95,
+              "rmse": 23.16,
+              "mape_pct": 5.17,
+              "wape_pct": 4.23,
+              "r2": 0.9868
+            },
+            "Cabbage Coconut Palya": {
+              "mae": 16.37,
+              "rmse": 19.95,
+              "mape_pct": 3.2,
+              "wape_pct": 3.17,
+              "r2": 0.8452
+            },
+            "Chapati & Dal Fry": {
+              "mae": 18.61,
+              "rmse": 22.66,
+              "mape_pct": 9.3,
+              "wape_pct": 7.27,
+              "r2": 0.9535
+            },
+            "Chapati & Dal Tadka": {
+              "mae": 16.39,
+              "rmse": 20.15,
+              "mape_pct": 3.06,
+              "wape_pct": 2.97,
+              "r2": 0.9429
+            },
+            "Coastal Boiled Rice": {
+              "mae": 18.76,
+              "rmse": 22.98,
+              "mape_pct": 3.28,
+              "wape_pct": 3.23,
+              "r2": 0.8043
+            },
+            "Coastal Veg Pulao": {
+              "mae": 17.48,
+              "rmse": 21.7,
+              "mape_pct": 3.66,
+              "wape_pct": 3.69,
+              "r2": 0.2465
+            },
+            "Crispy Masala Dosa": {
+              "mae": 30.32,
+              "rmse": 41.55,
+              "mape_pct": 5.69,
+              "wape_pct": 5.51,
+              "r2": 0.8379
+            },
+            "Crispy Veg Cutlet & Mint Dip": {
+              "mae": 23.3,
+              "rmse": 31.91,
+              "mape_pct": 6.64,
+              "wape_pct": 6.58,
+              "r2": 0.7394
+            },
+            "Curd Rice & Pickle": {
+              "mae": 19.43,
+              "rmse": 23.49,
+              "mape_pct": 9.41,
+              "wape_pct": 7.44,
+              "r2": 0.9515
+            },
+            "Dal Tadka & Drumstick Sambar": {
+              "mae": 28.92,
+              "rmse": 49.95,
+              "mape_pct": 4.84,
+              "wape_pct": 5.03,
+              "r2": 0.7143
+            },
+            "Ghee Rice & Rasam": {
+              "mae": 17.52,
+              "rmse": 21.89,
+              "mape_pct": 3.2,
+              "wape_pct": 3.2,
+              "r2": 0.9317
+            },
+            "Hyderabadi Veg Biryani": {
+              "mae": 47.8,
+              "rmse": 66.84,
+              "mape_pct": 7.44,
+              "wape_pct": 7.52,
+              "r2": 0.6776
+            },
+            "Idli & Udupi Sambar": {
+              "mae": 29.72,
+              "rmse": 39.98,
+              "mape_pct": 5.83,
+              "wape_pct": 5.72,
+              "r2": 0.842
+            },
+            "Idli Vada & Sambar": {
+              "mae": 18.4,
+              "rmse": 22.13,
+              "mape_pct": 3.17,
+              "wape_pct": 3.14,
+              "r2": 0.9321
+            },
+            "Jackfruit Kadgi Chakko": {
+              "mae": 25.88,
+              "rmse": 34.01,
+              "mape_pct": 5.59,
+              "wape_pct": 5.36,
+              "r2": 0.9799
+            },
+            "Jeera Ghee Rice": {
+              "mae": 22.41,
+              "rmse": 27.71,
+              "mape_pct": 5.73,
+              "wape_pct": 4.55,
+              "r2": 0.9863
+            },
+            "Jeera Peas Veg Pulao": {
+              "mae": 35.95,
+              "rmse": 50.14,
+              "mape_pct": 6.54,
+              "wape_pct": 6.7,
+              "r2": 0.753
+            },
+            "Jeera Rice": {
+              "mae": 17.83,
+              "rmse": 22.62,
+              "mape_pct": 3.44,
+              "wape_pct": 3.35,
+              "r2": 0.913
+            },
+            "Jeera Rice & Dal": {
+              "mae": 15.75,
+              "rmse": 19.51,
+              "mape_pct": 3.02,
+              "wape_pct": 2.99,
+              "r2": 0.9408
+            },
+            "Kadai Mixed Veg Curry": {
+              "mae": 33.38,
+              "rmse": 43.13,
+              "mape_pct": 6.63,
+              "wape_pct": 6.64,
+              "r2": 0.7909
+            },
+            "Kanda Poha & Chutney": {
+              "mae": 26.23,
+              "rmse": 32.92,
+              "mape_pct": 6.32,
+              "wape_pct": 5.87,
+              "r2": 0.8986
+            },
+            "Kotte Kadubu & Chutney": {
+              "mae": 18.19,
+              "rmse": 23.0,
+              "mape_pct": 7.65,
+              "wape_pct": 6.78,
+              "r2": 0.9566
+            },
+            "Kuchlakki Boiled Red Rice": {
+              "mae": 15.56,
+              "rmse": 19.27,
+              "mape_pct": 2.65,
+              "wape_pct": 2.63,
+              "r2": 0.9357
+            },
+            "Malabar Parotta & Veg Kurma": {
+              "mae": 20.69,
+              "rmse": 24.63,
+              "mape_pct": 3.62,
+              "wape_pct": 3.55,
+              "r2": 0.9231
+            },
+            "Mangalore Buns & Filter Chai": {
+              "mae": 24.57,
+              "rmse": 34.68,
+              "mape_pct": 6.42,
+              "wape_pct": 6.38,
+              "r2": 0.7485
+            },
+            "Mangalore Buns & Kurma": {
+              "mae": 17.88,
+              "rmse": 24.15,
+              "mape_pct": 3.02,
+              "wape_pct": 3.06,
+              "r2": 0.9266
+            },
+            "Mangalore Buns & Sagu": {
+              "mae": 20.72,
+              "rmse": 25.68,
+              "mape_pct": 7.69,
+              "wape_pct": 6.97,
+              "r2": 0.9342
+            },
+            "Mangalore Sambar": {
+              "mae": 17.39,
+              "rmse": 21.52,
+              "mape_pct": 3.2,
+              "wape_pct": 3.16,
+              "r2": 0.9235
+            },
+            "Masala Dosa & Sambar": {
+              "mae": 18.32,
+              "rmse": 23.15,
+              "mape_pct": 7.62,
+              "wape_pct": 6.79,
+              "r2": 0.9542
+            },
+            "Mixed Veg Kurma": {
+              "mae": 17.36,
+              "rmse": 22.97,
+              "mape_pct": 3.24,
+              "wape_pct": 3.16,
+              "r2": 0.9059
+            },
+            "Neer Dosa & Coconut Chutney": {
+              "mae": 17.44,
+              "rmse": 21.09,
+              "mape_pct": 2.88,
+              "wape_pct": 2.89,
+              "r2": 0.9421
+            },
+            "Onion Pakora & Tamarind Chutney": {
+              "mae": 29.64,
+              "rmse": 38.95,
+              "mape_pct": 9.06,
+              "wape_pct": 8.73,
+              "r2": 0.6463
+            },
+            "Paneer Butter Masala": {
+              "mae": 29.97,
+              "rmse": 44.79,
+              "mape_pct": 4.98,
+              "wape_pct": 4.99,
+              "r2": 0.8005
+            },
+            "Paneer Ghee Roast": {
+              "mae": 17.88,
+              "rmse": 22.06,
+              "mape_pct": 3.05,
+              "wape_pct": 2.98,
+              "r2": 0.9317
+            },
+            "Paneer Tikka Masala": {
+              "mae": 23.05,
+              "rmse": 27.29,
+              "mape_pct": 6.46,
+              "wape_pct": 4.76,
+              "r2": 0.9882
+            },
+            "Parboiled Red Rice": {
+              "mae": 23.16,
+              "rmse": 28.65,
+              "mape_pct": 6.16,
+              "wape_pct": 4.88,
+              "r2": 0.9857
+            },
+            "Rava Upma & Chutney": {
+              "mae": 16.24,
+              "rmse": 19.01,
+              "mape_pct": 3.07,
+              "wape_pct": 3.04,
+              "r2": 0.9132
+            },
+            "Soft Whole-Wheat Chapati": {
+              "mae": 29.65,
+              "rmse": 42.92,
+              "mape_pct": 5.12,
+              "wape_pct": 5.23,
+              "r2": 0.7886
+            },
+            "Steamed Sona Masoori Rice": {
+              "mae": 31.81,
+              "rmse": 47.48,
+              "mape_pct": 5.13,
+              "wape_pct": 5.19,
+              "r2": 0.7601
+            },
+            "Steamed White Rice": {
+              "mae": 18.14,
+              "rmse": 21.5,
+              "mape_pct": 3.12,
+              "wape_pct": 3.11,
+              "r2": 0.8926
+            },
+            "Tempered Curd Rice": {
+              "mae": 49.15,
+              "rmse": 64.71,
+              "mape_pct": 9.74,
+              "wape_pct": 9.4,
+              "r2": 0.6773
+            },
+            "Tendli Cashew Palya": {
+              "mae": 17.73,
+              "rmse": 21.86,
+              "mape_pct": 3.4,
+              "wape_pct": 3.41,
+              "r2": 0.9033
+            },
+            "Udupi Sambar & Rasam": {
+              "mae": 21.51,
+              "rmse": 27.41,
+              "mape_pct": 6.01,
+              "wape_pct": 4.68,
+              "r2": 0.9856
+            },
+            "Udupi Tomato Rasam": {
+              "mae": 15.57,
+              "rmse": 18.68,
+              "mape_pct": 2.98,
+              "wape_pct": 2.94,
+              "r2": 0.9168
+            },
+            "Uppittu & Kesari Sheera": {
+              "mae": 20.03,
+              "rmse": 24.61,
+              "mape_pct": 3.86,
+              "wape_pct": 3.8,
+              "r2": 0.884
+            },
+            "Veg Fried Rice": {
+              "mae": 18.64,
+              "rmse": 23.41,
+              "mape_pct": 9.33,
+              "wape_pct": 7.49,
+              "r2": 0.9459
+            },
+            "Veg Rava Upma": {
+              "mae": 29.01,
+              "rmse": 40.43,
+              "mape_pct": 9.2,
+              "wape_pct": 8.81,
+              "r2": 0.5778
+            },
+            "Vermicelli Payasam / Kheer": {
+              "mae": 37.61,
+              "rmse": 50.0,
+              "mape_pct": 7.25,
+              "wape_pct": 7.04,
+              "r2": 0.752
+            },
+            "Wheat Parotta & Kurma": {
+              "mae": 17.89,
+              "rmse": 22.09,
+              "mape_pct": 8.38,
+              "wape_pct": 6.69,
+              "r2": 0.959
+            }
+          }
+        }
+      }
+    },
+    "_id": "b44eda9b-c745-423f-98c2-be98ef27dd1c"
   }
 ]
