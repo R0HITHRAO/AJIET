@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { api } from '../api';
 
-export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAuthSuccess }) {
+export default function AuthModal({ isOpen, initialMode = 'login', locked = false, onClose, onAuthSuccess }) {
   const [mode, setMode] = useState(initialMode); // 'login' | 'register' | 'forgot'
   const [forgotStep, setForgotStep] = useState('email'); // 'email' | 'verify'
   const [loading, setLoading] = useState(false);
@@ -36,13 +36,13 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
   });
 
   useEffect(() => {
-    if (!isOpen) return undefined;
+    if (!isOpen || locked) return undefined;
     const onKeyDown = (e) => {
       if (e.key === 'Escape') onClose?.();
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, locked, onClose]);
 
   useEffect(() => {}, [isOpen, mode]);
 
@@ -62,7 +62,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
     try {
       const res = await api.login(loginForm);
       onAuthSuccess(res.access_token, res.user);
-      onClose();
+      onClose?.();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -77,7 +77,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
     try {
       const res = await api.register(regForm);
       onAuthSuccess(res.access_token, res.user);
-      onClose();
+      onClose?.();
     } catch (err) {
       setError(err.message);
     } finally {
@@ -125,13 +125,14 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
     }
   };
 
-  const fillDemoUser = () => {
-    setLoginForm({ email: 'manager@nourishai.edu', password: 'Codeverse@2026' });
-    setError('');
-  };
-
   return (
-    <div className="no-print fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+    <div
+      className={
+        locked
+          ? 'no-print min-h-screen w-full hero-mesh flex items-center justify-center p-4'
+          : 'no-print fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4'
+      }
+    >
       <div className="animate-modal-in bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full overflow-hidden max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="hero-mesh text-white px-6 py-5 flex items-center justify-between">
@@ -148,18 +149,20 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
                   : 'Reset Password via Email OTP'}
               </h3>
               <p className="text-[11px] text-emerald-200/90">
-                Institutional Kitchen &amp; NGO Access Portal
+                Verified Institutional Kitchen &amp; NGO Portal
               </p>
             </div>
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close authentication modal"
-            className="p-1.5 rounded-lg text-emerald-200 hover:bg-white/10 transition"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          {!locked && (
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close authentication modal"
+              className="p-1.5 rounded-lg text-emerald-200 hover:bg-white/10 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          )}
         </div>
 
         {/* Mode Switcher */}
@@ -211,7 +214,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
                   <input
                     required
                     type="email"
-                    placeholder="manager@nourishai.edu"
+                    placeholder="you@organization.org"
                     value={loginForm.email}
                     onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                     className="field-control pl-9"
@@ -251,16 +254,9 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
                 {loading ? 'Signing in...' : 'Sign In'}
               </button>
 
-              <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-400">Default Kitchen Manager:</span>
-                <button
-                  type="button"
-                  onClick={fillDemoUser}
-                  className="font-semibold text-emerald-700 hover:underline"
-                >
-                  Fill manager@nourishai.edu
-                </button>
-              </div>
+              <p className="text-[11px] text-center text-slate-400">
+                Access is restricted to email-verified kitchen &amp; NGO staff.
+              </p>
             </form>
           )}
 

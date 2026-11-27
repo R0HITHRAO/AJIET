@@ -1,7 +1,13 @@
 const BASE = '/api';
+const PUBLIC_PREFIXES = ['/health', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/verify-otp', '/auth/reset-password', '/auth/email-status'];
 
 async function request(path, options = {}) {
-  const res = await fetch(`${BASE}${path}`, options);
+  const headers = new Headers(options.headers || {});
+  const token = localStorage.getItem('nourish_auth_token');
+  if (token && !headers.has('Authorization')) {
+    headers.set('Authorization', `Bearer ${token}`);
+  }
+  const res = await fetch(`${BASE}${path}`, { ...options, headers });
   if (!res.ok) {
     let message = `Request failed (${res.status})`;
     try {
@@ -9,6 +15,10 @@ async function request(path, options = {}) {
       message = err.detail || err.message || message;
     } catch {
       // ignore non-json error body
+    }
+    const isPublic = PUBLIC_PREFIXES.some((prefix) => path.startsWith(prefix));
+    if ((res.status === 401 || res.status === 403) && !isPublic) {
+      window.dispatchEvent(new CustomEvent('nourish:unauthorized'));
     }
     throw new Error(message);
   }
@@ -144,6 +154,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
+  downloadSampleCsv: () => request('/meal-logs/sample-csv'),
   verifyOtp: (email, otp) =>
     request('/auth/verify-otp', {
       method: 'POST',

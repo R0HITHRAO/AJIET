@@ -43,14 +43,8 @@ export default function App() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const saved = localStorage.getItem('nourish_auth_user');
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [currentUser, setCurrentUser] = useState(null);
+  const [authChecking, setAuthChecking] = useState(() => Boolean(localStorage.getItem('nourish_auth_token')));
 
   const refreshGlobal = async () => {
     try {
@@ -58,26 +52,53 @@ export default function App() {
       setHealth(hRes);
       setOverview(oRes);
     } catch {
-      // handled gracefully via empty state
+      // handled gracefully via empty state or unauthorized handler
     }
   };
 
   useEffect(() => {
-    refreshGlobal();
     const token = localStorage.getItem('nourish_auth_token');
-    if (token) {
-      api
-        .me(token)
-        .then((res) => {
+    if (!token) {
+      setAuthChecking(false);
+      return undefined;
+    }
+    api
+      .me(token)
+      .then((res) => {
+        if (res.user?.verified) {
           setCurrentUser(res.user);
           localStorage.setItem('nourish_auth_user', JSON.stringify(res.user));
-        })
-        .catch(() => {
+        } else {
           localStorage.removeItem('nourish_auth_token');
           localStorage.removeItem('nourish_auth_user');
           setCurrentUser(null);
-        });
+        }
+      })
+      .catch(() => {
+        localStorage.removeItem('nourish_auth_token');
+        localStorage.removeItem('nourish_auth_user');
+        setCurrentUser(null);
+      })
+      .finally(() => setAuthChecking(false));
+    return undefined;
+  }, []);
+
+  useEffect(() => {
+    if (currentUser?.verified) {
+      refreshGlobal();
+    } else {
+      setOverview(null);
     }
+  }, [currentUser]);
+
+  useEffect(() => {
+    const onUnauthorized = () => {
+      localStorage.removeItem('nourish_auth_token');
+      localStorage.removeItem('nourish_auth_user');
+      setCurrentUser(null);
+    };
+    window.addEventListener('nourish:unauthorized', onUnauthorized);
+    return () => window.removeEventListener('nourish:unauthorized', onUnauthorized);
   }, []);
 
   const handleAuthSuccess = (token, user) => {
@@ -122,6 +143,33 @@ export default function App() {
   };
 
   const liveSurplusCount = overview?.kpis?.eligible_surplus_servings_live || 0;
+
+  if (authChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50">
+        <div className="text-center space-y-2">
+          <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center mx-auto animate-pulse">
+            <Sprout className="w-5 h-5" />
+          </div>
+          <p className="text-xs font-semibold text-slate-600">Verifying Nourish AI session...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!currentUser) {
+    return (
+      <div className="min-h-screen bg-slate-100 flex flex-col">
+        <AuthModal
+          locked
+          isOpen
+          initialMode={authModalMode}
+          onClose={() => {}}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex flex-col">

@@ -198,9 +198,8 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
 
   const downloadSampleCsv = async () => {
     try {
-      const res = await fetch('/api/meal-logs/sample-csv');
-      if (!res.ok) throw new Error('Unable to download sample CSV');
-      const blob = await res.blob();
+      const csvText = await api.downloadSampleCsv();
+      const blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
