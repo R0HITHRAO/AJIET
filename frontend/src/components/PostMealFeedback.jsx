@@ -26,8 +26,12 @@ export default function PostMealFeedback({ onDataUpdated }) {
   const [expectedAttendance, setExpectedAttendance] = useState(740);
   const [actualAttendance, setActualAttendance] = useState(650);
   const [weather, setWeather] = useState('Rainy');
+  const [isHoliday, setIsHoliday] = useState(false);
+  const [specialEvent, setSpecialEvent] = useState('None');
   const [menuItems, setMenuItems] = useState([]);
   const [rows, setRows] = useState([]);
+  const [predictionModel, setPredictionModel] = useState('');
+  const [predictionLoading, setPredictionLoading] = useState(false);
   const [autoRetrain, setAutoRetrain] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [retraining, setRetraining] = useState(false);
@@ -53,15 +57,15 @@ export default function PostMealFeedback({ onDataUpdated }) {
     if (!slotItems.length) return;
     setRows(
       slotItems.map((item, idx) => {
-        const pred = Math.round(expectedAttendance * item.uptake_rate);
-        const prep = Math.round(pred * 1.06);
+        const estimatedDemand = Math.round(expectedAttendance * item.uptake_rate);
+        const prep = Math.round(estimatedDemand * 1.06);
         // Pre-fill first item with realistic surplus so judges can test immediately
         const serv = idx === 0 ? Math.max(20, prep - 75) : Math.max(20, prep - 12);
         return {
           menu_item_id: item.menu_item_id,
           name: item.name,
           requires_cold_chain: item.requires_cold_chain,
-          predicted_servings: pred,
+          predicted_servings: null,
           prepared_servings: prep,
           served_servings: serv,
           holding_temp_c: item.requires_cold_chain ? 4.0 : 64.5,
@@ -73,6 +77,40 @@ export default function PostMealFeedback({ onDataUpdated }) {
       })
     );
   }, [mealSlot, menuItems]);
+
+  useEffect(() => {
+    const menuItemIds = menuItems.filter((item) => item.meal_slot === mealSlot).map((item) => item.menu_item_id);
+    if (!menuItemIds.length) return undefined;
+    let active = true;
+    setPredictionLoading(true);
+    api.forecast({
+      date: dateStr,
+      meal_slot: mealSlot,
+      expected_attendance: Number(expectedAttendance),
+      weather,
+      is_holiday: isHoliday,
+      special_event: specialEvent,
+      model_choice: 'ensemble',
+      menu_item_ids: menuItemIds,
+    }).then((forecast) => {
+      if (!active) return;
+      const predictionByItem = Object.fromEntries(
+        (forecast.items || []).map((item) => [item.menu_item_id, item.predicted_servings])
+      );
+      setPredictionModel(forecast.applied_model || forecast.model_choice);
+      setRows((previous) => previous.map((row) => ({
+        ...row,
+        predicted_servings: predictionByItem[row.menu_item_id] ?? null,
+      })));
+    }).catch(() => {
+      if (!active) return;
+      setPredictionModel('Unavailable');
+      setRows((previous) => previous.map((row) => ({ ...row, predicted_servings: null })));
+    }).finally(() => {
+      if (active) setPredictionLoading(false);
+    });
+    return () => { active = false; };
+  }, [dateStr, expectedAttendance, isHoliday, mealSlot, menuItems, specialEvent, weather]);
 
   const updateRow = (idx, field, value) => {
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
@@ -89,6 +127,8 @@ export default function PostMealFeedback({ onDataUpdated }) {
         meal_slot: mealSlot,
         expected_attendance: Number(expectedAttendance),
         actual_attendance: Number(actualAttendance),
+        is_holiday: isHoliday,
+        special_event: specialEvent,
         weather,
         temperature_c: 26.5,
         auto_retrain: autoRetrain,
@@ -96,7 +136,7 @@ export default function PostMealFeedback({ onDataUpdated }) {
           menu_item_id: r.menu_item_id,
           prepared_servings: Number(r.prepared_servings),
           served_servings: Number(r.served_servings),
-          predicted_servings: Number(r.predicted_servings),
+          predicted_servings: r.predicted_servings == null ? null : Number(r.predicted_servings),
           holding_temp_c: Number(r.holding_temp_c),
           hours_since_cooked: Number(r.hours_since_cooked),
           storage_type: r.storage_type,
@@ -162,14 +202,14 @@ export default function PostMealFeedback({ onDataUpdated }) {
           </div>
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || predictionLoading}
             className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold transition disabled:opacity-60"
           >
             {submitting ? 'Saving Feedback...' : 'Submit Post-Meal Record'}
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-3">
           <div>
             <label className="block text-xs font-semibold text-slate-600 mb-1">Date</label>
             <input
@@ -221,13 +261,31 @@ export default function PostMealFeedback({ onDataUpdated }) {
               ))}
             </select>
           </div>
+          <div>
+            <label className="block text-xs font-semibold text-slate-600 mb-1">Campus Event</label>
+            <select
+              value={specialEvent}
+              onChange={(e) => setSpecialEvent(e.target.value)}
+              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"
+            >
+              {['None', 'Exam Week', 'Tech Fest', 'Sports Day', 'Hackathon', 'Parent Meet'].map((event) => (
+                <option key={event} value={event}>{event}</option>
+              ))}
+            </select>
+          </div>
+          <label className="flex items-center gap-2 self-end pb-2 text-sm font-medium text-slate-700">
+            <input type="checkbox" checked={isHoliday} onChange={(e) => setIsHoliday(e.target.checked)} />
+            Holiday
+          </label>
         </div>
 
+        <p className="text-xs text-slate-500">Forecast record: {predictionLoading ? 'Updating...' : predictionModel || 'Unavailable'}</p>
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-slate-500 uppercase">
                 <th className="py-2 pr-2">Menu Item</th>
+                <th className="py-2 px-2">Model Prediction</th>
                 <th className="py-2 px-2">Prepared</th>
                 <th className="py-2 px-2">Served</th>
                 <th className="py-2 px-2">Leftover</th>
@@ -243,6 +301,7 @@ export default function PostMealFeedback({ onDataUpdated }) {
                 return (
                   <tr key={row.menu_item_id}>
                     <td className="py-2.5 pr-2 font-semibold text-slate-800">{row.name}</td>
+                    <td className="py-2.5 px-2 font-semibold text-slate-700">{row.predicted_servings ?? '-'}</td>
                     <td className="py-2.5 px-2">
                       <input
                         type="number"

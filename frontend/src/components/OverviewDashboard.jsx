@@ -56,10 +56,14 @@ export default function OverviewDashboard({ data, onNavigate }) {
     );
   }
 
-  const { kpis, daily_trend: dailyTrend, slot_breakdown: slotBreakdown, top_waste_items: topWaste, ml_summary: ml, database } = data;
+  const { kpis, daily_trend: dailyTrend, slot_breakdown: slotBreakdown, top_waste_items: topWaste, ml_summary: ml, forecast_error_review: errorReview, database } = data;
   const rf = ml?.metrics?.random_forest || {};
   const xgb = ml?.metrics?.xgboost || {};
   const ens = ml?.metrics?.ensemble || {};
+  const baseline = ml?.metrics?.baseline || {};
+  const validation = ml?.metrics?.validation || {};
+  const selectedModel = validation.selected_model || 'baseline';
+  const latestErrorWeek = errorReview?.weekly?.[errorReview.weekly.length - 1];
 
   return (
     <div className="space-y-6">
@@ -222,25 +226,37 @@ export default function OverviewDashboard({ data, onNavigate }) {
           </div>
           <div className="space-y-2.5 text-sm">
             {[
-              { name: 'Adaptive Ensemble', m: ens, badge: 'Active Default' },
-              { name: 'XGBoost Regressor', m: xgb, badge: `${Math.round((ml?.weights?.xgboost || 0.55) * 100)}% wt` },
-              { name: 'Random Forest', m: rf, badge: `${Math.round((ml?.weights?.random_forest || 0.45) * 100)}% wt` },
+              { key: 'ensemble', name: 'Adaptive Ensemble', m: ens, badge: 'Ensemble' },
+              { key: 'xgboost', name: 'XGBoost Regressor', m: xgb, badge: `${Math.round((ml?.weights?.xgboost || 0.55) * 100)}% wt` },
+              { key: 'random_forest', name: 'Random Forest', m: rf, badge: `${Math.round((ml?.weights?.random_forest || 0.45) * 100)}% wt` },
             ].map((row) => (
               <div key={row.name} className="p-3 rounded-xl bg-slate-50 border border-slate-200/70 flex items-center justify-between">
                 <div>
                   <p className="font-semibold text-slate-800">{row.name}</p>
                   <p className="text-xs text-slate-500">
-                    MAE: {row.m.mae ?? '-'} serv &bull; MAPE: {row.m.mape_pct ?? '-'}%
+                    MAE: {row.m.mae ?? '-'} serv &bull; WAPE: {row.m.wape_pct ?? '-'}% &bull; MAPE: {row.m.mape_pct ?? '-'}%
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                    R² {row.m.r2 ?? '-'}
+                  <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${selectedModel === row.key ? 'text-emerald-700 bg-emerald-50 border border-emerald-200' : 'text-slate-600 bg-white border border-slate-200'}`}>
+                    {selectedModel === row.key ? 'Selected' : `${validation.fold_wins?.[row.key] ?? 0}/${validation.fold_count ?? 0} folds`}
                   </span>
                   <p className="text-[11px] text-slate-400 mt-1">{row.badge}</p>
                 </div>
               </div>
             ))}
+            <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 flex items-center justify-between">
+              <div>
+                <p className="font-semibold text-slate-800">Dish + weekday baseline</p>
+                <p className="text-xs text-slate-600">MAE: {baseline.mae ?? '-'} serv &bull; WAPE: {baseline.wape_pct ?? '-'}% &bull; MAPE: {baseline.mape_pct ?? '-'}%</p>
+              </div>
+              <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${selectedModel === 'baseline' ? 'text-amber-800 bg-white border border-amber-300' : 'text-slate-600 bg-white border border-slate-200'}`}>
+                {selectedModel === 'baseline' ? 'Forecast fallback' : 'Reference'}
+              </span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Expanding validation across {validation.fold_count ?? 0} future-date folds. ML selection requires lower pooled MAE and wins in at least {validation.required_fold_wins ?? 0} folds.
+            </p>
           </div>
         </div>
 
@@ -297,6 +313,45 @@ export default function OverviewDashboard({ data, onNavigate }) {
           </p>
         </div>
       </div>
+
+      <section className="card-surface p-5">
+        <div className="flex flex-wrap items-end justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-base font-bold text-slate-900">Weekly Forecast Error Review</h3>
+            <p className="text-xs text-slate-500">Prediction-linked meal records from the latest {errorReview?.weeks_included?.length || 0} weeks</p>
+          </div>
+          <div className="flex gap-5 text-sm">
+            <div><span className="text-slate-500">Tracked</span><strong className="ml-2 text-slate-900">{errorReview?.tracked_records ?? 0}</strong></div>
+            <div><span className="text-slate-500">Latest week MAE</span><strong className="ml-2 text-slate-900">{latestErrorWeek?.mae ?? '-'} serv</strong></div>
+            <div><span className="text-slate-500">WAPE</span><strong className="ml-2 text-slate-900">{latestErrorWeek?.wape_pct ?? '-'}%</strong></div>
+          </div>
+        </div>
+        {errorReview?.tracked_records ? (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {[['Meal slot', errorReview.by_meal_slot || []], ['Dish', errorReview.by_dish || []]].map(([title, rows]) => (
+              <div key={title} className="min-w-0">
+                <h4 className="text-sm font-semibold text-slate-800 mb-2">Errors by {title.toLowerCase()}</h4>
+                <div className="max-h-72 overflow-auto border border-slate-200 rounded-lg">
+                  <table className="w-full text-sm text-left">
+                    <thead className="sticky top-0 bg-slate-50 text-xs text-slate-500">
+                      <tr><th className="px-3 py-2 font-semibold">{title}</th><th className="px-3 py-2 font-semibold">Records</th><th className="px-3 py-2 font-semibold">MAE</th><th className="px-3 py-2 font-semibold">WAPE</th></tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((row) => (
+                        <tr key={row.group} className="border-t border-slate-100">
+                          <td className="px-3 py-2 text-slate-800">{row.group}</td><td className="px-3 py-2 text-slate-600">{row.samples}</td><td className="px-3 py-2 text-slate-600">{row.mae} serv</td><td className="px-3 py-2 text-slate-600">{row.wape_pct}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="border-t border-slate-100 pt-4 text-sm text-slate-500">No prediction-linked meal records are available for this review window.</p>
+        )}
+      </section>
     </div>
   );
 }

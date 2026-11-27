@@ -8,8 +8,8 @@
 ## Core Modules Implemented
 
 1. **AI Demand Forecasting Engine (`backend/app/ml_engine.py`)**
-   - Combines **Scikit-learn `RandomForestRegressor`** and **XGBoost `XGBRegressor`** trained on 90 days of institutional meal logs (attendance, day of week, holidays, campus events, weather, temperature, dish uptake, and 7-day rolling consumption).
-   - Serves selectable **Ensemble / XGBoost / Random Forest** predictions with tree-dispersion uncertainty bands (`p10`, `p50`, `p90`) and live evaluation metrics (`MAE`, `RMSE`, `MAPE`, `R²`).
+   - Combines **Scikit-learn `RandomForestRegressor`** and **XGBoost `XGBRegressor`** using date-grouped expanding-window validation across five future periods, compared against a recent same-dish/weekday baseline.
+   - Uses ML predictions only when they beat the baseline in pooled MAE and at least 80% of validation folds; otherwise forecasts fall back to the attendance-adjusted baseline. Reports serving MAE, RMSE, MAPE, and WAPE.
 
 2. **Google OR-Tools Batch-Wise Preparation Optimizer (`backend/app/optimizer.py`)**
    - Solves a Mixed-Integer Linear Program (MILP) for **2-stage batch-wise cooking**: smaller **Initial Base Batches** + **On-Demand Reserve Batches**, constrained by live ingredient inventory.
@@ -19,7 +19,8 @@
    - Dynamically reruns ML demand forecasts and Google OR-Tools optimization under simulated attendance surges/drops, menu dish swaps, weather/events, and ingredient stock shortages.
 
 4. **Post-Meal Feedback & Continuous Learning (`backend/app/main.py`)**
-   - Records actual meals served & leftovers, computes post-meal forecast MAE, supports CSV upload of actual kitchen logs, and triggers one-click model retraining.
+   - Records predictions alongside actual meals served & leftovers, reviews weekly errors by meal slot and dish, supports CSV upload of actual kitchen logs, and triggers model retraining.
+   - Checked-in `historical_seed` rows are synthetic demo data, not verified institutional records. Import real records through the CSV upload flow; `predicted_servings` is optional and enables forecast error tracking for imported rows.
 
 5. **Smart Surplus Detection & NGO Redistribution (`backend/app/optimizer.py`)**
    - Evaluates FSSAI-aligned **food-safety & storage criteria** (holding temperature °C, elapsed hours vs safe window, cold-chain requirement, sealed container check) before allowing redistribution.

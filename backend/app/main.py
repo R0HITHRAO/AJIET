@@ -61,6 +61,54 @@ app.add_middleware(
 )
 
 
+def _forecast_error_review(logs: list[dict[str, Any]], weeks: int = 8) -> dict[str, Any]:
+    tracked = []
+    for log in logs:
+        predicted = log.get("predicted_servings")
+        actual = log.get("served_servings")
+        if predicted is None or actual is None:
+            continue
+        row = dict(log)
+        row["week"] = datetime.fromisoformat(log["date"]).strftime("%G-W%V")
+        tracked.append(row)
+
+    latest_weeks = sorted({row["week"] for row in tracked})[-weeks:]
+    tracked = [row for row in tracked if row["week"] in latest_weeks]
+
+    def summarize(rows: list[dict[str, Any]]) -> dict[str, Any]:
+        if not rows:
+            return {"samples": 0, "mae": None, "mape_pct": None, "wape_pct": None}
+        errors = [abs(float(row["served_servings"]) - float(row["predicted_servings"])) for row in rows]
+        actual_total = sum(abs(float(row["served_servings"])) for row in rows)
+        return {
+            "samples": len(rows),
+            "mae": round(sum(errors) / len(errors), 2),
+            "mape_pct": round(
+                sum(error / max(float(row["served_servings"]), 1.0) for error, row in zip(errors, rows))
+                / len(rows) * 100.0,
+                2,
+            ),
+            "wape_pct": round(sum(errors) / max(actual_total, 1.0) * 100.0, 2),
+        }
+
+    def grouped(group_key: Any) -> list[dict[str, Any]]:
+        groups: dict[str, list[dict[str, Any]]] = {}
+        for row in tracked:
+            key = group_key(row)
+            groups.setdefault(str(key), []).append(row)
+        return [{"group": key, **summarize(rows)} for key, rows in sorted(groups.items())]
+
+    return {
+        "tracked_records": len(tracked),
+        "weeks_included": latest_weeks,
+        "overall": summarize(tracked),
+        "weekly": grouped(lambda row: row["week"]),
+        "by_meal_slot": grouped(lambda row: row["meal_slot"]),
+        "by_dish": grouped(lambda row: row.get("menu_item_name", row["menu_item_id"])),
+        "by_context": grouped(lambda row: f"{row.get('special_event', 'None')} / {'Holiday' if row.get('is_holiday') else 'Regular'}"),
+    }
+
+
 @app.get("/api/health")
 def health() -> dict[str, Any]:
     return {
@@ -201,6 +249,7 @@ def dashboard_overview() -> dict[str, Any]:
         "slot_breakdown": slot_breakdown,
         "top_waste_items": top_waste_items,
         "ml_summary": forecast_engine.summary(),
+        "forecast_error_review": _forecast_error_review(logs),
         "database": db_manager.status(),
     }
 
@@ -303,6 +352,12 @@ def get_meal_logs(limit: int = Query(default=100, ge=1, le=2000), meal_slot: str
     return {"logs": logs, "total_count": db_manager.collection("meal_logs").count_documents(filt)}
 
 
+@app.get("/api/forecast-errors/weekly")
+def weekly_forecast_errors(weeks: int = Query(default=8, ge=1, le=52)) -> dict[str, Any]:
+    logs = db_manager.collection("meal_logs").find()
+    return _forecast_error_review(logs, weeks=weeks)
+
+
 @app.post("/api/meal-logs")
 def submit_post_meal_log(req: PostMealLogRequest) -> dict[str, Any]:
     if not req.items:
@@ -402,11 +457,11 @@ def submit_post_meal_log(req: PostMealLogRequest) -> dict[str, Any]:
 
 @app.get("/api/meal-logs/sample-csv")
 def sample_csv_template() -> PlainTextResponse:
-    header = "date,meal_slot,menu_item_id,expected_attendance,actual_attendance,prepared_servings,served_servings,is_holiday,special_event,weather,temperature_c\n"
+    header = "date,meal_slot,menu_item_id,expected_attendance,actual_attendance,prepared_servings,served_servings,predicted_servings,is_holiday,special_event,weather,temperature_c\n"
     rows = [
-        "2026-11-26,Lunch,item_steamed_rice,720,705,710,645,false,None,Cloudy,27.5",
-        "2026-11-26,Lunch,item_dal_sambar,720,705,650,602,false,None,Cloudy,27.5",
-        "2026-11-26,Lunch,item_paneer_curry,720,705,660,620,false,None,Cloudy,27.5",
+        "2026-11-26,Lunch,item_steamed_rice,720,705,710,645,660,false,None,Cloudy,27.5",
+        "2026-11-26,Lunch,item_dal_sambar,720,705,650,602,615,false,None,Cloudy,27.5",
+        "2026-11-26,Lunch,item_paneer_curry,720,705,660,620,605,false,None,Cloudy,27.5",
     ]
     return PlainTextResponse(
         content=header + "\n".join(rows) + "\n",
@@ -447,6 +502,11 @@ async def import_meal_logs_csv(file: UploadFile = File(...), retrain: bool = Que
                 "actual_attendance": int(float(row["actual_attendance"])),
                 "prepared_servings": prep,
                 "served_servings": serv,
+                "predicted_servings": (
+                    int(float(row["predicted_servings"]))
+                    if (row.get("predicted_servings") or "").strip()
+                    else None
+                ),
                 "leftover_servings": max(0, prep - serv),
                 "shortage_servings": max(0, serv - prep),
                 "rolling_7d_served": float(serv),
