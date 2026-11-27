@@ -2,7 +2,7 @@
   {
     "version": 1,
     "reason": "demo_reset",
-    "trained_at": "2026-11-27T16:59:53",
+    "trained_at": "2026-11-27T18:30:11",
     "training_samples": 1440,
     "validation_samples": 240,
     "weights": {
@@ -677,12 +677,12 @@
         }
       }
     },
-    "_id": "4b746c8a-0bd6-46f7-bb84-3a9496c1aa07"
+    "_id": "bd5b04bb-d59d-4992-8624-a8f9070b761e"
   },
   {
     "version": 2,
     "reason": "csv_import",
-    "trained_at": "2026-11-27T17:00:08",
+    "trained_at": "2026-11-27T18:30:26",
     "training_samples": 4443,
     "validation_samples": 787,
     "weights": {
@@ -2309,6 +2309,6 @@
         }
       }
     },
-    "_id": "5a116f68-8d5e-4ec8-be53-c401d0b1bae7"
+    "_id": "14acb55a-97f0-4793-837e-ea5799d79059"
   }
 ]

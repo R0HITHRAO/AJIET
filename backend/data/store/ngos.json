@@ -15,7 +15,7 @@
     "contact_person": "Raghavendra Bhat",
     "phone": "+91 98451 22310",
     "reliability_score": 0.97,
-    "_id": "14afadd0-665b-4955-90c1-eecda92cd829"
+    "_id": "c3e8963b-f574-47a2-8c98-b63d7fa75c34"
   },
   {
     "ngo_id": "ngo_bantakal_care",
@@ -33,7 +33,7 @@
     "contact_person": "Sunitha Shetty",
     "phone": "+91 99002 44812",
     "reliability_score": 0.95,
-    "_id": "04db8357-3447-4219-ba41-5106233b2c4b"
+    "_id": "b3d9456f-8ca8-4807-98d3-ed697284e031"
   },
   {
     "ngo_id": "ngo_manipal_robin",
@@ -51,7 +51,7 @@
     "contact_person": "Aarav Kamath",
     "phone": "+91 97412 66109",
     "reliability_score": 0.96,
-    "_id": "75996e00-5f69-4390-a4e9-e898f80b56f2"
+    "_id": "c110da7c-c2a9-44dd-a582-007473f0026f"
   },
   {
     "ngo_id": "ngo_kaup_ashram",
@@ -69,7 +69,7 @@
     "contact_person": "Meenakshi Rao",
     "phone": "+91 94482 11904",
     "reliability_score": 0.94,
-    "_id": "df9876ef-5103-4139-a3c7-69868b2b498f"
+    "_id": "223c87cb-0aee-4b26-bb15-9c630127d15c"
   },
   {
     "ngo_id": "ngo_shirva_foodbank",
@@ -87,7 +87,7 @@
     "contact_person": "Joseph D'Souza",
     "phone": "+91 98804 77230",
     "reliability_score": 0.93,
-    "_id": "bb7d3934-bfe5-4c1c-97c0-07f98cfa8eeb"
+    "_id": "43a4b216-3faa-4427-93ea-91794183b7e4"
   },
   {
     "ngo_id": "ngo_katapady_aid",
@@ -105,7 +105,7 @@
     "contact_person": "Prashanth Poojary",
     "phone": "+91 96118 33091",
     "reliability_score": 0.9,
-    "_id": "d5cdb1d9-664e-473b-9567-1eab88d46831"
+    "_id": "e273106a-98a5-4cc2-adaa-6b84e0c8db7d"
   },
   {
     "ngo_id": "ngo_karkala_mission",
@@ -123,6 +123,6 @@
     "contact_person": "Harish Hegde",
     "phone": "+91 94801 88512",
     "reliability_score": 0.89,
-    "_id": "14f311cd-d522-4622-9002-9ce3dd199e08"
+    "_id": "83277c66-f492-4941-82ec-1b662623fa28"
   }
 ]

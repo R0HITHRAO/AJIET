@@ -24,7 +24,7 @@
       "ing_coconut": 0.02,
       "ing_spices": 0.006
     },
-    "_id": "cf179373-5937-4520-aa24-d2d14708e46c"
+    "_id": "68f767c4-f943-4222-ae63-f38a2ea5a9de"
   },
   {
     "menu_item_id": "item_masala_dosa",
@@ -51,7 +51,7 @@
       "ing_oil": 0.015,
       "ing_coconut": 0.02
     },
-    "_id": "7b4bfa53-4077-460d-a583-ca40a6445e99"
+    "_id": "a37216b0-1ff5-42b0-979b-70a355749e7f"
   },
   {
     "menu_item_id": "item_poha",
@@ -78,7 +78,7 @@
       "ing_oil": 0.01,
       "ing_coconut": 0.015
     },
-    "_id": "5b10c654-9b64-4a55-96f6-2614c7d29d43"
+    "_id": "d94057dd-ba2a-4941-a5da-0bc1a6e37598"
   },
   {
     "menu_item_id": "item_upma",
@@ -105,7 +105,7 @@
       "ing_oil": 0.012,
       "ing_coconut": 0.015
     },
-    "_id": "5418dddb-fb49-47fe-b655-7d42ac4f457f"
+    "_id": "eda12b4b-51f4-4145-98a0-279766d255eb"
   },
   {
     "menu_item_id": "item_steamed_rice",
@@ -128,7 +128,7 @@
     "recipe": {
       "ing_rice": 0.11
     },
-    "_id": "dc1e526b-58a9-4d47-bff0-61a0cf4e1eff"
+    "_id": "a56aa57c-9cc5-4b69-be7d-a4b7eb7b1824"
   },
   {
     "menu_item_id": "item_dal_sambar",
@@ -155,7 +155,7 @@
       "ing_mixed_veg": 0.04,
       "ing_spices": 0.008
     },
-    "_id": "0879952f-5d13-4321-bacf-86da3c397d07"
+    "_id": "04207cbf-39ce-4756-b48f-3c1f0bb45e8d"
   },
   {
     "menu_item_id": "item_paneer_curry",
@@ -182,7 +182,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.01
     },
-    "_id": "51f5415b-a2de-4a4a-83d9-fa8bb656e6e5"
+    "_id": "92f47c51-597b-451d-ae9e-0079703c7951"
   },
   {
     "menu_item_id": "item_curd_rice",
@@ -208,7 +208,7 @@
       "ing_oil": 0.006,
       "ing_spices": 0.003
     },
-    "_id": "e5add264-ec8d-4bf8-8e8b-7fca362ad9fc"
+    "_id": "0bd2c01b-4afd-444e-9422-96a917500116"
   },
   {
     "menu_item_id": "item_veg_biryani",
@@ -235,7 +235,7 @@
       "ing_curd": 0.03,
       "ing_spices": 0.012
     },
-    "_id": "8e6bb59a-0ba5-46a7-9572-d2dc7482093b"
+    "_id": "53f5e158-f78e-4329-b63c-d581e34712ec"
   },
   {
     "menu_item_id": "item_veg_cutlet",
@@ -262,7 +262,7 @@
       "ing_oil": 0.018,
       "ing_spices": 0.005
     },
-    "_id": "b7fd7ed2-a0b5-475c-9bc9-f1fb5f9ae9cf"
+    "_id": "f9e896d9-311f-49a0-acb1-2fa63d832881"
   },
   {
     "menu_item_id": "item_buns_tea",
@@ -288,7 +288,7 @@
       "ing_sugar": 0.025,
       "ing_oil": 0.015
     },
-    "_id": "ce1b3c07-275e-4fd5-b604-ddeab7337366"
+    "_id": "df72ba02-4d06-4705-be99-b080fc614873"
   },
   {
     "menu_item_id": "item_pakora",
@@ -314,7 +314,7 @@
       "ing_oil": 0.02,
       "ing_spices": 0.005
     },
-    "_id": "fa5b7f8d-cb4d-4135-9d8c-0fff79e7c61b"
+    "_id": "e3456659-7eaf-499b-87fd-1974ed52c675"
   },
   {
     "menu_item_id": "item_chapati",
@@ -338,7 +338,7 @@
       "ing_wheat": 0.1,
       "ing_oil": 0.006
     },
-    "_id": "5b8f5413-ee1d-4597-be26-43af02566a03"
+    "_id": "01057c60-fb0d-4b97-80a0-17ca198c434d"
   },
   {
     "menu_item_id": "item_mixed_veg_curry",
@@ -365,7 +365,7 @@
       "ing_oil": 0.012,
       "ing_spices": 0.008
     },
-    "_id": "09adf82a-ad2d-4153-bfbc-169999aec0b8"
+    "_id": "df00b0d5-6542-41d3-aecd-17bc5077ed24"
   },
   {
     "menu_item_id": "item_veg_pulao",
@@ -392,7 +392,7 @@
       "ing_oil": 0.01,
       "ing_spices": 0.007
     },
-    "_id": "62921b5e-aa4f-4ece-a18e-b7aceb4b78ce"
+    "_id": "313339aa-6950-455b-b32e-16152235e888"
   },
   {
     "menu_item_id": "item_kheer",
@@ -417,7 +417,7 @@
       "ing_sugar": 0.035,
       "ing_rava": 0.025
     },
-    "_id": "1a487091-ec77-4b10-89ee-2ccf03c1e874"
+    "_id": "659df3cc-d1c1-445e-ba88-fa53dbc3913c"
   },
   {
     "menu_item_id": "item_avalakki_uppittu",
@@ -444,7 +444,7 @@
       "ing_coconut": 0.02,
       "ing_spices": 0.005
     },
-    "_id": "1d0ecc3b-f9ee-4f3f-a73f-b801664f9152"
+    "_id": "5b6f7d1b-f3fc-4a6c-9963-172050e7830c"
   },
   {
     "menu_item_id": "item_bendekai_gojju_palya",
@@ -470,7 +470,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.008
     },
-    "_id": "4b72ec68-6489-4e41-b567-84a98db3b544"
+    "_id": "913ad38b-d9a3-41fb-b616-7ff983dccdb7"
   },
   {
     "menu_item_id": "item_boiled_rice",
@@ -493,7 +493,7 @@
     "recipe": {
       "ing_rice": 0.15
     },
-    "_id": "03677d53-9e7e-4c0b-9cc5-4a48b4934a9d"
+    "_id": "a0f2c01c-dab5-48bd-bc04-139fd3512516"
   },
   {
     "menu_item_id": "item_buns_kurma",
@@ -520,7 +520,7 @@
       "ing_oil": 0.025,
       "ing_spices": 0.008
     },
-    "_id": "bd47fa2c-7d91-44d2-8a3c-3425bbf7f7aa"
+    "_id": "227ce462-7e5e-411b-9328-8a98d004420c"
   },
   {
     "menu_item_id": "item_cabbage_palya",
@@ -546,7 +546,7 @@
       "ing_oil": 0.012,
       "ing_spices": 0.005
     },
-    "_id": "63800e1f-ffa5-4614-9bf3-d76745cbc99e"
+    "_id": "f318ee27-f56d-4ea0-ac31-049fa1217175"
   },
   {
     "menu_item_id": "item_chapati_dal_fry",
@@ -574,7 +574,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.006
     },
-    "_id": "cb83610e-ddeb-4b45-91cd-b54097364ad1"
+    "_id": "d6a3edde-92eb-4fad-b1cd-d492094829e2"
   },
   {
     "menu_item_id": "item_chapati_dal_tadka",
@@ -602,7 +602,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.006
     },
-    "_id": "483eba5a-bc21-4b2a-be71-769aa0bf60de"
+    "_id": "1c951b8b-fd71-4290-8870-829ab423d4d3"
   },
   {
     "menu_item_id": "item_coastal_veg_pulao",
@@ -629,7 +629,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.008
     },
-    "_id": "47e66989-d0ea-42de-8d66-00026ee9702a"
+    "_id": "8fe5b38e-1e80-4eb5-a7d9-2ce40d2f2e2b"
   },
   {
     "menu_item_id": "item_curd_rice_pickle",
@@ -654,7 +654,7 @@
       "ing_curd": 0.11,
       "ing_spices": 0.004
     },
-    "_id": "b70bbe33-8c22-4954-95a4-bfc167d77b57"
+    "_id": "21276bf3-9c05-45cd-ab88-f1ee0baaa657"
   },
   {
     "menu_item_id": "item_ghee_rice_rasam",
@@ -681,7 +681,7 @@
       "ing_oil": 0.02,
       "ing_spices": 0.007
     },
-    "_id": "7267bf52-9ff3-4b61-9df4-13a102fdb15a"
+    "_id": "2faeeb85-23df-46d3-abe2-b821e8264155"
   },
   {
     "menu_item_id": "item_idli_vada_sambar",
@@ -708,7 +708,7 @@
       "ing_coconut": 0.02,
       "ing_spices": 0.006
     },
-    "_id": "f46ea85f-6a72-4875-806f-4072b276db56"
+    "_id": "f0110d18-3722-4cec-8500-c345d19184a8"
   },
   {
     "menu_item_id": "item_jackfruit_kadgi_chakko",
@@ -734,7 +734,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.008
     },
-    "_id": "f4b29dc3-f31b-4e3c-b691-5dbdcc7aaa59"
+    "_id": "965b9366-4bc1-47a5-9a4a-52e8c12123b9"
   },
   {
     "menu_item_id": "item_jeera_ghee_rice",
@@ -759,7 +759,7 @@
       "ing_oil": 0.02,
       "ing_spices": 0.005
     },
-    "_id": "68dcfeb8-680a-4672-898f-49c556f62e64"
+    "_id": "f8a56c3f-51e0-4224-a0c1-fdcbc2a32539"
   },
   {
     "menu_item_id": "item_jeera_rice",
@@ -784,7 +784,7 @@
       "ing_oil": 0.018,
       "ing_spices": 0.005
     },
-    "_id": "9e569784-4b98-4cf8-9a6b-e7120f47be41"
+    "_id": "428878b0-381c-4428-bb9f-1936aa3d81fa"
   },
   {
     "menu_item_id": "item_jeera_rice_dal",
@@ -810,7 +810,7 @@
       "ing_oil": 0.018,
       "ing_spices": 0.006
     },
-    "_id": "4139a644-0457-43aa-87ff-90dc185add2a"
+    "_id": "6dc0a3f6-bb26-4bd9-bd8d-2a64002b3ce8"
   },
   {
     "menu_item_id": "item_kotte_kadubu_chutney",
@@ -835,7 +835,7 @@
       "ing_coconut": 0.04,
       "ing_spices": 0.005
     },
-    "_id": "ca9ab4e2-3681-4655-86b6-acc6f7c97894"
+    "_id": "b533b460-5ac1-4610-a449-de778e1e042d"
   },
   {
     "menu_item_id": "item_kuchlakki_red_rice",
@@ -858,7 +858,7 @@
     "recipe": {
       "ing_rice": 0.15
     },
-    "_id": "e98c3eb8-8915-407c-8e08-249cec3a64ff"
+    "_id": "490478ea-1dc8-4b90-af58-41464c2c8df6"
   },
   {
     "menu_item_id": "item_malabar_parotta_kurma",
@@ -885,7 +885,7 @@
       "ing_oil": 0.025,
       "ing_spices": 0.008
     },
-    "_id": "d9ff0895-a1aa-48cb-b1c6-1902946851e6"
+    "_id": "39e188cc-8825-479a-a358-2c91633636cb"
   },
   {
     "menu_item_id": "item_mangalore_buns_sagu",
@@ -912,7 +912,7 @@
       "ing_oil": 0.025,
       "ing_spices": 0.006
     },
-    "_id": "c834871e-5343-4216-b8d5-ea90f579db4f"
+    "_id": "0ed438a5-2753-41a1-a5fa-b4cfe09de12e"
   },
   {
     "menu_item_id": "item_mangalore_sambar",
@@ -938,7 +938,7 @@
       "ing_coconut": 0.03,
       "ing_spices": 0.008
     },
-    "_id": "27d2c887-43af-4ef1-aff9-9eafb7080277"
+    "_id": "7c357cda-badd-453c-b0b0-b90545a1d2c2"
   },
   {
     "menu_item_id": "item_masala_dosa_sambar",
@@ -965,7 +965,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.006
     },
-    "_id": "99fc9358-f1a2-4ee8-8140-aef69e8c9bdd"
+    "_id": "05c137be-4f82-4028-9ade-1b1406ff3fac"
   },
   {
     "menu_item_id": "item_neer_dosa_chutney",
@@ -990,7 +990,7 @@
       "ing_coconut": 0.05,
       "ing_spices": 0.004
     },
-    "_id": "30a70bca-cd10-4dc6-8a41-9119ebdb22b4"
+    "_id": "8afd220b-03b6-423a-9fbb-3a0f1c182063"
   },
   {
     "menu_item_id": "item_paneer_ghee_roast",
@@ -1016,7 +1016,7 @@
       "ing_oil": 0.025,
       "ing_spices": 0.01
     },
-    "_id": "9c8bb8b1-a912-44be-a278-d3973d4408e9"
+    "_id": "cb895bff-196a-43db-bbb2-caa28a95ae43"
   },
   {
     "menu_item_id": "item_paneer_tikka_masala",
@@ -1043,7 +1043,7 @@
       "ing_oil": 0.02,
       "ing_spices": 0.008
     },
-    "_id": "a0b0b93f-ee0c-4bc2-8754-336564ff7a67"
+    "_id": "32ad7d88-cace-42ea-bfba-0f3c67009edb"
   },
   {
     "menu_item_id": "item_parboiled_red_rice",
@@ -1066,7 +1066,7 @@
     "recipe": {
       "ing_rice": 0.15
     },
-    "_id": "7d425498-83fd-401e-a8a5-038e7cff53c6"
+    "_id": "97a8bbce-8f66-4dbf-8f58-28524c1db53d"
   },
   {
     "menu_item_id": "item_rasam",
@@ -1091,7 +1091,7 @@
       "ing_toor_dal": 0.03,
       "ing_spices": 0.007
     },
-    "_id": "6770b8af-2894-4fe4-b344-00458490415e"
+    "_id": "686220a1-bb37-4374-95b2-1e1b3267b47c"
   },
   {
     "menu_item_id": "item_steamed_white_rice",
@@ -1114,7 +1114,7 @@
     "recipe": {
       "ing_rice": 0.14
     },
-    "_id": "335bfb91-93ae-4d18-b5e0-a1c1dd90804f"
+    "_id": "4ac5115e-5c06-4348-8f15-3d2728e40526"
   },
   {
     "menu_item_id": "item_tendli_cashew_palya",
@@ -1140,7 +1140,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.006
     },
-    "_id": "cec6beb9-16d1-4685-bb4a-c6d0ba1625f3"
+    "_id": "6906ddb1-bdc0-42a1-9feb-e76fb6b7a851"
   },
   {
     "menu_item_id": "item_udupi_sambar_rasam",
@@ -1167,7 +1167,7 @@
       "ing_coconut": 0.02,
       "ing_spices": 0.007
     },
-    "_id": "e1cfcb27-1fba-4e3e-8adb-ab7686161edd"
+    "_id": "409104d3-69ff-48e4-9877-fda50190e2f2"
   },
   {
     "menu_item_id": "item_upma_chutney",
@@ -1193,7 +1193,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.005
     },
-    "_id": "0434e8d8-c245-4f3d-9464-c95448a71609"
+    "_id": "e2f73bd8-3996-4e22-bba3-477b879526ec"
   },
   {
     "menu_item_id": "item_uppittu_sheera",
@@ -1219,7 +1219,7 @@
       "ing_oil": 0.02,
       "ing_spices": 0.004
     },
-    "_id": "c1c52ef5-b556-4621-83d5-c2345a058911"
+    "_id": "61477506-0c75-4acf-ada3-e13b7eb8d2b5"
   },
   {
     "menu_item_id": "item_veg_fried_rice",
@@ -1246,7 +1246,7 @@
       "ing_oil": 0.02,
       "ing_spices": 0.006
     },
-    "_id": "629ed121-ba22-48a0-8303-167677a6ed8f"
+    "_id": "c76b57b7-f713-4877-9728-60eaceab7544"
   },
   {
     "menu_item_id": "item_veg_kurma",
@@ -1273,7 +1273,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.007
     },
-    "_id": "6c3e8511-a4e3-44c9-b34c-3b504359c150"
+    "_id": "f0cd3491-588f-4911-8153-47b234984cbe"
   },
   {
     "menu_item_id": "item_wheat_parotta_kurma",
@@ -1300,6 +1300,6 @@
       "ing_oil": 0.02,
       "ing_spices": 0.007
     },
-    "_id": "ccbd5e56-e236-4a32-b89f-9a1d37f276b1"
+    "_id": "f17d070c-4881-47c0-badf-61fa4a1a7545"
   }
 ]

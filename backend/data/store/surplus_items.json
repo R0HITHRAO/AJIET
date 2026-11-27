@@ -23,7 +23,7 @@
     "status": "Eligible",
     "created_at": "2026-11-27T10:35:00",
     "notes": "Excess reserve batch from Hostel Block B dining",
-    "_id": "e870a5b1-77fd-47c0-8f3b-973e650a6360"
+    "_id": "ff15c84c-7f99-4a4c-9ac2-517db53e3509"
   },
   {
     "surplus_id": "surp_paneer_02",
@@ -49,7 +49,7 @@
     "status": "Eligible",
     "created_at": "2026-11-27T10:42:00",
     "notes": "Dairy-rich gravy; prioritize cold-chain NGO within 15 km",
-    "_id": "59fb9916-05fd-4b2d-838d-10d3dd7f704b"
+    "_id": "0fed0cce-8b5b-4e76-a804-fe68fb691fd0"
   },
   {
     "surplus_id": "surp_idli_sambar_03",
@@ -75,7 +75,7 @@
     "status": "Eligible",
     "created_at": "2026-11-27T10:48:00",
     "notes": "Morning breakfast surplus due to rainy-day drop in turnout",
-    "_id": "9e4f9a3f-6955-4f09-84f1-ea76e8e646a9"
+    "_id": "16aac376-fbf5-4949-a0b3-1bfff2b0ddfd"
   },
   {
     "surplus_id": "surp_curd_rice_unsafe",
@@ -100,6 +100,6 @@
     "status": "Rejected (Safety)",
     "created_at": "2026-11-27T10:00:00",
     "notes": "Automatically diverted to campus biogas digester",
-    "_id": "504ead2a-7684-4d8b-bf5d-6164e6ca0318"
+    "_id": "bdf8bf4d-43f3-4deb-9cff-ff05047a8f90"
   }
 ]

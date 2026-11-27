@@ -7,7 +7,7 @@
     "reorder_level": 60.0,
     "unit_cost": 54.0,
     "perishability_days": 180,
-    "_id": "5d200ce5-98bc-42ad-af4b-c7c3e46049ab"
+    "_id": "3c6be81e-5c1f-4299-a8bf-dd88945b864c"
   },
   {
     "ingredient_id": "ing_toor_dal",
@@ -17,7 +17,7 @@
     "reorder_level": 20.0,
     "unit_cost": 135.0,
     "perishability_days": 120,
-    "_id": "a65a6f42-5603-474f-8b99-069d300ed4a5"
+    "_id": "e8102b7c-3101-45c9-aefd-6419374c6ab6"
   },
   {
     "ingredient_id": "ing_wheat",
@@ -27,7 +27,7 @@
     "reorder_level": 40.0,
     "unit_cost": 46.0,
     "perishability_days": 90,
-    "_id": "11a5435a-9957-4f6e-83fe-50d6f5f6dda8"
+    "_id": "53efe4a1-4403-4b3e-99cc-441f9a474206"
   },
   {
     "ingredient_id": "ing_paneer",
@@ -37,7 +37,7 @@
     "reorder_level": 15.0,
     "unit_cost": 360.0,
     "perishability_days": 4,
-    "_id": "78f62cee-2416-476e-a3d3-ff46be4a2c9d"
+    "_id": "24d2b655-2f1f-4fb9-ae70-7a6afb1126f4"
   },
   {
     "ingredient_id": "ing_potato",
@@ -47,7 +47,7 @@
     "reorder_level": 25.0,
     "unit_cost": 34.0,
     "perishability_days": 21,
-    "_id": "3d92d51f-357e-4a2e-a540-5db7ff705cb0"
+    "_id": "4a3f549d-51b4-4445-b864-5d576108b8ca"
   },
   {
     "ingredient_id": "ing_onion",
@@ -57,7 +57,7 @@
     "reorder_level": 25.0,
     "unit_cost": 38.0,
     "perishability_days": 21,
-    "_id": "26fecbd0-7e2e-41b2-bb7a-d28e8b66fbe5"
+    "_id": "d437c3d3-1771-433c-b2c4-f27cb7fbd068"
   },
   {
     "ingredient_id": "ing_tomato",
@@ -67,7 +67,7 @@
     "reorder_level": 22.0,
     "unit_cost": 42.0,
     "perishability_days": 6,
-    "_id": "85470019-b784-485c-9a56-39dd4c69289c"
+    "_id": "519c9d77-3220-4b83-8676-4687f2a8a4a8"
   },
   {
     "ingredient_id": "ing_mixed_veg",
@@ -77,7 +77,7 @@
     "reorder_level": 28.0,
     "unit_cost": 65.0,
     "perishability_days": 4,
-    "_id": "172d7d54-27ef-4211-944f-0c07d58cea34"
+    "_id": "34bbaec4-11cc-4566-9686-002f4b8325f8"
   },
   {
     "ingredient_id": "ing_oil",
@@ -87,7 +87,7 @@
     "reorder_level": 18.0,
     "unit_cost": 148.0,
     "perishability_days": 180,
-    "_id": "13fbefe2-3270-4a05-8ef1-93152994e706"
+    "_id": "8d1624c0-4cb3-4fc7-a7bc-f01d436f4ea0"
   },
   {
     "ingredient_id": "ing_curd",
@@ -97,7 +97,7 @@
     "reorder_level": 18.0,
     "unit_cost": 62.0,
     "perishability_days": 3,
-    "_id": "00a701b6-ab86-47d4-9711-c7fb5f33ed0a"
+    "_id": "3229b7d1-514d-4542-adaa-1a49c4cb61c2"
   },
   {
     "ingredient_id": "ing_idli_batter",
@@ -107,7 +107,7 @@
     "reorder_level": 35.0,
     "unit_cost": 58.0,
     "perishability_days": 2,
-    "_id": "bf013198-5648-4f30-97fb-e2443edbc537"
+    "_id": "ff84eefa-e1f5-4e69-a431-b94cd2e3b3c3"
   },
   {
     "ingredient_id": "ing_poha",
@@ -117,7 +117,7 @@
     "reorder_level": 15.0,
     "unit_cost": 52.0,
     "perishability_days": 90,
-    "_id": "c645a550-581b-4181-8905-c34cca2947f0"
+    "_id": "e72ba20f-7111-48f8-852e-5d1a887a0f88"
   },
   {
     "ingredient_id": "ing_rava",
@@ -127,7 +127,7 @@
     "reorder_level": 15.0,
     "unit_cost": 56.0,
     "perishability_days": 90,
-    "_id": "c3b533ef-e385-40d2-aa34-65e6a8f591a5"
+    "_id": "1401c8ab-5d8c-47d9-88fa-7366be39505f"
   },
   {
     "ingredient_id": "ing_coconut",
@@ -137,7 +137,7 @@
     "reorder_level": 12.0,
     "unit_cost": 120.0,
     "perishability_days": 3,
-    "_id": "11bd4b39-ac21-4e14-9435-6fbc185602df"
+    "_id": "79eaac85-bce7-47d3-9179-d43a9582d1f0"
   },
   {
     "ingredient_id": "ing_spices",
@@ -147,7 +147,7 @@
     "reorder_level": 6.0,
     "unit_cost": 420.0,
     "perishability_days": 180,
-    "_id": "6a298fe9-d23a-463f-bed6-a649437563a8"
+    "_id": "e892ae77-cab4-4960-bbeb-eaa949ba09ae"
   },
   {
     "ingredient_id": "ing_milk",
@@ -157,7 +157,7 @@
     "reorder_level": 25.0,
     "unit_cost": 54.0,
     "perishability_days": 2,
-    "_id": "ce4363f4-7a7f-43c8-b953-35fd0405571d"
+    "_id": "ff3a1b50-9c0b-483e-97e1-982c7715d058"
   },
   {
     "ingredient_id": "ing_sugar",
@@ -167,7 +167,7 @@
     "reorder_level": 12.0,
     "unit_cost": 48.0,
     "perishability_days": 180,
-    "_id": "a096f179-bf6b-438b-9095-735b3f84bb0a"
+    "_id": "d72893bd-c5e7-42bd-bbc2-3771cad62bd9"
   },
   {
     "ingredient_id": "ing_besan",
@@ -177,6 +177,6 @@
     "reorder_level": 10.0,
     "unit_cost": 88.0,
     "perishability_days": 90,
-    "_id": "99aecbc1-fa6c-4e28-ab5a-954adff36116"
+    "_id": "6ad94df0-de75-4bdd-8b35-059886ba36a0"
   }
 ]
