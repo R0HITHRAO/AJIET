@@ -5,14 +5,19 @@
 @layer base {
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #f8fafc;
+    background-color: #f6f8f7;
     color: #0f172a;
   }
 }
 
 @layer components {
   .card-surface {
-    @apply bg-white rounded-2xl border border-slate-200/90 shadow-[0_1px_2px_rgba(15,23,42,0.04)];
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)];
+  }
+
+  .card-interactive {
+    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)]
+           hover:border-emerald-300 hover:shadow-[0_8px_24px_-8px_rgba(6,78,59,0.12)] transition-all duration-200;
   }
 
   .field-label {
@@ -26,7 +31,7 @@
 
   .btn-primary {
     @apply h-10 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold
-           inline-flex items-center justify-center gap-2 transition disabled:opacity-50;
+           inline-flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50;
   }
 
   .btn-secondary {

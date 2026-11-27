@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Save, Search } from 'lucide-react';
+import { Package, Save, Search } from 'lucide-react';
 import { api } from '../api';
 
 export default function InventoryData({ onDataUpdated }) {
@@ -40,7 +40,6 @@ export default function InventoryData({ onDataUpdated }) {
 
   return (
     <div className="space-y-6">
-      {/* Clean Segmented Sub-Tab & Search */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex p-1 rounded-xl bg-slate-200/70">
           <button
@@ -49,7 +48,7 @@ export default function InventoryData({ onDataUpdated }) {
               subTab === 'inventory' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
-            Ingredient Inventory ({ingredients.length})
+            Pantry Stock ({ingredients.length})
           </button>
           <button
             onClick={() => setSubTab('logs')}
@@ -65,7 +64,7 @@ export default function InventoryData({ onDataUpdated }) {
           <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder={subTab === 'inventory' ? 'Filter ingredients...' : 'Search logs by dish or date...'}
+            placeholder={subTab === 'inventory' ? 'Search ingredients...' : 'Search dish or date...'}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             className="field-control pl-9 h-9 text-xs"
@@ -73,87 +72,76 @@ export default function InventoryData({ onDataUpdated }) {
         </div>
       </div>
 
+      {/* Visual Card Grid for Pantry Stock */}
       {subTab === 'inventory' && (
-        <div className="card-surface p-6 overflow-x-auto">
-          <div className="mb-4">
-            <h3 className="text-sm font-bold text-slate-900">Live Kitchen Ingredient Stock</h3>
-            <p className="text-xs text-slate-500 mt-0.5">
-              Stock updates constrain Google OR-Tools batch optimization immediately
-            </p>
-          </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {filteredIngredients.map((ing) => {
+            const isLow = ing.stock_qty <= ing.reorder_level * 1.2;
+            const ratio = Math.min(100, Math.round((ing.stock_qty / Math.max(ing.reorder_level * 3, 1)) * 100));
+            return (
+              <div key={ing.ingredient_id} className="card-surface p-5 space-y-3.5">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex items-center gap-2.5">
+                    <span
+                      className={`w-9 h-9 rounded-xl flex items-center justify-center ${
+                        isLow ? 'bg-amber-50 text-amber-700' : 'bg-emerald-50 text-emerald-700'
+                      }`}
+                    >
+                      <Package className="w-4 h-4" />
+                    </span>
+                    <div>
+                      <h3 className="text-sm font-bold text-slate-900">{ing.name}</h3>
+                      <p className="text-[11px] text-slate-400">
+                        ₹{ing.unit_cost}/{ing.unit} &bull; {ing.perishability_days}d shelf life
+                      </p>
+                    </div>
+                  </div>
+                  <span
+                    className={`text-[11px] font-semibold px-2.5 py-0.5 rounded-full ${
+                      isLow
+                        ? 'bg-amber-50 text-amber-800 border border-amber-200'
+                        : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
+                    }`}
+                  >
+                    {isLow ? 'Low Stock' : 'Healthy'}
+                  </span>
+                </div>
 
-          <table className="w-full text-xs text-left">
-            <thead>
-              <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
-                <th className="py-2.5">Ingredient</th>
-                <th className="py-2.5">Status</th>
-                <th className="py-2.5">Stock Quantity</th>
-                <th className="py-2.5">Reorder Level</th>
-                <th className="py-2.5">Unit Cost</th>
-                <th className="py-2.5">Shelf Life</th>
-                <th className="py-2.5 text-right">Action</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100">
-              {filteredIngredients.map((ing) => {
-                const isLow = ing.stock_qty <= ing.reorder_level * 1.2;
-                return (
-                  <tr key={ing.ingredient_id}>
-                    <td className="py-3 font-semibold text-slate-900">{ing.name}</td>
-                    <td className="py-3">
-                      <span
-                        className={`px-2 py-0.5 rounded-full font-semibold ${
-                          isLow
-                            ? 'bg-amber-50 text-amber-800 border border-amber-200'
-                            : 'bg-emerald-50 text-emerald-700 border border-emerald-200'
-                        }`}
-                      >
-                        {isLow ? 'Low Stock' : 'Healthy'}
-                      </span>
-                    </td>
-                    <td className="py-3">
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="number"
-                          step="1"
-                          min="0"
-                          value={editing[ing.ingredient_id] ?? ing.stock_qty}
-                          onChange={(e) => setEditing({ ...editing, [ing.ingredient_id]: e.target.value })}
-                          className="w-24 h-8 rounded-lg border border-slate-200 px-2.5 stat-value"
-                        />
-                        <span className="text-slate-500">{ing.unit}</span>
-                      </div>
-                    </td>
-                    <td className="py-3 text-slate-500 stat-value">
-                      {ing.reorder_level} {ing.unit}
-                    </td>
-                    <td className="py-3 stat-value">
-                      ₹{ing.unit_cost}/{ing.unit}
-                    </td>
-                    <td className="py-3 text-slate-500">{ing.perishability_days} days</td>
-                    <td className="py-3 text-right">
-                      <button
-                        onClick={() => saveStock(ing)}
-                        className="btn-secondary h-8 px-3 text-xs"
-                      >
-                        <Save className="w-3 h-3" />
-                        {savedId === ing.ingredient_id ? 'Saved' : 'Save'}
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                <div className="space-y-1">
+                  <div className="w-full h-1.5 rounded-full bg-slate-100 overflow-hidden">
+                    <div
+                      className={`h-full rounded-full ${isLow ? 'bg-amber-500' : 'bg-emerald-600'}`}
+                      style={{ width: `${ratio}%` }}
+                    />
+                  </div>
+                  <p className="text-[11px] text-slate-400">Reorder alert below {ing.reorder_level} {ing.unit}</p>
+                </div>
+
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="number"
+                      step="1"
+                      min="0"
+                      value={editing[ing.ingredient_id] ?? ing.stock_qty}
+                      onChange={(e) => setEditing({ ...editing, [ing.ingredient_id]: e.target.value })}
+                      className="w-24 h-9 rounded-xl border border-slate-200 px-2.5 text-sm font-semibold stat-value"
+                    />
+                    <span className="text-xs text-slate-500 font-medium">{ing.unit}</span>
+                  </div>
+                  <button onClick={() => saveStock(ing)} className="btn-secondary h-9 px-3 text-xs">
+                    <Save className="w-3.5 h-3.5" />
+                    {savedId === ing.ingredient_id ? 'Saved' : 'Save'}
+                  </button>
+                </div>
+              </div>
+            );
+          })}
         </div>
       )}
 
       {subTab === 'logs' && (
         <div className="card-surface p-6 overflow-x-auto">
-          <div className="mb-4">
-            <h3 className="text-sm font-bold text-slate-900">Historical Consumption &amp; Leftover Logs</h3>
-            <p className="text-xs text-slate-500 mt-0.5">Training records used by Random Forest &amp; XGBoost</p>
-          </div>
           <table className="w-full text-xs text-left">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
