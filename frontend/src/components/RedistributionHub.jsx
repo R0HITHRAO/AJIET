@@ -271,6 +271,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
   const [transportMode, setTransportMode] = useState('NGO Pickup Van');
   const [statusMsg, setStatusMsg] = useState('');
   const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
 
   const [newSurplus, setNewSurplus] = useState({
     menu_item_id: 'item_veg_pulao',
@@ -298,21 +299,35 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
   });
 
   const loadAll = async () => {
-    const [sRes, nRes, rRes, mRes] = await Promise.all([
-      api.getSurplus(),
-      api.getNgos(),
-      api.getRedistributions(),
-      api.getMenu(),
-    ]);
-    const items = sRes.surplus_items || [];
-    setSurplusList(items);
-    setNgos(nRes.ngos || []);
-    setRedistributions(rRes.redistributions || []);
-    setMenuItems(mRes.items || []);
+    setLoading(true);
+    setError('');
+    try {
+      const [sRes, nRes, rRes, mRes] = await Promise.all([
+        api.getSurplus(),
+        api.getNgos(),
+        api.getRedistributions(),
+        api.getMenu(),
+      ]);
+      const items = sRes.surplus_items || [];
+      setSurplusList(items);
+      setNgos(nRes.ngos || []);
+      setRedistributions(rRes.redistributions || []);
+      setMenuItems(mRes.items || []);
 
-    if (!selectedSurplusId || !items.some((i) => i.surplus_id === selectedSurplusId)) {
-      const firstEligible = items.find((i) => i.status === 'Eligible') || items[0];
-      setSelectedSurplusId(firstEligible?.surplus_id || null);
+      if (!selectedSurplusId || !items.some((i) => i.surplus_id === selectedSurplusId)) {
+        const firstEligible = items.find((i) => i.status === 'Eligible') || items[0];
+        setSelectedSurplusId(firstEligible?.surplus_id || null);
+      }
+      return true;
+    } catch (err) {
+      setError(
+        `Unable to load surplus and NGO data: ${
+          err instanceof Error ? err.message : 'The server returned an unexpected response.'
+        }`
+      );
+      return false;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -386,9 +401,14 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
   };
 
   const handleToggleNgo = async (ngo) => {
-    await api.toggleNgoAvailability(ngo.ngo_id, !ngo.is_available);
-    await loadAll();
-    onDataUpdated?.();
+    setError('');
+    try {
+      await api.toggleNgoAvailability(ngo.ngo_id, !ngo.is_available);
+      await loadAll();
+      onDataUpdated?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unable to update NGO availability.');
+    }
   };
 
   return (
@@ -633,14 +653,24 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
       {error && (
         <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-800">{error}</div>
       )}
+      {loading && (
+        <div role="status" className="card-surface p-6 text-center text-sm text-slate-500">
+          Loading surplus, NGO, and dispatch data...
+        </div>
+      )}
 
       {/* Sub-Tab 1: Matching Queue */}
       {subTab === 'matching' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-5 space-y-3">
-            {surplusList
-              .filter((s) => !(s.servings_available <= 0 && s.status === 'Dispatched'))
-              .map((s) => {
+            {loading ? null : surplusList.filter((s) => !(s.servings_available <= 0 && s.status === 'Dispatched')).length === 0 ? (
+              <div className="card-surface p-6 text-center text-sm text-slate-500">
+                No surplus batches are available yet. Use <strong>Log Surplus Batch</strong> to add one.
+              </div>
+            ) : (
+              surplusList
+                .filter((s) => !(s.servings_available <= 0 && s.status === 'Dispatched'))
+                .map((s) => {
               const isSelected = s.surplus_id === selectedSurplusId;
               return (
                 <div
@@ -689,9 +719,10 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
                   </div>
                 </div>
               );
-            })}
+                })
+            )}
 
-            {kitchenInfo && (
+            {kitchenInfo && ngos.length > 0 && (
               <ProximityRadar kitchen={kitchenInfo} ngos={ngos} highlightedNgoId={topRecommendedNgoId} />
             )}
           </div>
@@ -832,7 +863,13 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {redistributions.map((r) => (
+              {redistributions.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                    No redistribution dispatches have been recorded yet.
+                  </td>
+                </tr>
+              ) : redistributions.map((r) => (
                 <tr key={r.redistribution_id}>
                   <td className="py-3 font-semibold text-slate-900">{r.menu_item_name}</td>
                   <td className="py-3 text-slate-600">{r.ngo_name}</td>
@@ -893,7 +930,13 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {ngos.map((n) => (
+              {ngos.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="py-8 text-center text-slate-500">
+                    No NGO partners are registered yet. Use <strong>Add NGO Partner</strong> to add one.
+                  </td>
+                </tr>
+              ) : ngos.map((n) => (
                 <tr key={n.ngo_id}>
                   <td className="py-3 font-semibold text-slate-900">
                     {n.name}
