@@ -174,7 +174,7 @@ export default function App() {
             onSelectSlot={openPlannerForSlot}
           />
         )}
-        {activeTab === 'planner' && <ForecastBatchPlanner initialSlot={preferredSlot} />}
+        {activeTab === 'planner' && <ForecastBatchPlanner initialSlot={preferredSlot} onDataUpdated={refreshGlobal} />}
         {activeTab === 'simulator' && <WhatIfSimulator />}
         {activeTab === 'redistribution' && (
           <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />

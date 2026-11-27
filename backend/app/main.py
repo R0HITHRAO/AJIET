@@ -261,6 +261,37 @@ def get_menu(meal_slot: str | None = Query(default=None)) -> dict[str, Any]:
     return {"items": items}
 
 
+@app.delete("/api/menu/{menu_item_id}")
+def delete_menu_item(
+    menu_item_id: str,
+    remove_history: bool = Query(default=True),
+    retrain: bool = Query(default=True),
+) -> dict[str, Any]:
+    menu_col = db_manager.collection("menu_items")
+    existing = menu_col.find_one({"menu_item_id": menu_item_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Menu item not found")
+
+    menu_col.delete_many({"menu_item_id": menu_item_id})
+
+    removed_logs = 0
+    removed_surplus = 0
+    if remove_history:
+        removed_logs = db_manager.collection("meal_logs").delete_many({"menu_item_id": menu_item_id})
+        removed_surplus = db_manager.collection("surplus_items").delete_many({"menu_item_id": menu_item_id})
+
+    retrain_run = None
+    if retrain and db_manager.collection("meal_logs").count_documents() >= 20:
+        retrain_run = forecast_engine.train(db_manager, reason=f"dish_removed:{menu_item_id}")
+
+    return {
+        "deleted_menu_item": existing,
+        "removed_logs_count": removed_logs,
+        "removed_surplus_count": removed_surplus,
+        "retrained_model": retrain_run,
+    }
+
+
 @app.get("/api/ingredients")
 def get_ingredients() -> dict[str, Any]:
     items = db_manager.collection("ingredients").find()

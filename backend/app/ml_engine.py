@@ -440,7 +440,7 @@ class DemandForecastEngine:
         assert self.preprocessor is not None and self.rf_model is not None and self.xgb_model is not None
 
         all_items = db.collection("menu_items").find({"meal_slot": meal_slot})
-        if menu_item_ids:
+        if menu_item_ids is not None:
             menu_lookup = {m["menu_item_id"]: m for m in db.collection("menu_items").find()}
             selected_items = [menu_lookup[mid] for mid in menu_item_ids if mid in menu_lookup]
         else:

@@ -151,7 +151,18 @@ def test_end_to_end_nourish_ai_workflow():
         assert ret.status_code == 200
         assert ret.json()["current_run"]["version"] >= 2
 
-        # 10. Reset demo cleanly
+        # 10. Remove a specific dish and its history
+        del_res = client.delete("/api/menu/item_curd_rice?remove_history=true&retrain=true")
+        assert del_res.status_code == 200
+        del_data = del_res.json()
+        assert del_data["deleted_menu_item"]["menu_item_id"] == "item_curd_rice"
+        assert del_data["removed_logs_count"] >= 90
+        menu_after = client.get("/api/menu?meal_slot=Lunch").json()["items"]
+        assert all(m["menu_item_id"] != "item_curd_rice" for m in menu_after)
+        logs_after = client.get("/api/meal-logs?limit=2000").json()["logs"]
+        assert all(l["menu_item_id"] != "item_curd_rice" for l in logs_after)
+
+        # 11. Reset demo cleanly
         rst = client.post("/api/admin/reset-demo")
         assert rst.status_code == 200
         assert rst.json()["status"] == "reset_complete"

@@ -23,6 +23,11 @@ export const api = {
   health: () => request('/health'),
   dashboardOverview: () => request('/dashboard/overview'),
   getMenu: (mealSlot) => request(`/menu${mealSlot ? `?meal_slot=${encodeURIComponent(mealSlot)}` : ''}`),
+  deleteMenuItem: (menuItemId, removeHistory = true, retrain = true) =>
+    request(
+      `/menu/${encodeURIComponent(menuItemId)}?remove_history=${removeHistory ? 'true' : 'false'}&retrain=${retrain ? 'true' : 'false'}`,
+      { method: 'DELETE' }
+    ),
   getIngredients: () => request('/ingredients'),
   updateIngredient: (id, stockQty) =>
     request(`/ingredients/${id}`, {
