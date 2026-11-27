@@ -185,25 +185,37 @@ class DemandForecastEngine:
         return reports
 
     def _compute_feature_importances(self) -> list[dict[str, Any]]:
+        """Combine XGBoost gain/split-weight with Random Forest split frequency to avoid continuous-scale MDI bias."""
         if self.preprocessor is None or self.rf_model is None or self.xgb_model is None:
             return []
         raw_names = list(self.preprocessor.get_feature_names_out())
-        rf_imp = self.rf_model.feature_importances_
-        xgb_imp = self.xgb_model.feature_importances_
-        combined = 0.5 * (rf_imp / max(rf_imp.sum(), 1e-9)) + 0.5 * (xgb_imp / max(xgb_imp.sum(), 1e-9))
+        n_feat = len(raw_names)
+
+        rf_counts = np.zeros(n_feat, dtype=float)
+        for est in self.rf_model.estimators_:
+            feats = est.tree_.feature
+            valid = feats[feats >= 0]
+            np.add.at(rf_counts, valid, 1.0)
+        rf_freq = rf_counts / max(float(rf_counts.sum()), 1e-9)
+
+        booster = self.xgb_model.get_booster()
+        gain_scores = booster.get_score(importance_type="gain")
+        weight_scores = booster.get_score(importance_type="weight")
+        xgb_gain_raw = np.array([float(gain_scores.get(f"f{i}", 0.0)) for i in range(n_feat)])
+        xgb_weight_raw = np.array([float(weight_scores.get(f"f{i}", 0.0)) for i in range(n_feat)])
+        xgb_gain = xgb_gain_raw / max(float(xgb_gain_raw.sum()), 1e-9)
+        xgb_weight = xgb_weight_raw / max(float(xgb_weight_raw.sum()), 1e-9)
+
+        combined = 0.50 * xgb_gain + 0.25 * rf_freq + 0.25 * xgb_weight
 
         grouped: dict[str, float] = {}
         for raw_name, score in zip(raw_names, combined):
             clean = raw_name.split("__", 1)[-1]
-            base_col = clean
-            for cat in CATEGORICAL_COLS:
-                if clean.startswith(f"{cat}_"):
-                    base_col = cat
-                    break
+            base_col = next((cat for cat in CATEGORICAL_COLS if clean.startswith(f"{cat}_")), clean)
             grouped[base_col] = grouped.get(base_col, 0.0) + float(score)
 
         total = sum(grouped.values()) or 1.0
-        ranked = [
+        return [
             {
                 "feature": FRIENDLY_FEATURE_MAP.get(k, k),
                 "raw_key": k,
@@ -211,7 +223,6 @@ class DemandForecastEngine:
             }
             for k, v in sorted(grouped.items(), key=lambda kv: kv[1], reverse=True)
         ]
-        return ranked
 
     def train(self, db: DatabaseManager, reason: str = "startup") -> dict[str, Any]:
         logs = db.collection("meal_logs").find()
