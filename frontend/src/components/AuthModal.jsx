@@ -5,6 +5,7 @@ import {
   KeyRound,
   Lock,
   Mail,
+  Settings,
   ShieldCheck,
   Sprout,
   User,
@@ -19,14 +20,17 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
-  const [demoOtp, setDemoOtp] = useState('');
   const [emailStatus, setEmailStatus] = useState(null);
+  const [showEmailSetup, setShowEmailSetup] = useState(false);
 
-  useEffect(() => {
-    if (isOpen && mode === 'forgot') {
-      api.emailStatus().then(setEmailStatus).catch(() => {});
-    }
-  }, [isOpen, mode]);
+  const [emailCfg, setEmailCfg] = useState({
+    provider: 'smtp',
+    smtp_host: 'smtp.gmail.com',
+    smtp_port: 587,
+    sender_email: '',
+    secret: '',
+    sender_name: 'Nourish AI',
+  });
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [regForm, setRegForm] = useState({
@@ -43,6 +47,24 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
     confirm_password: '',
   });
 
+  const loadEmailStatus = async () => {
+    try {
+      const st = await api.emailStatus();
+      setEmailStatus(st);
+      if (!st.configured) {
+        setShowEmailSetup(true);
+      }
+    } catch {
+      // ignore
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen && mode === 'forgot') {
+      loadEmailStatus();
+    }
+  }, [isOpen, mode]);
+
   if (!isOpen) return null;
 
   const switchMode = (next) => {
@@ -50,7 +72,6 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
     setForgotStep('email');
     setError('');
     setInfo('');
-    setDemoOtp('');
   };
 
   const handleLogin = async (e) => {
@@ -83,21 +104,40 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
     }
   };
 
+  const handleSaveEmailConfig = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+    setError('');
+    setInfo('');
+    try {
+      const res = await api.configureEmail({
+        ...emailCfg,
+        smtp_port: Number(emailCfg.smtp_port),
+      });
+      setEmailStatus(res.email_status);
+      setShowEmailSetup(false);
+      setInfo(`Live email active (${res.email_status.label}). You can now send verification OTPs.`);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSendOtp = async (e) => {
     e.preventDefault();
     setLoading(true);
     setError('');
     setInfo('');
-    setDemoOtp('');
     try {
       const res = await api.forgotPassword(forgotForm.email);
       setInfo(res.message);
-      if (res.demo_otp) {
-        setDemoOtp(res.demo_otp);
-      }
       setForgotStep('verify');
     } catch (err) {
       setError(err.message);
+      if (err.message.toLowerCase().includes('not configured')) {
+        setShowEmailSetup(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -134,7 +174,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
 
   return (
     <div className="no-print fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="animate-modal-in bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full overflow-hidden">
+      <div className="animate-modal-in bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full overflow-hidden max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="hero-mesh text-white px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -249,7 +289,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
               </button>
 
               <div className="pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
-                <span className="text-slate-400">Hackathon Demo Account:</span>
+                <span className="text-slate-400">Default Kitchen Manager:</span>
                 <button
                   type="button"
                   onClick={fillDemoUser}
@@ -338,7 +378,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
             </form>
           )}
 
-          {/* FORGOT PASSWORD -> EMAIL OTP FLOW */}
+          {/* FORGOT PASSWORD -> LIVE EMAIL OTP FLOW */}
           {mode === 'forgot' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between gap-2">
@@ -350,23 +390,115 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
                   <ArrowLeft className="w-3.5 h-3.5" />
                   Back to Sign In
                 </button>
-                {emailStatus && (
-                  <span
-                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
-                      emailStatus.configured
-                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                        : 'bg-amber-50 text-amber-800 border-amber-200'
-                    }`}
-                  >
-                    {emailStatus.configured ? emailStatus.label : 'Demo Mode (Set backend/.env)'}
-                  </span>
-                )}
+                <button
+                  type="button"
+                  onClick={() => setShowEmailSetup(!showEmailSetup)}
+                  className={`text-[11px] font-semibold px-2.5 py-1 rounded-full border inline-flex items-center gap-1 transition ${
+                    emailStatus?.configured
+                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                      : 'bg-slate-100 text-slate-700 border-slate-300'
+                  }`}
+                >
+                  <Settings className="w-3 h-3" />
+                  {emailStatus?.configured ? emailStatus.label : 'Configure Email'}
+                </button>
               </div>
+
+              {/* In-App Live Email Provider Setup */}
+              {showEmailSetup && (
+                <form
+                  onSubmit={handleSaveEmailConfig}
+                  className="p-4 rounded-2xl bg-slate-50 border border-slate-200 space-y-3"
+                >
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs font-bold text-slate-900">Connect Live Email Provider</p>
+                    {emailStatus?.configured && (
+                      <button
+                        type="button"
+                        onClick={() => setShowEmailSetup(false)}
+                        className="text-[11px] text-slate-500 hover:text-slate-800"
+                      >
+                        Close
+                      </button>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5">
+                    <div>
+                      <label className="field-label">Provider</label>
+                      <select
+                        value={emailCfg.provider}
+                        onChange={(e) => setEmailCfg({ ...emailCfg, provider: e.target.value })}
+                        className="field-control h-9 text-xs"
+                      >
+                        <option value="smtp">Gmail / Custom SMTP</option>
+                        <option value="brevo">Brevo API (HTTPS)</option>
+                        <option value="resend">Resend API (HTTPS)</option>
+                      </select>
+                    </div>
+                    {emailCfg.provider === 'smtp' ? (
+                      <div>
+                        <label className="field-label">SMTP Host : Port</label>
+                        <div className="flex gap-1.5">
+                          <input
+                            type="text"
+                            value={emailCfg.smtp_host}
+                            onChange={(e) => setEmailCfg({ ...emailCfg, smtp_host: e.target.value })}
+                            className="field-control h-9 text-xs flex-1"
+                          />
+                          <input
+                            type="number"
+                            value={emailCfg.smtp_port}
+                            onChange={(e) => setEmailCfg({ ...emailCfg, smtp_port: Number(e.target.value) })}
+                            className="field-control h-9 text-xs w-16 stat-value"
+                          />
+                        </div>
+                      </div>
+                    ) : (
+                      <div>
+                        <label className="field-label">Sender Name</label>
+                        <input
+                          type="text"
+                          value={emailCfg.sender_name}
+                          onChange={(e) => setEmailCfg({ ...emailCfg, sender_name: e.target.value })}
+                          className="field-control h-9 text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <label className="field-label">Sender Email Address</label>
+                    <input
+                      required
+                      type="email"
+                      placeholder="your_email@gmail.com"
+                      value={emailCfg.sender_email}
+                      onChange={(e) => setEmailCfg({ ...emailCfg, sender_email: e.target.value })}
+                      className="field-control h-9 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="field-label">
+                      {emailCfg.provider === 'smtp' ? 'Google App Password / SMTP Password' : 'API Key'}
+                    </label>
+                    <input
+                      required
+                      type="password"
+                      placeholder={emailCfg.provider === 'smtp' ? '16-char App Password' : 'Paste API key'}
+                      value={emailCfg.secret}
+                      onChange={(e) => setEmailCfg({ ...emailCfg, secret: e.target.value })}
+                      className="field-control h-9 text-xs"
+                    />
+                  </div>
+                  <button type="submit" disabled={loading} className="btn-primary h-9 w-full text-xs">
+                    {loading ? 'Saving...' : 'Save & Activate Live Email'}
+                  </button>
+                </form>
+              )}
 
               {forgotStep === 'email' ? (
                 <form onSubmit={handleSendOtp} className="space-y-4">
                   <p className="text-xs text-slate-500">
-                    Enter your registered email address and we will send a 6-digit verification OTP to reset your password.
+                    Enter your registered email address and we will send a 6-digit verification OTP to your inbox.
                   </p>
                   <div>
                     <label className="field-label">Registered Email</label>
@@ -375,38 +507,24 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
                       <input
                         required
                         type="email"
-                        placeholder="manager@nourishai.edu"
+                        placeholder="you@institution.edu"
                         value={forgotForm.email}
                         onChange={(e) => setForgotForm({ ...forgotForm, email: e.target.value })}
                         className="field-control pl-9"
                       />
                     </div>
                   </div>
-                  <button type="submit" disabled={loading} className="btn-primary w-full">
+                  <button
+                    type="submit"
+                    disabled={loading || !emailStatus?.configured}
+                    className="btn-primary w-full"
+                  >
                     <KeyRound className="w-4 h-4" />
                     {loading ? 'Sending OTP...' : 'Send OTP to Email'}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleResetPassword} className="space-y-3.5">
-                  {demoOtp && (
-                    <div className="p-3 rounded-xl bg-amber-50 border border-amber-200 text-xs text-amber-950 flex items-center justify-between gap-2">
-                      <div>
-                        <p className="font-bold">Demo OTP Preview (SMTP not configured)</p>
-                        <p className="text-amber-800">
-                          Code: <strong className="tracking-widest text-sm stat-value">{demoOtp}</strong>
-                        </p>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setForgotForm({ ...forgotForm, otp: demoOtp })}
-                        className="px-2.5 py-1 rounded-lg bg-white border border-amber-300 text-amber-900 font-semibold shrink-0"
-                      >
-                        Use OTP
-                      </button>
-                    </div>
-                  )}
-
                   <div>
                     <label className="field-label">6-Digit Email OTP</label>
                     <div className="relative">

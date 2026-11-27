@@ -132,6 +132,12 @@ export const api = {
       body: JSON.stringify({ email }),
     }),
   emailStatus: () => request('/auth/email-status'),
+  configureEmail: (payload) =>
+    request('/auth/email-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
   verifyOtp: (email, otp) =>
     request('/auth/verify-otp', {
       method: 'POST',

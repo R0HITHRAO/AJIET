@@ -15,6 +15,7 @@ import requests
 from .config import (
     ACCESS_TOKEN_EXPIRE_HOURS,
     AUTH_SECRET,
+    BASE_DIR,
     OTP_EXPIRY_MINUTES,
     get_email_settings,
 )
@@ -103,29 +104,87 @@ def email_provider_status() -> dict[str, Any]:
         return {
             "configured": True,
             "provider": "brevo_api",
-            "label": "Brevo Transactional Email API (HTTPS)",
+            "label": "Brevo Email API (Live)",
             "sender": cfg["smtp_from"],
         }
     if cfg["resend_api_key"]:
         return {
             "configured": True,
             "provider": "resend_api",
-            "label": "Resend Email API (HTTPS)",
+            "label": "Resend Email API (Live)",
             "sender": cfg["smtp_from"],
         }
     if cfg["smtp_host"] and cfg["smtp_user"] and cfg["smtp_pass"]:
         return {
             "configured": True,
             "provider": "smtp_ssl" if cfg["smtp_use_ssl"] else "smtp_starttls",
-            "label": f"SMTP ({cfg['smtp_host']}:{cfg['smtp_port']})",
+            "label": f"SMTP {cfg['smtp_host']}:{cfg['smtp_port']} (Live)",
             "sender": cfg["smtp_from"],
         }
     return {
         "configured": False,
-        "provider": "demo_preview",
-        "label": "Demo OTP Preview (Configure backend/.env)",
+        "provider": "unconfigured",
+        "label": "Not Configured",
         "sender": None,
     }
+
+
+def _clean_env_val(value: str) -> str:
+    return value.replace("\r", "").replace("\n", "").strip()
+
+
+def save_email_settings(
+    provider: str,
+    sender_email: str,
+    secret: str,
+    smtp_host: str = "smtp.gmail.com",
+    smtp_port: int = 587,
+    sender_name: str = "Nourish AI",
+) -> dict[str, Any]:
+    env_path = BASE_DIR / ".env"
+    clean_email = _clean_env_val(sender_email)
+    clean_secret = _clean_env_val(secret)
+    clean_name = _clean_env_val(sender_name) or "Nourish AI"
+    formatted_from = f"{clean_name} <{clean_email}>"
+
+    lines = [
+        "# Nourish AI Live Email Configuration (gitignored)",
+        f"SMTP_FROM={formatted_from}",
+    ]
+    if provider == "brevo":
+        lines.extend(
+            [
+                f"BREVO_API_KEY={clean_secret}",
+                "RESEND_API_KEY=",
+                "SMTP_HOST=",
+                "SMTP_USER=",
+                "SMTP_PASS=",
+            ]
+        )
+    elif provider == "resend":
+        lines.extend(
+            [
+                f"RESEND_API_KEY={clean_secret}",
+                "BREVO_API_KEY=",
+                "SMTP_HOST=",
+                "SMTP_USER=",
+                "SMTP_PASS=",
+            ]
+        )
+    else:
+        lines.extend(
+            [
+                f"SMTP_HOST={_clean_env_val(smtp_host) or 'smtp.gmail.com'}",
+                f"SMTP_PORT={int(smtp_port)}",
+                f"SMTP_USER={clean_email}",
+                f"SMTP_PASS={clean_secret}",
+                "BREVO_API_KEY=",
+                "RESEND_API_KEY=",
+            ]
+        )
+
+    env_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return email_provider_status()
 
 
 def _otp_email_bodies(recipient_name: str, otp: str) -> tuple[str, str]:
@@ -154,13 +213,9 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str) -> dict[
     cfg = get_email_settings()
     status = email_provider_status()
     if not status["configured"]:
-        return {
-            "sent": False,
-            "smtp_configured": False,
-            "delivery_mode": "demo_preview",
-            "demo_otp": otp,
-            "message": f"Email provider not configured — demo OTP preview generated for {recipient_email}.",
-        }
+        raise RuntimeError(
+            "Live email delivery is not configured. Connect your Gmail SMTP, Brevo API, or Resend API first."
+        )
 
     text_body, html_body = _otp_email_bodies(recipient_name, otp)
     subject = "Nourish AI — Password Reset Verification OTP"

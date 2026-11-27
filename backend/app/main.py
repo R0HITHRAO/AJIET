@@ -23,6 +23,7 @@ from .auth import (
     hash_password,
     normalize_email,
     public_user,
+    save_email_settings,
     send_otp_email,
     verify_password,
 )
@@ -38,6 +39,7 @@ from .db import db_manager
 from .ml_engine import forecast_engine
 from .models import (
     BatchOptimizationRequest,
+    EmailConfigRequest,
     ForecastRequest,
     ForgotPasswordRequest,
     IngredientUpdateRequest,
@@ -234,12 +236,31 @@ def auth_email_status() -> dict[str, Any]:
     return email_provider_status()
 
 
+@app.post("/api/auth/email-config")
+def configure_auth_email(req: EmailConfigRequest) -> dict[str, Any]:
+    status = save_email_settings(
+        provider=req.provider,
+        sender_email=req.sender_email,
+        secret=req.secret,
+        smtp_host=req.smtp_host,
+        smtp_port=req.smtp_port,
+        sender_name=req.sender_name,
+    )
+    return {"status": "configured", "email_status": status}
+
+
 @app.post("/api/auth/forgot-password")
 def forgot_password(req: ForgotPasswordRequest) -> dict[str, Any]:
     email = normalize_email(req.email)
     user = db_manager.collection("users").find_one({"email": email})
     if not user:
         raise HTTPException(status_code=404, detail="No registered account found with this email address")
+
+    if not email_provider_status()["configured"]:
+        raise HTTPException(
+            status_code=503,
+            detail="Live email provider is not configured yet. Connect Gmail SMTP, Brevo, or Resend first.",
+        )
 
     otp = generate_otp()
     expires_at = (datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)).isoformat()
@@ -258,7 +279,7 @@ def forgot_password(req: ForgotPasswordRequest) -> dict[str, Any]:
     try:
         delivery = send_otp_email(email, user["name"], otp)
     except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to send OTP email via SMTP: {exc}") from exc
+        raise HTTPException(status_code=502, detail=f"Failed to send OTP email: {exc}") from exc
 
     return {
         "status": "otp_issued",

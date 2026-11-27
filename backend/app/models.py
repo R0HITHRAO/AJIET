@@ -148,6 +148,15 @@ class ResetPasswordRequest(BaseModel):
     new_password: str = Field(..., min_length=6, max_length=128)
 
 
+class EmailConfigRequest(BaseModel):
+    provider: Literal["smtp", "brevo", "resend"] = "smtp"
+    smtp_host: str = Field(default="smtp.gmail.com", max_length=120)
+    smtp_port: int = Field(default=587, ge=1, le=65535)
+    sender_email: str = Field(..., min_length=5, max_length=160)
+    secret: str = Field(..., min_length=4, max_length=256)
+    sender_name: str = Field(default="Nourish AI", max_length=80)
+
+
 class NGOCreateRequest(BaseModel):
     name: str
     org_type: Literal["NGO", "Food Bank", "Charitable Trust", "Community Shelter"] = "NGO"

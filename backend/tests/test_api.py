@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
+import sys
+from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 
@@ -199,10 +200,26 @@ def test_end_to_end_nourish_ai_workflow():
         assert me.status_code == 200
         assert me.json()["user"]["email"] == "coord@smvitm.edu"
 
-        forgot = client.post("/api/auth/forgot-password", json={"email": "coord@smvitm.edu"})
-        assert forgot.status_code == 200
-        otp_code = forgot.json().get("demo_otp")
-        assert otp_code and len(otp_code) == 6
+        captured_otp = {}
+
+        def _fake_send(recipient_email, recipient_name, otp):
+            captured_otp["code"] = otp
+            return {
+                "sent": True,
+                "smtp_configured": True,
+                "delivery_mode": "smtp",
+                "message": f"Sent OTP to {recipient_email}",
+            }
+
+        with (
+            patch("app.main.email_provider_status", return_value={"configured": True, "provider": "smtp_starttls", "label": "SMTP", "sender": "test@nourishai.edu"}),
+            patch("app.main.send_otp_email", side_effect=_fake_send),
+        ):
+            forgot = client.post("/api/auth/forgot-password", json={"email": "coord@smvitm.edu"})
+            assert forgot.status_code == 200
+            assert forgot.json()["sent"] is True
+            otp_code = captured_otp["code"]
+            assert len(otp_code) == 6
 
         ver = client.post("/api/auth/verify-otp", json={"email": "coord@smvitm.edu", "otp": otp_code})
         assert ver.status_code == 200
