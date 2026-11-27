@@ -14,8 +14,24 @@ from app.main import app  # noqa: E402
 
 
 def test_end_to_end_nourish_ai_workflow():
-    with TestClient(app) as client:
-        # 1. Health & startup ML training check
+    captured_otp = {}
+
+    def _fake_send(recipient_email, recipient_name, otp, purpose="password_reset"):
+        captured_otp["code"] = otp
+        captured_otp["purpose"] = purpose
+        return {
+            "sent": True,
+            "smtp_configured": True,
+            "delivery_mode": "smtp",
+            "message": f"Sent OTP to {recipient_email}",
+        }
+
+    with (
+        patch("app.main.email_provider_status", return_value={"configured": True, "provider": "smtp_starttls", "label": "SMTP", "sender": "test@nourishai.edu"}),
+        patch("app.main.send_otp_email", side_effect=_fake_send),
+        TestClient(app) as client,
+    ):
+        # 1. Public health check & unauthenticated API gate check
         health = client.get("/api/health")
         assert health.status_code == 200
         h_data = health.json()
@@ -27,6 +43,23 @@ def test_end_to_end_nourish_ai_workflow():
         assert validation["method"] == "expanding_window_by_date"
         assert validation["fold_count"] == 5
         assert "baseline" in h_data["ml_engine"]["metrics"]
+
+        assert client.get("/api/dashboard/overview").status_code == 401
+
+        # Register a verified user account before protected workflow calls
+        reg_init = client.post(
+            "/api/auth/register",
+            json={
+                "name": "Verified Admin",
+                "email": "verified@smvitm.edu",
+                "password": "VerifiedPass123",
+                "role": "Kitchen Manager",
+                "organization": "SMVITM Central Kitchen",
+            },
+        )
+        assert reg_init.status_code == 200
+        assert reg_init.json()["user"]["verified"] is True
+        client.headers.update({"Authorization": f"Bearer {reg_init.json()['access_token']}"})
 
         # 2. Dashboard overview
         dash = client.get("/api/dashboard/overview")
@@ -214,30 +247,17 @@ def test_end_to_end_nourish_ai_workflow():
         )
         assert reg.status_code == 200
         token = reg.json()["access_token"]
+        assert reg.json()["user"]["verified"] is True
+
         me = client.get("/api/auth/me", headers={"Authorization": f"Bearer {token}"})
         assert me.status_code == 200
         assert me.json()["user"]["email"] == "coord@smvitm.edu"
 
-        captured_otp = {}
-
-        def _fake_send(recipient_email, recipient_name, otp):
-            captured_otp["code"] = otp
-            return {
-                "sent": True,
-                "smtp_configured": True,
-                "delivery_mode": "smtp",
-                "message": f"Sent OTP to {recipient_email}",
-            }
-
-        with (
-            patch("app.main.email_provider_status", return_value={"configured": True, "provider": "smtp_starttls", "label": "SMTP", "sender": "test@nourishai.edu"}),
-            patch("app.main.send_otp_email", side_effect=_fake_send),
-        ):
-            forgot = client.post("/api/auth/forgot-password", json={"email": "coord@smvitm.edu"})
-            assert forgot.status_code == 200
-            assert forgot.json()["sent"] is True
-            otp_code = captured_otp["code"]
-            assert len(otp_code) == 6
+        forgot = client.post("/api/auth/forgot-password", json={"email": "coord@smvitm.edu"})
+        assert forgot.status_code == 200
+        assert forgot.json()["sent"] is True
+        otp_code = captured_otp["code"]
+        assert len(otp_code) == 6
 
         ver = client.post("/api/auth/verify-otp", json={"email": "coord@smvitm.edu", "otp": otp_code})
         assert ver.status_code == 200
