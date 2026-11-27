@@ -25,8 +25,12 @@ export default function PostMealFeedback({ onDataUpdated }) {
   const [expectedAttendance, setExpectedAttendance] = useState(740);
   const [actualAttendance, setActualAttendance] = useState(650);
   const [weather, setWeather] = useState('Rainy');
+  const [isHoliday, setIsHoliday] = useState(false);
+  const [specialEvent, setSpecialEvent] = useState('None');
   const [menuItems, setMenuItems] = useState([]);
   const [rows, setRows] = useState([]);
+  const [predictionModel, setPredictionModel] = useState('');
+  const [predictionLoading, setPredictionLoading] = useState(false);
   const [autoRetrain, setAutoRetrain] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [retraining, setRetraining] = useState(false);
@@ -52,14 +56,14 @@ export default function PostMealFeedback({ onDataUpdated }) {
     if (!slotItems.length) return;
     setRows(
       slotItems.map((item, idx) => {
-        const pred = Math.round(expectedAttendance * item.uptake_rate);
-        const prep = Math.round(pred * 1.06);
+        const estimatedDemand = Math.round(expectedAttendance * item.uptake_rate);
+        const prep = Math.round(estimatedDemand * 1.06);
         const serv = idx === 0 ? Math.max(20, prep - 75) : Math.max(20, prep - 12);
         return {
           menu_item_id: item.menu_item_id,
           name: item.name,
           requires_cold_chain: item.requires_cold_chain,
-          predicted_servings: pred,
+          predicted_servings: null,
           prepared_servings: prep,
           served_servings: serv,
           holding_temp_c: item.requires_cold_chain ? 4.0 : 64.5,
@@ -71,6 +75,48 @@ export default function PostMealFeedback({ onDataUpdated }) {
       })
     );
   }, [mealSlot, menuItems]);
+
+  useEffect(() => {
+    const menuItemIds = menuItems.filter((item) => item.meal_slot === mealSlot).map((item) => item.menu_item_id);
+    if (!menuItemIds.length) return undefined;
+    let active = true;
+    setPredictionLoading(true);
+    api
+      .forecast({
+        date: dateStr,
+        meal_slot: mealSlot,
+        expected_attendance: Number(expectedAttendance),
+        weather,
+        is_holiday: isHoliday,
+        special_event: specialEvent,
+        model_choice: 'ensemble',
+        menu_item_ids: menuItemIds,
+      })
+      .then((forecast) => {
+        if (!active) return;
+        const predictionByItem = Object.fromEntries(
+          (forecast.items || []).map((item) => [item.menu_item_id, item.predicted_servings])
+        );
+        setPredictionModel(forecast.applied_model || forecast.model_choice);
+        setRows((previous) =>
+          previous.map((row) => ({
+            ...row,
+            predicted_servings: predictionByItem[row.menu_item_id] ?? null,
+          }))
+        );
+      })
+      .catch(() => {
+        if (!active) return;
+        setPredictionModel('Unavailable');
+        setRows((previous) => previous.map((row) => ({ ...row, predicted_servings: null })));
+      })
+      .finally(() => {
+        if (active) setPredictionLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [dateStr, expectedAttendance, isHoliday, mealSlot, menuItems, specialEvent, weather]);
 
   const updateRow = (idx, field, value) => {
     setRows((prev) => prev.map((r, i) => (i === idx ? { ...r, [field]: value } : r)));
@@ -87,6 +133,8 @@ export default function PostMealFeedback({ onDataUpdated }) {
         meal_slot: mealSlot,
         expected_attendance: Number(expectedAttendance),
         actual_attendance: Number(actualAttendance),
+        is_holiday: isHoliday,
+        special_event: specialEvent,
         weather,
         temperature_c: 26.5,
         auto_retrain: autoRetrain,
@@ -94,7 +142,7 @@ export default function PostMealFeedback({ onDataUpdated }) {
           menu_item_id: r.menu_item_id,
           prepared_servings: Number(r.prepared_servings),
           served_servings: Number(r.served_servings),
-          predicted_servings: Number(r.predicted_servings),
+          predicted_servings: r.predicted_servings == null ? null : Number(r.predicted_servings),
           holding_temp_c: Number(r.holding_temp_c),
           hours_since_cooked: Number(r.hours_since_cooked),
           storage_type: r.storage_type,
@@ -152,15 +200,15 @@ export default function PostMealFeedback({ onDataUpdated }) {
           <div>
             <h3 className="text-sm font-bold text-slate-900">Step 1 &amp; 2: Meal Turnout &amp; Leftover Telemetry</h3>
             <p className="text-xs text-slate-500 mt-0.5">
-              Submit served counts and holding conditions; leftovers ≥ 10 servings trigger automatic safety inspection
+              Compare live model predictions against served counts; leftovers ≥ 10 servings trigger FSSAI safety checks
             </p>
           </div>
-          <button type="submit" disabled={submitting} className="btn-primary">
+          <button type="submit" disabled={submitting || predictionLoading} className="btn-primary">
             {submitting ? 'Saving...' : 'Submit Post-Meal Record'}
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-7 gap-4 items-end">
           <div>
             <label className="field-label">Date</label>
             <input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)} className="field-control" />
@@ -199,13 +247,38 @@ export default function PostMealFeedback({ onDataUpdated }) {
               ))}
             </select>
           </div>
+          <div>
+            <label className="field-label">Campus Event</label>
+            <select value={specialEvent} onChange={(e) => setSpecialEvent(e.target.value)} className="field-control">
+              {['None', 'Exam Week', 'Tech Fest', 'Sports Day', 'Hackathon', 'Parent Meet'].map((ev) => (
+                <option key={ev} value={ev}>{ev}</option>
+              ))}
+            </select>
+          </div>
+          <label className="h-10 flex items-center gap-2 text-xs font-semibold text-slate-700 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={isHoliday}
+              onChange={(e) => setIsHoliday(e.target.checked)}
+              className="rounded accent-emerald-700"
+            />
+            Holiday
+          </label>
         </div>
 
-        <div className="overflow-x-auto pt-2">
+        <div className="flex items-center justify-between text-xs text-slate-500">
+          <span>
+            Active forecast baseline:{' '}
+            <strong className="text-slate-700">{predictionLoading ? 'Updating...' : predictionModel || 'Unavailable'}</strong>
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
                 <th className="py-2.5 pr-3">Dish</th>
+                <th className="py-2.5 px-2">Model Prediction</th>
                 <th className="py-2.5 px-2">Prepared</th>
                 <th className="py-2.5 px-2">Served</th>
                 <th className="py-2.5 px-2">Leftover</th>
@@ -221,6 +294,7 @@ export default function PostMealFeedback({ onDataUpdated }) {
                 return (
                   <tr key={row.menu_item_id}>
                     <td className="py-3 pr-3 font-semibold text-slate-800">{row.name}</td>
+                    <td className="py-3 px-2 font-semibold text-slate-700 stat-value">{row.predicted_servings ?? '-'}</td>
                     <td className="py-3 px-2">
                       <input
                         type="number"
@@ -393,7 +467,7 @@ export default function PostMealFeedback({ onDataUpdated }) {
                     <span className="text-slate-500">({run.reason}) &bull; {run.training_samples} rows</span>
                   </div>
                   <span className="font-semibold text-emerald-700 stat-value">
-                    MAE {run.metrics?.ensemble?.mae} &bull; R² {run.metrics?.ensemble?.r2}
+                    MAE {run.metrics?.ensemble?.mae} &bull; WAPE {run.metrics?.ensemble?.wape_pct ?? '-'}%
                   </span>
                 </div>
               ))}

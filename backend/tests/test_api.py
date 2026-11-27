@@ -22,6 +22,10 @@ def test_end_to_end_nourish_ai_workflow():
         assert h_data["ml_engine"]["training_samples"] >= 1000
         assert "random_forest" in h_data["ml_engine"]["metrics"]
         assert "xgboost" in h_data["ml_engine"]["metrics"]
+        validation = h_data["ml_engine"]["metrics"]["validation"]
+        assert validation["method"] == "expanding_window_by_date"
+        assert validation["fold_count"] == 5
+        assert "baseline" in h_data["ml_engine"]["metrics"]
 
         # 2. Dashboard overview
         dash = client.get("/api/dashboard/overview")
@@ -46,6 +50,8 @@ def test_end_to_end_nourish_ai_workflow():
             assert fc.status_code == 200
             fc_data = fc.json()
             assert fc_data["total_predicted_servings"] > 0
+            expected_model = model_choice if validation["reliable_ml_models"].get(model_choice) else "baseline"
+            assert fc_data["applied_model"] == expected_model
             assert all(it["p10_servings"] <= it["predicted_servings"] <= it["p90_servings"] for it in fc_data["items"])
 
         # 4. Google OR-Tools Batch Optimization
@@ -109,6 +115,11 @@ def test_end_to_end_nourish_ai_workflow():
         assert fb.status_code == 200
         fb_data = fb.json()
         assert len(fb_data["detected_surplus"]) == 1
+        error_review = client.get("/api/forecast-errors/weekly").json()
+        assert error_review["tracked_records"] >= 1
+        assert any(row["group"] == "Lunch" for row in error_review["by_meal_slot"])
+        assert any(row["group"] == "Steamed Sona Masoori Rice" for row in error_review["by_dish"])
+        assert error_review["overall"]["mae"] is not None
         new_surplus = fb_data["detected_surplus"][0]
         assert new_surplus["safety_passed"] is True
 

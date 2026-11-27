@@ -58,11 +58,16 @@ export default function OverviewDashboard({ data, onNavigate }) {
     slot_breakdown: slotBreakdown,
     top_waste_items: topWaste,
     ml_summary: ml,
+    forecast_error_review: errorReview,
   } = data;
 
   const rf = ml?.metrics?.random_forest || {};
   const xgb = ml?.metrics?.xgboost || {};
   const ens = ml?.metrics?.ensemble || {};
+  const baseline = ml?.metrics?.baseline || {};
+  const validation = ml?.metrics?.validation || {};
+  const selectedModel = validation.selected_model || 'ensemble';
+  const latestErrorWeek = errorReview?.weekly?.[errorReview.weekly.length - 1];
 
   return (
     <div className="space-y-6">
@@ -180,16 +185,16 @@ export default function OverviewDashboard({ data, onNavigate }) {
         </div>
       </section>
 
-      {/* 3. Balanced Two-Column Diagnostics & Priority Watchlist */}
+      {/* 3. Balanced Two-Column Validation & Watchlist */}
       <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card-surface p-6">
-          <div className="flex items-center justify-between mb-4">
+        <div className="card-surface p-6 space-y-4">
+          <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BrainCircuit className="w-4 h-4 text-emerald-700" />
-              <h3 className="text-sm font-bold text-slate-900">ML Demand Forecasting Accuracy</h3>
+              <h3 className="text-sm font-bold text-slate-900">Rolling Forecast Validation</h3>
             </div>
             <span className="text-xs font-semibold text-slate-500">
-              Trained on {ml?.training_samples || 0} meal records
+              {validation.fold_count ?? 0} future-date folds &bull; {ml?.training_samples || 0} logs
             </span>
           </div>
           <div className="overflow-x-auto">
@@ -198,35 +203,55 @@ export default function OverviewDashboard({ data, onNavigate }) {
                 <tr className="border-b border-slate-200 text-slate-400 uppercase">
                   <th className="py-2 font-semibold">Model</th>
                   <th className="py-2 font-semibold">MAE</th>
-                  <th className="py-2 font-semibold">RMSE</th>
+                  <th className="py-2 font-semibold">WAPE</th>
                   <th className="py-2 font-semibold">MAPE</th>
-                  <th className="py-2 font-semibold text-right">R² Score</th>
+                  <th className="py-2 font-semibold text-right">Validation</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 stat-value">
                 {[
-                  { name: 'Adaptive Ensemble', m: ens, primary: true },
-                  { name: 'XGBoost Regressor', m: xgb, primary: false },
-                  { name: 'Random Forest', m: rf, primary: false },
-                ].map((row) => (
-                  <tr key={row.name}>
-                    <td className="py-3 font-semibold text-slate-800">
-                      {row.name}
-                      {row.primary && (
-                        <span className="ml-2 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                          Default
+                  { key: 'ensemble', name: 'Adaptive Ensemble', m: ens },
+                  { key: 'xgboost', name: 'XGBoost Regressor', m: xgb },
+                  { key: 'random_forest', name: 'Random Forest', m: rf },
+                  { key: 'baseline', name: 'Dish + Weekday Baseline', m: baseline },
+                ].map((row) => {
+                  const isSelected = selectedModel === row.key;
+                  const statusLabel = isSelected
+                    ? row.key === 'baseline'
+                      ? 'Fallback Active'
+                      : 'Selected'
+                    : row.key === 'baseline'
+                    ? 'Reference'
+                    : `${validation.fold_wins?.[row.key] ?? 0}/${validation.fold_count ?? 0} folds`;
+                  return (
+                    <tr key={row.key}>
+                      <td className="py-2.5 font-semibold text-slate-800">{row.name}</td>
+                      <td className="py-2.5 text-slate-600">{row.m.mae ?? '-'}</td>
+                      <td className="py-2.5 text-slate-600">{row.m.wape_pct ?? '-'}%</td>
+                      <td className="py-2.5 text-slate-600">{row.m.mape_pct ?? '-'}%</td>
+                      <td className="py-2.5 text-right">
+                        <span
+                          className={`text-[11px] font-semibold px-2 py-0.5 rounded-full border ${
+                            isSelected
+                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                              : 'bg-slate-50 text-slate-600 border-slate-200'
+                          }`}
+                        >
+                          {statusLabel}
                         </span>
-                      )}
-                    </td>
-                    <td className="py-3 text-slate-600">{row.m.mae ?? '-'}</td>
-                    <td className="py-3 text-slate-600">{row.m.rmse ?? '-'}</td>
-                    <td className="py-3 text-slate-600">{row.m.mape_pct ?? '-'}%</td>
-                    <td className="py-3 text-right font-bold text-emerald-700">{row.m.r2 ?? '-'}</td>
-                  </tr>
-                ))}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
+          {validation.fold_count > 0 && (
+            <p className="text-[11px] text-slate-500">
+              ML selection requires lower pooled MAE than baseline and wins in at least {validation.required_fold_wins ?? 0} of{' '}
+              {validation.fold_count} expanding folds.
+            </p>
+          )}
         </div>
 
         <div className="card-surface p-6 flex flex-col justify-between space-y-4">
@@ -245,7 +270,9 @@ export default function OverviewDashboard({ data, onNavigate }) {
                 <div key={dish.menu_item_id} className="py-2.5 flex items-center justify-between text-xs">
                   <div>
                     <p className="font-semibold text-slate-800">{dish.name}</p>
-                    <p className="text-slate-400">{dish.meal_slot} &bull; {dish.leftover_servings.toLocaleString()} leftover servings</p>
+                    <p className="text-slate-400">
+                      {dish.meal_slot} &bull; {dish.leftover_servings.toLocaleString()} leftover servings
+                    </p>
                   </div>
                   <span className="font-bold text-slate-700 bg-slate-100 px-2.5 py-1 rounded-lg stat-value">
                     {dish.waste_kg} kg
@@ -270,6 +297,70 @@ export default function OverviewDashboard({ data, onNavigate }) {
             </button>
           )}
         </div>
+      </section>
+
+      {/* 4. Weekly Forecast Error Review */}
+      <section className="card-surface p-6">
+        <div className="flex flex-wrap items-center justify-between gap-3 mb-4">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Weekly Forecast Error Review</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Prediction-linked meal records across the latest {errorReview?.weeks_included?.length || 0} weeks
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-5 text-xs">
+            <span className="text-slate-500">
+              Tracked <strong className="ml-1 text-slate-900 stat-value">{errorReview?.tracked_records ?? 0}</strong>
+            </span>
+            <span className="text-slate-500">
+              Latest MAE <strong className="ml-1 text-slate-900 stat-value">{latestErrorWeek?.mae ?? '-'} serv</strong>
+            </span>
+            <span className="text-slate-500">
+              WAPE <strong className="ml-1 text-slate-900 stat-value">{latestErrorWeek?.wape_pct ?? '-'}%</strong>
+            </span>
+          </div>
+        </div>
+
+        {errorReview?.tracked_records ? (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+            {[
+              ['Meal slot', errorReview.by_meal_slot || []],
+              ['Dish', errorReview.by_dish || []],
+            ].map(([title, rows]) => (
+              <div key={title} className="min-w-0">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-2">
+                  Errors by {title.toLowerCase()}
+                </h4>
+                <div className="max-h-64 overflow-auto border border-slate-200 rounded-xl">
+                  <table className="w-full text-xs text-left">
+                    <thead className="sticky top-0 bg-slate-50 text-[11px] uppercase text-slate-500">
+                      <tr>
+                        <th className="px-3 py-2 font-semibold">{title}</th>
+                        <th className="px-3 py-2 font-semibold">Records</th>
+                        <th className="px-3 py-2 font-semibold">MAE</th>
+                        <th className="px-3 py-2 font-semibold text-right">WAPE</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 stat-value">
+                      {rows.map((row) => (
+                        <tr key={row.group}>
+                          <td className="px-3 py-2 font-medium text-slate-800">{row.group}</td>
+                          <td className="px-3 py-2 text-slate-600">{row.samples}</td>
+                          <td className="px-3 py-2 text-slate-600">{row.mae} serv</td>
+                          <td className="px-3 py-2 text-right font-semibold text-slate-700">{row.wape_pct}%</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="border-t border-slate-100 pt-4 text-xs text-slate-500">
+            No prediction-linked meal records logged yet—submit records in Post-Meal &amp; Retrain to populate weekly error tracking.
+          </p>
+        )}
       </section>
     </div>
   );
