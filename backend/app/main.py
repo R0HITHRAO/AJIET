@@ -9,9 +9,9 @@ import hmac
 from pathlib import Path
 from typing import Any
 
-from fastapi import FastAPI, File, Header, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse, PlainTextResponse
+from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from .auth import (
@@ -73,12 +73,51 @@ async def lifespan(app: FastAPI):
     yield
 
 
+PUBLIC_API_PATHS = {
+    "/api/health",
+    "/api/auth/register",
+    "/api/auth/login",
+    "/api/auth/me",
+    "/api/auth/forgot-password",
+    "/api/auth/verify-otp",
+    "/api/auth/reset-password",
+    "/api/auth/email-status",
+}
+
+
+def _resolve_verified_user(authorization: str | None) -> dict[str, Any]:
+    if not authorization or not authorization.lower().startswith("bearer "):
+        raise HTTPException(status_code=401, detail="Authentication required. Please sign in.")
+    token = authorization.split(" ", 1)[1].strip()
+    payload = decode_access_token(token)
+    if not payload:
+        raise HTTPException(status_code=401, detail="Invalid or expired session token")
+    user = db_manager.collection("users").find_one({"user_id": payload["sub"]})
+    if not user:
+        raise HTTPException(status_code=401, detail="User account no longer exists")
+    if not user.get("verified", False):
+        raise HTTPException(status_code=403, detail="Verified account required before accessing Nourish AI")
+    return user
+
+
 app = FastAPI(
     title="Nourish AI API",
     description="AI-Powered Smart Kitchen Management & Sustainable Food Redistribution System",
     version="1.0.0",
     lifespan=lifespan,
 )
+
+
+@app.middleware("http")
+async def enforce_verified_user(request: Request, call_next):
+    path = request.url.path
+    if request.method != "OPTIONS" and path.startswith("/api/") and path not in PUBLIC_API_PATHS:
+        try:
+            _resolve_verified_user(request.headers.get("authorization"))
+        except HTTPException as exc:
+            return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
+    return await call_next(request)
+
 
 app.add_middleware(
     CORSMiddleware,
@@ -182,6 +221,38 @@ def _validate_otp_record(email: str, otp: str) -> dict[str, Any]:
     return record
 
 
+def _issue_email_otp(recipient_email: str, recipient_name: str, purpose: str) -> dict[str, Any]:
+    if not email_provider_status()["configured"]:
+        raise HTTPException(
+            status_code=503,
+            detail="Live email provider is not configured yet. Connect Gmail SMTP, Brevo, or Resend first.",
+        )
+    email = normalize_email(recipient_email)
+    otp = generate_otp()
+    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)).isoformat()
+    otp_col = db_manager.collection("password_reset_otps")
+    otp_col.delete_many({"email": email})
+    otp_col.insert_one(
+        {
+            "email": email,
+            "purpose": purpose,
+            "otp_hash": hash_otp(email, otp),
+            "attempts": 0,
+            "expires_at": expires_at,
+            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        }
+    )
+    try:
+        delivery = send_otp_email(email, recipient_name, otp, purpose=purpose)
+    except Exception as exc:
+        raise HTTPException(status_code=502, detail=f"Failed to send OTP email: {exc}") from exc
+    return {
+        "email": email,
+        "expires_in_minutes": OTP_EXPIRY_MINUTES,
+        **delivery,
+    }
+
+
 @app.post("/api/auth/register")
 def register_user(req: RegisterRequest) -> dict[str, Any]:
     email = normalize_email(req.email)
@@ -199,6 +270,7 @@ def register_user(req: RegisterRequest) -> dict[str, Any]:
         "password_hash": hash_password(req.password),
         "role": req.role,
         "organization": req.organization.strip() or "SMVITM Central Kitchen",
+        "verified": True,
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
     users_col.insert_one(user_doc)
@@ -212,6 +284,11 @@ def login_user(req: LoginRequest) -> dict[str, Any]:
     user = db_manager.collection("users").find_one({"email": email})
     if not user or not verify_password(req.password, user.get("password_hash", "")):
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    if not user.get("verified", False):
+        raise HTTPException(
+            status_code=403,
+            detail="Your account email is not verified yet. Verify the OTP sent to your email before signing in.",
+        )
 
     token = create_access_token(user)
     return {"access_token": token, "token_type": "bearer", "user": public_user(user)}
@@ -219,15 +296,7 @@ def login_user(req: LoginRequest) -> dict[str, Any]:
 
 @app.get("/api/auth/me")
 def get_current_user(authorization: str | None = Header(default=None)) -> dict[str, Any]:
-    if not authorization or not authorization.lower().startswith("bearer "):
-        raise HTTPException(status_code=401, detail="Missing bearer token")
-    token = authorization.split(" ", 1)[1].strip()
-    payload = decode_access_token(token)
-    if not payload:
-        raise HTTPException(status_code=401, detail="Invalid or expired session token")
-    user = db_manager.collection("users").find_one({"user_id": payload["sub"]})
-    if not user:
-        raise HTTPException(status_code=401, detail="User account no longer exists")
+    user = _resolve_verified_user(authorization)
     return {"user": public_user(user)}
 
 
@@ -256,37 +325,8 @@ def forgot_password(req: ForgotPasswordRequest) -> dict[str, Any]:
     if not user:
         raise HTTPException(status_code=404, detail="No registered account found with this email address")
 
-    if not email_provider_status()["configured"]:
-        raise HTTPException(
-            status_code=503,
-            detail="Live email provider is not configured yet. Connect Gmail SMTP, Brevo, or Resend first.",
-        )
-
-    otp = generate_otp()
-    expires_at = (datetime.now(timezone.utc) + timedelta(minutes=OTP_EXPIRY_MINUTES)).isoformat()
-    otp_col = db_manager.collection("password_reset_otps")
-    otp_col.delete_many({"email": email})
-    otp_col.insert_one(
-        {
-            "email": email,
-            "otp_hash": hash_otp(email, otp),
-            "attempts": 0,
-            "expires_at": expires_at,
-            "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
-        }
-    )
-
-    try:
-        delivery = send_otp_email(email, user["name"], otp)
-    except Exception as exc:
-        raise HTTPException(status_code=502, detail=f"Failed to send OTP email: {exc}") from exc
-
-    return {
-        "status": "otp_issued",
-        "email": email,
-        "expires_in_minutes": OTP_EXPIRY_MINUTES,
-        **delivery,
-    }
+    delivery = _issue_email_otp(email, user["name"], purpose="password_reset")
+    return {"status": "otp_issued", **delivery}
 
 
 @app.post("/api/auth/verify-otp")

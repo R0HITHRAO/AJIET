@@ -85,6 +85,7 @@ def public_user(user: dict[str, Any]) -> dict[str, Any]:
         "email": user["email"],
         "role": user["role"],
         "organization": user.get("organization", ""),
+        "verified": bool(user.get("verified", False)),
         "created_at": user.get("created_at"),
     }
 
@@ -187,19 +188,26 @@ def save_email_settings(
     return email_provider_status()
 
 
-def _otp_email_bodies(recipient_name: str, otp: str) -> tuple[str, str]:
+def _otp_email_bodies(recipient_name: str, otp: str, purpose: str = "password_reset") -> tuple[str, str]:
+    is_verify = purpose == "account_verify"
+    heading = "Nourish AI Account Verification" if is_verify else "Nourish AI Password Reset"
+    action_text = (
+        "verify your email and activate your Nourish AI account"
+        if is_verify
+        else "reset your password"
+    )
     text = (
         f"Hello {recipient_name},\n\n"
-        f"Your Nourish AI password reset OTP is: {otp}\n"
-        f"This code expires in {OTP_EXPIRY_MINUTES} minutes.\n\n"
-        "If you did not request this reset, please ignore this email.\n\n"
+        f"Your Nourish AI verification OTP is: {otp}\n"
+        f"Use this code to {action_text}. It expires in {OTP_EXPIRY_MINUTES} minutes.\n\n"
+        "If you did not request this, please ignore this email.\n\n"
         "— Nourish AI (Team Codeverse)"
     )
     html = f"""
     <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
-      <h2 style="color: #064e3b; margin-top: 0;">Nourish AI Password Reset</h2>
+      <h2 style="color: #064e3b; margin-top: 0;">{heading}</h2>
       <p style="color: #334155;">Hello <strong>{recipient_name}</strong>,</p>
-      <p style="color: #334155;">Use the verification code below to reset your password:</p>
+      <p style="color: #334155;">Use the verification code below to {action_text}:</p>
       <div style="font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #065f46; background: #ecfdf5; padding: 14px 20px; border-radius: 10px; text-align: center; margin: 18px 0;">
         {otp}
       </div>
@@ -209,7 +217,12 @@ def _otp_email_bodies(recipient_name: str, otp: str) -> tuple[str, str]:
     return text, html
 
 
-def send_otp_email(recipient_email: str, recipient_name: str, otp: str) -> dict[str, Any]:
+def send_otp_email(
+    recipient_email: str,
+    recipient_name: str,
+    otp: str,
+    purpose: str = "password_reset",
+) -> dict[str, Any]:
     cfg = get_email_settings()
     status = email_provider_status()
     if not status["configured"]:
@@ -217,8 +230,12 @@ def send_otp_email(recipient_email: str, recipient_name: str, otp: str) -> dict[
             "Live email delivery is not configured. Connect your Gmail SMTP, Brevo API, or Resend API first."
         )
 
-    text_body, html_body = _otp_email_bodies(recipient_name, otp)
-    subject = "Nourish AI — Password Reset Verification OTP"
+    text_body, html_body = _otp_email_bodies(recipient_name, otp, purpose=purpose)
+    subject = (
+        "Nourish AI — Verify Your Account OTP"
+        if purpose == "account_verify"
+        else "Nourish AI — Password Reset Verification OTP"
+    )
 
     if cfg["brevo_api_key"]:
         sender_name, sender_email = parseaddr(cfg["smtp_from"])
