@@ -497,6 +497,8 @@ class DemandForecastEngine:
 
         results = []
         for idx, item in enumerate(selected_items):
+            item_mid = item["menu_item_id"]
+            item_fallback = expected_attendance * float(item["uptake_rate"])
             rf_p = float(rf_preds[idx])
             xgb_p = float(xgb_preds[idx])
             ens_p = float(ens_preds[idx])
@@ -506,8 +508,27 @@ class DemandForecastEngine:
                 model_prediction = xgb_p
             else:
                 model_prediction = ens_p
-            baseline = baseline_map.get(mid, fallback_rolling)
+            baseline = baseline_map.get(item_mid, item_fallback)
             chosen = model_prediction if applied_model != "baseline" else baseline
+
+            drivers: list[str] = []
+            if is_holiday:
+                drivers.append("Holiday turnout drop")
+            if special_event != "None":
+                drivers.append(f"Event: {special_event}")
+            if weather == "Rainy":
+                if float(item.get("rain_affinity", 1.0)) >= 1.06:
+                    drivers.append("Rainy-day demand boost")
+                elif float(item.get("rain_affinity", 1.0)) <= 0.94:
+                    drivers.append("Rainy-day dip")
+                else:
+                    drivers.append("Rainy weather")
+            elif temperature_c >= 31.5 and float(item.get("heat_affinity", 1.0)) >= 1.05:
+                drivers.append("Warm-weather boost")
+            if is_weekend and not is_holiday:
+                drivers.append("Weekend hostel pattern")
+            if not drivers:
+                drivers.append("Regular weekday baseline")
 
             # Scale softly if expected attendance goes outside historical training range
             model_std = max(float(tree_stds[idx]), chosen * 0.055)
@@ -517,13 +538,14 @@ class DemandForecastEngine:
 
             results.append(
                 {
-                    "menu_item_id": item["menu_item_id"],
+                    "menu_item_id": item_mid,
                     "name": item["name"],
                     "category": item["category"],
                     "dietary_tag": item["dietary_tag"],
                     "predicted_servings": p50,
                     "baseline_prediction": int(round(baseline)),
                     "applied_model": applied_model,
+                    "driver_tags": drivers[:2],
                     "p10_servings": p10,
                     "p90_servings": p90,
                     "rf_prediction": int(round(rf_p)),

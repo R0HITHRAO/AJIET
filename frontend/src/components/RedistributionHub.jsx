@@ -2,15 +2,27 @@ import React, { useEffect, useState } from 'react';
 import {
   CheckCircle2,
   Clock,
+  FileText,
   MapPin,
   Navigation,
   Plus,
+  Printer,
   Send,
   ShieldAlert,
   ShieldCheck,
   Snowflake,
+  X,
 } from 'lucide-react';
 import { api } from '../api';
+
+const AREA_COORDS = {
+  Bantakal: { lat: 13.2612, lon: 74.7924 },
+  Udupi: { lat: 13.3409, lon: 74.7421 },
+  Manipal: { lat: 13.3525, lon: 74.7868 },
+  Kaup: { lat: 13.2230, lon: 74.7458 },
+  Shirva: { lat: 13.2371, lon: 74.8194 },
+  Padubidri: { lat: 13.1394, lon: 74.7734 },
+};
 
 function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
   const maxKm = 26;
@@ -85,6 +97,82 @@ function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
   );
 }
 
+function SafetyHandoverSlipModal({ slip, onClose }) {
+  if (!slip) return null;
+  return (
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+        <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
+          <div>
+            <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
+              FSSAI Food-Safety Handover Slip
+            </span>
+            <h3 className="text-lg font-extrabold text-slate-900 mt-0.5">{slip.menu_item_name}</h3>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
+          <div>
+            <p className="text-[11px] font-semibold uppercase text-emerald-800">Handover Verification Code</p>
+            <p className="text-xl font-extrabold tracking-widest text-emerald-950 stat-value">
+              {slip.handover_code || slip.redistribution_id.slice(-6).toUpperCase()}
+            </p>
+          </div>
+          <span className="px-2.5 py-1 rounded-full bg-emerald-700 text-white text-xs font-semibold">
+            {slip.status}
+          </span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-3 text-xs">
+          <div className="p-3 rounded-xl bg-slate-50">
+            <p className="text-slate-400 font-semibold">Quantity</p>
+            <p className="font-bold text-slate-900 mt-0.5 stat-value">
+              {slip.servings_delivered} servings ({slip.weight_kg} kg)
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50">
+            <p className="text-slate-400 font-semibold">Storage &amp; Temp</p>
+            <p className="font-bold text-slate-900 mt-0.5 stat-value">
+              {slip.holding_temp_c != null ? `${slip.holding_temp_c}°C` : 'Safe Zone'} ({slip.storage_type || 'hot_hold'})
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50">
+            <p className="text-slate-400 font-semibold">Safe Window Left</p>
+            <p className="font-bold text-slate-900 mt-0.5 stat-value">
+              {slip.remaining_safe_hours != null ? `${slip.remaining_safe_hours} hrs` : 'Verified'}
+            </p>
+          </div>
+          <div className="p-3 rounded-xl bg-slate-50">
+            <p className="text-slate-400 font-semibold">Transit &amp; Distance</p>
+            <p className="font-bold text-slate-900 mt-0.5 stat-value">
+              {slip.distance_km} km &bull; {slip.transport_mode}
+            </p>
+          </div>
+        </div>
+
+        <div className="p-3.5 rounded-xl border border-slate-200 text-xs space-y-1">
+          <p className="font-bold text-slate-900">Recipient: {slip.ngo_name}</p>
+          {slip.ngo_contact && <p className="text-slate-500">Contact: {slip.ngo_contact}</p>}
+          <p className="text-slate-400">Logged at: {slip.created_at}</p>
+        </div>
+
+        <div className="flex items-center justify-end gap-2 pt-2">
+          <button onClick={() => window.print()} className="btn-secondary">
+            <Printer className="w-4 h-4" />
+            Print Slip
+          </button>
+          <button onClick={onClose} className="btn-primary">
+            Done
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
   const [subTab, setSubTab] = useState('matching');
   const [surplusList, setSurplusList] = useState([]);
@@ -93,6 +181,8 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
   const [menuItems, setMenuItems] = useState([]);
   const [selectedSurplusId, setSelectedSurplusId] = useState(null);
   const [showAddSurplus, setShowAddSurplus] = useState(false);
+  const [showAddNgo, setShowAddNgo] = useState(false);
+  const [activeSlip, setActiveSlip] = useState(null);
   const [transportMode, setTransportMode] = useState('NGO Pickup Van');
   const [statusMsg, setStatusMsg] = useState('');
   const [error, setError] = useState('');
@@ -106,6 +196,20 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
     storage_type: 'hot_hold',
     is_sealed: true,
     notes: 'Unopened reserve catering tray',
+  });
+
+  const [newNgo, setNewNgo] = useState({
+    name: '',
+    org_type: 'NGO',
+    area: 'Udupi',
+    lat: 13.3409,
+    lon: 74.7421,
+    min_servings: 20,
+    max_capacity_servings: 200,
+    has_cold_chain: true,
+    dietary_preference: 'Any',
+    contact_person: '',
+    phone: '',
   });
 
   const loadAll = async () => {
@@ -147,6 +251,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
       setStatusMsg(
         `Dispatched ${res.redistribution.servings_delivered} servings (${res.redistribution.weight_kg} kg) to ${res.redistribution.ngo_name}.`
       );
+      setActiveSlip(res.redistribution);
       await loadAll();
       onDataUpdated?.();
     } catch (err) {
@@ -180,6 +285,21 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
     }
   };
 
+  const handleCreateNgo = async (e) => {
+    e.preventDefault();
+    setError('');
+    try {
+      const res = await api.createNgo(newNgo);
+      setShowAddNgo(false);
+      setStatusMsg(`Registered NGO partner "${res.ngo.name}" (${res.ngo.distance_km} km from kitchen).`);
+      setNewNgo({ ...newNgo, name: '', contact_person: '', phone: '' });
+      await loadAll();
+      onDataUpdated?.();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
   const handleToggleNgo = async (ngo) => {
     await api.toggleNgoAvailability(ngo.ngo_id, !ngo.is_available);
     await loadAll();
@@ -188,7 +308,9 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
 
   return (
     <div className="space-y-6">
-      {/* Clean Sub-Navigation + Primary Action */}
+      <SafetyHandoverSlipModal slip={activeSlip} onClose={() => setActiveSlip(null)} />
+
+      {/* Clean Sub-Navigation + Contextual Action */}
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="inline-flex p-1 rounded-xl bg-slate-200/70">
           {[
@@ -208,11 +330,129 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
           ))}
         </div>
 
-        <button onClick={() => setShowAddSurplus(!showAddSurplus)} className="btn-primary">
-          <Plus className="w-4 h-4" />
-          Log Surplus Batch
-        </button>
+        <div className="flex items-center gap-2">
+          {subTab === 'ngos' && (
+            <button onClick={() => setShowAddNgo(!showAddNgo)} className="btn-secondary">
+              <Plus className="w-4 h-4" />
+              Add NGO Partner
+            </button>
+          )}
+          <button onClick={() => setShowAddSurplus(!showAddSurplus)} className="btn-primary">
+            <Plus className="w-4 h-4" />
+            Log Surplus Batch
+          </button>
+        </div>
       </div>
+
+      {/* Add NGO Partner Form */}
+      {showAddNgo && (
+        <form onSubmit={handleCreateNgo} className="card-surface p-5 space-y-4 border-emerald-300">
+          <p className="text-sm font-bold text-slate-900">Register New NGO / Food Bank Partner</p>
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-6 gap-3">
+            <div className="col-span-2">
+              <label className="field-label">Organization Name</label>
+              <input
+                required
+                type="text"
+                placeholder="e.g., Kundapura Seva Food Bank"
+                value={newNgo.name}
+                onChange={(e) => setNewNgo({ ...newNgo, name: e.target.value })}
+                className="field-control"
+              />
+            </div>
+            <div>
+              <label className="field-label">Type</label>
+              <select
+                value={newNgo.org_type}
+                onChange={(e) => setNewNgo({ ...newNgo, org_type: e.target.value })}
+                className="field-control"
+              >
+                {['NGO', 'Food Bank', 'Charitable Trust', 'Community Shelter'].map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Area Preset</label>
+              <select
+                value={newNgo.area}
+                onChange={(e) => {
+                  const area = e.target.value;
+                  const coords = AREA_COORDS[area] || { lat: 13.34, lon: 74.74 };
+                  setNewNgo({ ...newNgo, area, lat: coords.lat, lon: coords.lon });
+                }}
+                className="field-control"
+              >
+                {Object.keys(AREA_COORDS).map((a) => (
+                  <option key={a} value={a}>{a}</option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="field-label">Max Capacity</label>
+              <input
+                type="number"
+                min="15"
+                value={newNgo.max_capacity_servings}
+                onChange={(e) => setNewNgo({ ...newNgo, max_capacity_servings: Number(e.target.value) })}
+                className="field-control stat-value"
+              />
+            </div>
+            <div>
+              <label className="field-label">Dietary</label>
+              <select
+                value={newNgo.dietary_preference}
+                onChange={(e) => setNewNgo({ ...newNgo, dietary_preference: e.target.value })}
+                className="field-control"
+              >
+                <option value="Any">Any</option>
+                <option value="Veg Only">Veg Only</option>
+              </select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 items-center">
+            <div>
+              <label className="field-label">Contact Person</label>
+              <input
+                required
+                type="text"
+                placeholder="Name"
+                value={newNgo.contact_person}
+                onChange={(e) => setNewNgo({ ...newNgo, contact_person: e.target.value })}
+                className="field-control"
+              />
+            </div>
+            <div>
+              <label className="field-label">Phone</label>
+              <input
+                required
+                type="text"
+                placeholder="+91 ..."
+                value={newNgo.phone}
+                onChange={(e) => setNewNgo({ ...newNgo, phone: e.target.value })}
+                className="field-control"
+              />
+            </div>
+            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 pt-5 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={newNgo.has_cold_chain}
+                onChange={(e) => setNewNgo({ ...newNgo, has_cold_chain: e.target.checked })}
+                className="rounded accent-emerald-700"
+              />
+              Has Cold-Chain Vehicle
+            </label>
+            <div className="flex justify-end gap-2 pt-5">
+              <button type="button" onClick={() => setShowAddNgo(false)} className="btn-secondary">
+                Cancel
+              </button>
+              <button type="submit" className="btn-primary">
+                Save NGO Partner
+              </button>
+            </div>
+          </div>
+        </form>
+      )}
 
       {/* Optional Add Surplus Form */}
       {showAddSurplus && (
@@ -501,7 +741,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
                 <th className="py-2.5">Distance</th>
                 <th className="py-2.5">Transport</th>
                 <th className="py-2.5">Status</th>
-                <th className="py-2.5 text-right">Action</th>
+                <th className="py-2.5 text-right">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -525,7 +765,14 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
                       {r.status}
                     </span>
                   </td>
-                  <td className="py-3 text-right">
+                  <td className="py-3 text-right space-x-3">
+                    <button
+                      onClick={() => setActiveSlip(r)}
+                      className="text-slate-600 hover:text-slate-900 font-semibold inline-flex items-center gap-1"
+                    >
+                      <FileText className="w-3.5 h-3.5" />
+                      Safety Slip
+                    </button>
                     {r.status === 'Dispatched' && (
                       <button
                         onClick={() => handleStatusUpdate(r.redistribution_id, 'Delivered')}

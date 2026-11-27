@@ -192,6 +192,31 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
     }
   };
 
+  const exportEvaluationCsv = () => {
+    const lines = [
+      'Section,Name,MAE_Servings,WAPE_Pct,MAPE_Pct,R2,Notes',
+      ...[
+        { name: 'Adaptive Ensemble', m: ens, note: selectedModel === 'ensemble' ? 'Selected' : 'Candidate' },
+        { name: 'XGBoost Regressor', m: xgb, note: selectedModel === 'xgboost' ? 'Selected' : 'Candidate' },
+        { name: 'Random Forest', m: rf, note: selectedModel === 'random_forest' ? 'Selected' : 'Candidate' },
+        { name: 'Dish + Weekday Baseline', m: baseline, note: selectedModel === 'baseline' ? 'Fallback' : 'Reference' },
+      ].map(
+        (r) =>
+          `ModelValidation,${r.name},${r.m.mae ?? ''},${r.m.wape_pct ?? ''},${r.m.mape_pct ?? ''},${r.m.r2 ?? ''},${r.note}`
+      ),
+      ...(errorReview?.by_meal_slot || []).map(
+        (row) => `WeeklyErrorBySlot,${row.group},${row.mae},${row.wape_pct},${row.mape_pct ?? ''},,${row.samples} records`
+      ),
+    ];
+    const blob = new Blob([lines.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `nourish_ai_evaluation_v${mlSummary?.model_version ?? 1}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const featureImp = mlSummary?.feature_importances?.slice(0, 7) || [];
   const mlMetrics = mlSummary?.metrics || {};
   const rf = mlMetrics.random_forest || {};
@@ -542,9 +567,15 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
                   Evaluated across {validation.fold_count ?? 0} future-date folds against dish + weekday baseline
                 </p>
               </div>
-              <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
-                Selected: {selectedModel}
-              </span>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold px-3 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200">
+                  Selected: {selectedModel}
+                </span>
+                <button type="button" onClick={exportEvaluationCsv} className="btn-secondary h-8 px-3 text-xs">
+                  <Download className="w-3.5 h-3.5" />
+                  Export Evaluation CSV
+                </button>
+              </div>
             </div>
 
             <div className="overflow-x-auto">

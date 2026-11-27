@@ -3,6 +3,7 @@ import {
   AlertCircle,
   CheckCircle2,
   Cpu,
+  Flame,
   Layers,
   RotateCcw,
   Save,
@@ -32,6 +33,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
 
   const [slotMenu, setSlotMenu] = useState([]);
   const [excludedIds, setExcludedIds] = useState([]);
+  const [firedReserves, setFiredReserves] = useState({});
   const [confirmDeleteId, setConfirmDeleteId] = useState(null);
   const [deletingId, setDeletingId] = useState(null);
   const [forecast, setForecast] = useState(null);
@@ -58,6 +60,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
       ]);
       setForecast(fcRes);
       setOptResult(optRes);
+      setFiredReserves({});
       if (save && optRes.saved_plan_id) {
         setSavedMsg(`Preparation plan saved (${optRes.saved_plan_id})`);
       }
@@ -130,10 +133,21 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
     }
   };
 
+  const handleFireReserveBatch = (item) => {
+    const current = firedReserves[item.menu_item_id] || 0;
+    if (current >= item.reserve_batches) return;
+    setFiredReserves({ ...firedReserves, [item.menu_item_id]: current + 1 });
+  };
+
   const opt = optResult?.optimization;
   const sum = opt?.summary || {};
   const fcLookup = Object.fromEntries((forecast?.items || []).map((i) => [i.menu_item_id, i]));
   const skippedItems = slotMenu.filter((m) => excludedIds.includes(m.menu_item_id));
+
+  const extraFiredServings = (opt?.items || []).reduce(
+    (acc, it) => acc + (firedReserves[it.menu_item_id] || 0) * it.batch_size,
+    0
+  );
 
   return (
     <div className="space-y-6">
@@ -267,12 +281,12 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
         <>
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="card-surface p-5">
-              <p className="text-xs font-semibold text-slate-500">Cook First (Initial)</p>
+              <p className="text-xs font-semibold text-slate-500">Active Cooked Batches</p>
               <p className="mt-1.5 text-2xl font-extrabold text-emerald-700 stat-value">
-                {(sum.total_initial_servings ?? 0).toLocaleString()} serv
+                {((sum.total_initial_servings ?? 0) + extraFiredServings).toLocaleString()} serv
               </p>
               <p className="text-xs text-slate-400 mt-1">
-                +{(sum.total_reserve_servings ?? 0).toLocaleString()} on-demand reserve
+                {Math.max(0, (sum.total_reserve_servings ?? 0) - extraFiredServings).toLocaleString()} standby reserve remaining
               </p>
             </div>
             <div className="card-surface p-5">
@@ -346,10 +360,10 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
                 </h3>
                 <div className="flex items-center gap-4 text-[11px] text-slate-500">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Initial Batch
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-600" /> Cooked Now
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500" /> On-Demand Reserve
+                    <span className="w-2.5 h-2.5 rounded-full bg-sky-500" /> Standby Reserve
                   </span>
                 </div>
               </div>
@@ -365,9 +379,13 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {opt.items.map((item) => {
                     const fc = fcLookup[item.menu_item_id] || {};
+                    const firedCount = firedReserves[item.menu_item_id] || 0;
+                    const cookedServings = item.initial_servings + firedCount * item.batch_size;
+                    const remainingReserveBatches = Math.max(0, item.reserve_batches - firedCount);
+                    const remainingReserveServings = remainingReserveBatches * item.batch_size;
                     const totalCap = Math.max(1, item.max_capacity_servings);
-                    const initPct = Math.round((item.initial_servings / totalCap) * 100);
-                    const resPct = 100 - initPct;
+                    const cookedPct = Math.round((cookedServings / totalCap) * 100);
+                    const resPct = 100 - cookedPct;
                     const isConfirming = confirmDeleteId === item.menu_item_id;
 
                     return (
@@ -405,6 +423,20 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
                           </div>
                         </div>
 
+                        {/* AI Forecast Driver Badges */}
+                        {fc.driver_tags?.length > 0 && (
+                          <div className="flex flex-wrap gap-1.5">
+                            {fc.driver_tags.map((tag) => (
+                              <span
+                                key={tag}
+                                className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-slate-100 text-slate-600"
+                              >
+                                {tag}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+
                         {isConfirming && (
                           <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 flex items-center justify-between gap-2 text-xs">
                             <span className="text-red-900 font-medium">
@@ -433,20 +465,39 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
                         {/* Visual Two-Stage Bar */}
                         <div className="space-y-1.5">
                           <div className="w-full h-3 rounded-full bg-slate-100 overflow-hidden flex">
-                            <div className="bg-emerald-600 h-full" style={{ width: `${initPct}%` }} />
-                            <div className="bg-sky-500 h-full" style={{ width: `${resPct}%` }} />
+                            <div className="bg-emerald-600 h-full transition-all duration-300" style={{ width: `${cookedPct}%` }} />
+                            <div className="bg-sky-500 h-full transition-all duration-300" style={{ width: `${resPct}%` }} />
                           </div>
                           <div className="flex items-center justify-between text-xs stat-value">
                             <span className="font-semibold text-emerald-800">
-                              Initial: {item.initial_batches}b ({item.initial_servings})
+                              Cooked: {item.initial_batches + firedCount}b ({cookedServings})
                             </span>
                             <span className="font-semibold text-sky-700">
-                              {item.reserve_batches > 0
-                                ? `+${item.reserve_batches}b Reserve (${item.reserve_servings})`
+                              {remainingReserveBatches > 0
+                                ? `+${remainingReserveBatches}b Reserve (${remainingReserveServings})`
+                                : item.reserve_batches > 0
+                                ? 'All reserves fired'
                                 : 'No reserve'}
                             </span>
                           </div>
                         </div>
+
+                        {/* Produce Additional Batch Button (Batch-Wise Cooking) */}
+                        {item.reserve_batches > 0 && (
+                          <div className="flex items-center justify-between gap-2">
+                            <button
+                              type="button"
+                              disabled={remainingReserveBatches <= 0}
+                              onClick={() => handleFireReserveBatch(item)}
+                              className="w-full h-8 rounded-xl border border-sky-200 bg-sky-50/70 hover:bg-sky-100 text-sky-800 text-xs font-semibold inline-flex items-center justify-center gap-1.5 transition disabled:opacity-50"
+                            >
+                              <Flame className="w-3.5 h-3.5" />
+                              {remainingReserveBatches > 0
+                                ? `Produce Additional Batch (+${item.batch_size} serv)`
+                                : 'Reserve Batches Produced'}
+                            </button>
+                          </div>
+                        )}
 
                         <div className="pt-2.5 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 stat-value">
                           <span>

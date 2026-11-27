@@ -45,7 +45,14 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
     );
   }
 
-  const { kpis, daily_trend: dailyTrend, slot_breakdown: slotBreakdown, top_waste_items: topWaste, ml_summary: ml } = data;
+  const {
+    kpis,
+    daily_trend: dailyTrend,
+    slot_breakdown: slotBreakdown,
+    top_waste_items: topWaste,
+    perishability_alerts: perishabilityAlerts = [],
+    ml_summary: ml,
+  } = data;
 
   return (
     <div className="space-y-8">
@@ -321,6 +328,26 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
                   </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-amber-700" />
+              </button>
+            )}
+
+            {perishabilityAlerts.length > 0 && (
+              <button
+                onClick={() => onSelectSlot?.(perishabilityAlerts[0].suggested_dishes?.[0]?.meal_slot || 'Breakfast')}
+                className="w-full p-4 rounded-2xl bg-sky-50 hover:bg-sky-100/70 border border-sky-200 text-left flex items-center justify-between transition"
+              >
+                <div>
+                  <p className="text-xs font-bold uppercase tracking-wider text-sky-800">
+                    Use Soon (≤ {perishabilityAlerts[0].perishability_days}d shelf life)
+                  </p>
+                  <p className="text-xs text-sky-900 mt-0.5">
+                    <strong>{perishabilityAlerts[0].name}</strong> ({perishabilityAlerts[0].stock_qty} {perishabilityAlerts[0].unit})
+                    {perishabilityAlerts[0].suggested_dishes?.[0]
+                      ? ` → Prioritize ${perishabilityAlerts[0].suggested_dishes[0].name}`
+                      : ''}
+                  </p>
+                </div>
+                <ArrowRight className="w-4 h-4 text-sky-700 shrink-0" />
               </button>
             )}
 

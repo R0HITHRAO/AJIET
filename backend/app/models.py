@@ -106,6 +106,20 @@ class IngredientUpdateRequest(BaseModel):
     stock_qty: float = Field(..., ge=0.0, le=100000.0)
 
 
+class MenuItemCreateRequest(BaseModel):
+    name: str = Field(..., min_length=2, max_length=120)
+    meal_slot: MealSlot = "Lunch"
+    category: str = Field(default="Custom Special", min_length=2, max_length=60)
+    dietary_tag: Literal["Veg", "Non-Veg"] = "Veg"
+    batch_size: int = Field(default=35, ge=5, le=500)
+    cost_per_serving: float = Field(default=26.0, ge=5.0, le=500.0)
+    uptake_rate: float = Field(default=0.75, ge=0.1, le=1.0)
+    serving_weight_kg: float = Field(default=0.28, ge=0.05, le=2.0)
+    requires_cold_chain: bool = False
+    max_safe_hold_hours: float = Field(default=4.0, ge=0.5, le=24.0)
+    recipe: dict[str, float] = Field(default_factory=dict)
+
+
 class NGOCreateRequest(BaseModel):
     name: str
     org_type: Literal["NGO", "Food Bank", "Charitable Trust", "Community Shelter"] = "NGO"

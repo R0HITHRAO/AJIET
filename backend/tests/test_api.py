@@ -151,7 +151,27 @@ def test_end_to_end_nourish_ai_workflow():
         assert ret.status_code == 200
         assert ret.json()["current_run"]["version"] >= 2
 
-        # 10. Remove a specific dish and its history
+        # 10. Add custom dish and remove a specific dish with its history
+        add_dish = client.post(
+            "/api/menu",
+            json={
+                "name": "Ragi Malt & Sprouts",
+                "meal_slot": "Breakfast",
+                "category": "Healthy Special",
+                "batch_size": 30,
+                "cost_per_serving": 20.0,
+                "uptake_rate": 0.65,
+                "recipe": {"ing_milk": 0.10, "ing_sugar": 0.02},
+            },
+        )
+        assert add_dish.status_code == 200
+        custom_id = add_dish.json()["item"]["menu_item_id"]
+        custom_fc = client.post(
+            "/api/forecast",
+            json={"date": "2026-11-28", "meal_slot": "Breakfast", "expected_attendance": 610},
+        )
+        assert any(i["menu_item_id"] == custom_id for i in custom_fc.json()["items"])
+
         del_res = client.delete("/api/menu/item_curd_rice?remove_history=true&retrain=true")
         assert del_res.status_code == 200
         del_data = del_res.json()

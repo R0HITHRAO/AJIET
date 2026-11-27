@@ -20,6 +20,7 @@ from .models import (
     BatchOptimizationRequest,
     ForecastRequest,
     IngredientUpdateRequest,
+    MenuItemCreateRequest,
     NGOCreateRequest,
     PostMealLogRequest,
     RedistributionDispatchRequest,
@@ -231,6 +232,27 @@ def dashboard_overview() -> dict[str, Any]:
     low_stock_count = sum(1 for ing in ingredients if float(ing["stock_qty"]) <= float(ing["reorder_level"]) * 1.2)
     sufficiency_rate = round((total_served / max(total_served + total_shortage, 1)) * 100.0, 1)
 
+    perishability_alerts = []
+    for ing in ingredients:
+        if int(ing.get("perishability_days", 99)) <= 4 and float(ing.get("stock_qty", 0)) > 0:
+            ing_id = ing["ingredient_id"]
+            dishes_using = [
+                {"menu_item_id": m["menu_item_id"], "name": m["name"], "meal_slot": m["meal_slot"]}
+                for m in menu_items.values()
+                if ing_id in (m.get("recipe") or {})
+            ]
+            perishability_alerts.append(
+                {
+                    "ingredient_id": ing_id,
+                    "name": ing["name"],
+                    "stock_qty": ing["stock_qty"],
+                    "unit": ing["unit"],
+                    "perishability_days": ing["perishability_days"],
+                    "suggested_dishes": dishes_using[:3],
+                }
+            )
+    perishability_alerts.sort(key=lambda x: x["perishability_days"])
+
     return {
         "kpis": {
             "monthly_waste_prevented_kg": ai_waste_prevented_kg,
@@ -248,6 +270,7 @@ def dashboard_overview() -> dict[str, Any]:
         "daily_trend": daily_trend,
         "slot_breakdown": slot_breakdown,
         "top_waste_items": top_waste_items,
+        "perishability_alerts": perishability_alerts,
         "ml_summary": forecast_engine.summary(),
         "forecast_error_review": _forecast_error_review(logs),
         "database": db_manager.status(),
@@ -259,6 +282,33 @@ def get_menu(meal_slot: str | None = Query(default=None)) -> dict[str, Any]:
     filt = {"meal_slot": meal_slot} if meal_slot else None
     items = db_manager.collection("menu_items").find(filt)
     return {"items": items}
+
+
+@app.post("/api/menu")
+def create_menu_item(req: MenuItemCreateRequest) -> dict[str, Any]:
+    slug = "".join(ch if ch.isalnum() else "_" for ch in req.name.lower()).strip("_")[:20] or "dish"
+    doc = {
+        "menu_item_id": f"item_{slug}_{uuid.uuid4().hex[:5]}",
+        "name": req.name.strip(),
+        "meal_slot": req.meal_slot,
+        "category": req.category.strip(),
+        "dietary_tag": req.dietary_tag,
+        "popularity_score": round(min(0.98, req.uptake_rate + 0.06), 2),
+        "uptake_rate": req.uptake_rate,
+        "batch_size": req.batch_size,
+        "min_initial_ratio": 0.62,
+        "cost_per_serving": req.cost_per_serving,
+        "waste_penalty": round(req.cost_per_serving * 1.1, 1),
+        "shortage_penalty": round(req.cost_per_serving * 1.9, 1),
+        "serving_weight_kg": req.serving_weight_kg,
+        "requires_cold_chain": req.requires_cold_chain,
+        "max_safe_hold_hours": req.max_safe_hold_hours,
+        "rain_affinity": 1.0,
+        "heat_affinity": 1.0,
+        "recipe": {k: float(v) for k, v in req.recipe.items() if float(v) > 0},
+    }
+    db_manager.collection("menu_items").insert_one(doc)
+    return {"item": doc}
 
 
 @app.delete("/api/menu/{menu_item_id}")
@@ -712,14 +762,24 @@ def dispatch_redistribution(req: RedistributionDispatchRequest) -> dict[str, Any
 
     redist_doc = {
         "redistribution_id": f"redist_{uuid.uuid4().hex[:8]}",
+        "handover_code": f"NA-{uuid.uuid4().hex[:4].upper()}",
         "surplus_id": req.surplus_id,
         "menu_item_name": surplus["menu_item_name"],
         "ngo_id": ngo["ngo_id"],
         "ngo_name": ngo["name"],
+        "ngo_area": ngo.get("area", ""),
+        "ngo_contact": f"{ngo.get('contact_person', '')} ({ngo.get('phone', '')})",
         "servings_delivered": alloc,
         "weight_kg": alloc_weight,
         "distance_km": match_info["distance_km"],
+        "eta_minutes": match_info["eta_minutes"],
         "match_score": match_info["match_score"],
+        "holding_temp_c": surplus.get("holding_temp_c"),
+        "storage_type": surplus.get("storage_type"),
+        "requires_cold_chain": surplus.get("requires_cold_chain", False),
+        "remaining_safe_hours": round(
+            max(0.0, float(surplus.get("max_safe_hold_hours", 4.0)) - float(surplus.get("hours_since_cooked", 0.0))), 1
+        ),
         "transport_mode": req.transport_mode,
         "status": "Dispatched",
         "notes": req.notes,
