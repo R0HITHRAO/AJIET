@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   ArrowLeft,
   CheckCircle2,
@@ -20,6 +20,13 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
   const [error, setError] = useState('');
   const [info, setInfo] = useState('');
   const [demoOtp, setDemoOtp] = useState('');
+  const [emailStatus, setEmailStatus] = useState(null);
+
+  useEffect(() => {
+    if (isOpen && mode === 'forgot') {
+      api.emailStatus().then(setEmailStatus).catch(() => {});
+    }
+  }, [isOpen, mode]);
 
   const [loginForm, setLoginForm] = useState({ email: '', password: '' });
   const [regForm, setRegForm] = useState({
@@ -334,14 +341,27 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
           {/* FORGOT PASSWORD -> EMAIL OTP FLOW */}
           {mode === 'forgot' && (
             <div className="space-y-4">
-              <button
-                type="button"
-                onClick={() => switchMode('login')}
-                className="text-xs font-semibold text-slate-500 hover:text-slate-800 inline-flex items-center gap-1"
-              >
-                <ArrowLeft className="w-3.5 h-3.5" />
-                Back to Sign In
-              </button>
+              <div className="flex items-center justify-between gap-2">
+                <button
+                  type="button"
+                  onClick={() => switchMode('login')}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 inline-flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" />
+                  Back to Sign In
+                </button>
+                {emailStatus && (
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                      emailStatus.configured
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200'
+                    }`}
+                  >
+                    {emailStatus.configured ? emailStatus.label : 'Demo Mode (Set backend/.env)'}
+                  </span>
+                )}
+              </div>
 
               {forgotStep === 'email' ? (
                 <form onSubmit={handleSendOtp} className="space-y-4">

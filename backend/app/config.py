@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
+from typing import Any
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -20,11 +21,30 @@ AUTH_SECRET = os.getenv("NOURISH_AUTH_SECRET", "nourish-ai-hackathon-secret-key"
 ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("ACCESS_TOKEN_EXPIRE_HOURS", "24"))
 OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", "10"))
 
-SMTP_HOST = os.getenv("SMTP_HOST", "").strip()
-SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "").strip()
-SMTP_PASS = os.getenv("SMTP_PASS", "").strip()
-SMTP_FROM = os.getenv("SMTP_FROM", "").strip() or SMTP_USER or "noreply@nourish-ai.local"
+
+def get_email_settings() -> dict[str, Any]:
+    """Loads email settings dynamically from .env so credential updates apply without restarting."""
+    load_dotenv(BASE_DIR / ".env", override=True)
+    load_dotenv(BASE_DIR.parent / ".env", override=True)
+    smtp_host = os.getenv("SMTP_HOST", "").strip()
+    smtp_port = int(os.getenv("SMTP_PORT", "587") or "587")
+    smtp_user = os.getenv("SMTP_USER", "").strip()
+    smtp_pass = os.getenv("SMTP_PASS", "").strip()
+    smtp_from = os.getenv("SMTP_FROM", "").strip() or smtp_user or "noreply@nourish-ai.local"
+    smtp_use_ssl = os.getenv("SMTP_USE_SSL", "").strip().lower() in ("1", "true", "yes") or smtp_port == 465
+    brevo_api_key = os.getenv("BREVO_API_KEY", "").strip()
+    resend_api_key = os.getenv("RESEND_API_KEY", "").strip()
+    return {
+        "smtp_host": smtp_host,
+        "smtp_port": smtp_port,
+        "smtp_user": smtp_user,
+        "smtp_pass": smtp_pass,
+        "smtp_from": smtp_from,
+        "smtp_use_ssl": smtp_use_ssl,
+        "brevo_api_key": brevo_api_key,
+        "resend_api_key": resend_api_key,
+    }
+
 
 KITCHEN_NAME = os.getenv("KITCHEN_NAME", "SMVITM Central Hostel & Canteen Kitchen")
 KITCHEN_LAT = float(os.getenv("KITCHEN_LAT", "13.2557"))

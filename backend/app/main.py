@@ -17,6 +17,7 @@ from fastapi.staticfiles import StaticFiles
 from .auth import (
     create_access_token,
     decode_access_token,
+    email_provider_status,
     generate_otp,
     hash_otp,
     hash_password,
@@ -226,6 +227,11 @@ def get_current_user(authorization: str | None = Header(default=None)) -> dict[s
     if not user:
         raise HTTPException(status_code=401, detail="User account no longer exists")
     return {"user": public_user(user)}
+
+
+@app.get("/api/auth/email-status")
+def auth_email_status() -> dict[str, Any]:
+    return email_provider_status()
 
 
 @app.post("/api/auth/forgot-password")

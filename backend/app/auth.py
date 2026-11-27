@@ -3,22 +3,20 @@ from __future__ import annotations
 import base64
 from datetime import datetime, timedelta, timezone
 from email.message import EmailMessage
+from email.utils import parseaddr
 import hashlib
 import hmac
 import json
 import secrets
 import smtplib
 from typing import Any
+import requests
 
 from .config import (
     ACCESS_TOKEN_EXPIRE_HOURS,
     AUTH_SECRET,
     OTP_EXPIRY_MINUTES,
-    SMTP_FROM,
-    SMTP_HOST,
-    SMTP_PASS,
-    SMTP_PORT,
-    SMTP_USER,
+    get_email_settings,
 )
 
 
@@ -99,50 +97,143 @@ def hash_otp(email: str, otp: str) -> str:
     return hmac.new(AUTH_SECRET.encode("utf-8"), msg, hashlib.sha256).hexdigest()
 
 
-def is_smtp_configured() -> bool:
-    return bool(SMTP_HOST and SMTP_USER and SMTP_PASS)
-
-
-def send_otp_email(recipient_email: str, recipient_name: str, otp: str) -> dict[str, Any]:
-    if not is_smtp_configured():
+def email_provider_status() -> dict[str, Any]:
+    cfg = get_email_settings()
+    if cfg["brevo_api_key"]:
         return {
-            "sent": False,
-            "smtp_configured": False,
-            "delivery_mode": "demo_preview",
-            "demo_otp": otp,
-            "message": f"SMTP not configured — demo OTP preview generated for {recipient_email}.",
+            "configured": True,
+            "provider": "brevo_api",
+            "label": "Brevo Transactional Email API (HTTPS)",
+            "sender": cfg["smtp_from"],
         }
+    if cfg["resend_api_key"]:
+        return {
+            "configured": True,
+            "provider": "resend_api",
+            "label": "Resend Email API (HTTPS)",
+            "sender": cfg["smtp_from"],
+        }
+    if cfg["smtp_host"] and cfg["smtp_user"] and cfg["smtp_pass"]:
+        return {
+            "configured": True,
+            "provider": "smtp_ssl" if cfg["smtp_use_ssl"] else "smtp_starttls",
+            "label": f"SMTP ({cfg['smtp_host']}:{cfg['smtp_port']})",
+            "sender": cfg["smtp_from"],
+        }
+    return {
+        "configured": False,
+        "provider": "demo_preview",
+        "label": "Demo OTP Preview (Configure backend/.env)",
+        "sender": None,
+    }
 
-    msg = EmailMessage()
-    msg["Subject"] = "Nourish AI — Password Reset Verification OTP"
-    msg["From"] = SMTP_FROM
-    msg["To"] = recipient_email
-    msg.set_content(
+
+def _otp_email_bodies(recipient_name: str, otp: str) -> tuple[str, str]:
+    text = (
         f"Hello {recipient_name},\n\n"
         f"Your Nourish AI password reset OTP is: {otp}\n"
         f"This code expires in {OTP_EXPIRY_MINUTES} minutes.\n\n"
         "If you did not request this reset, please ignore this email.\n\n"
         "— Nourish AI (Team Codeverse)"
     )
-    msg.add_alternative(
-        f"""
-        <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
-          <h2 style="color: #064e3b; margin-top: 0;">Nourish AI Password Reset</h2>
-          <p style="color: #334155;">Hello <strong>{recipient_name}</strong>,</p>
-          <p style="color: #334155;">Use the verification code below to reset your password:</p>
-          <div style="font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #065f46; background: #ecfdf5; padding: 14px 20px; border-radius: 10px; text-align: center; margin: 18px 0;">
-            {otp}
-          </div>
-          <p style="color: #64748b; font-size: 13px;">This OTP expires in {OTP_EXPIRY_MINUTES} minutes.</p>
-        </div>
-        """,
-        subtype="html",
-    )
+    html = f"""
+    <div style="font-family: Inter, Arial, sans-serif; max-width: 480px; margin: auto; padding: 24px; border: 1px solid #e2e8f0; border-radius: 12px;">
+      <h2 style="color: #064e3b; margin-top: 0;">Nourish AI Password Reset</h2>
+      <p style="color: #334155;">Hello <strong>{recipient_name}</strong>,</p>
+      <p style="color: #334155;">Use the verification code below to reset your password:</p>
+      <div style="font-size: 28px; font-weight: 800; letter-spacing: 6px; color: #065f46; background: #ecfdf5; padding: 14px 20px; border-radius: 10px; text-align: center; margin: 18px 0;">
+        {otp}
+      </div>
+      <p style="color: #64748b; font-size: 13px;">This OTP expires in {OTP_EXPIRY_MINUTES} minutes.</p>
+    </div>
+    """
+    return text, html
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=12) as server:
-        server.starttls()
-        server.login(SMTP_USER, SMTP_PASS)
-        server.send_message(msg)
+
+def send_otp_email(recipient_email: str, recipient_name: str, otp: str) -> dict[str, Any]:
+    cfg = get_email_settings()
+    status = email_provider_status()
+    if not status["configured"]:
+        return {
+            "sent": False,
+            "smtp_configured": False,
+            "delivery_mode": "demo_preview",
+            "demo_otp": otp,
+            "message": f"Email provider not configured — demo OTP preview generated for {recipient_email}.",
+        }
+
+    text_body, html_body = _otp_email_bodies(recipient_name, otp)
+    subject = "Nourish AI — Password Reset Verification OTP"
+
+    if cfg["brevo_api_key"]:
+        sender_name, sender_email = parseaddr(cfg["smtp_from"])
+        resp = requests.post(
+            "https://api.brevo.com/v3/smtp/email",
+            headers={
+                "api-key": cfg["brevo_api_key"],
+                "Content-Type": "application/json",
+            },
+            json={
+                "sender": {"name": sender_name or "Nourish AI", "email": sender_email or cfg["smtp_user"]},
+                "to": [{"email": recipient_email, "name": recipient_name}],
+                "subject": subject,
+                "textContent": text_body,
+                "htmlContent": html_body,
+            },
+            timeout=12,
+        )
+        if not resp.ok:
+            raise RuntimeError(f"Brevo API error ({resp.status_code}): {resp.text}")
+        return {
+            "sent": True,
+            "smtp_configured": True,
+            "delivery_mode": "brevo_api",
+            "message": f"A 6-digit verification OTP was sent to {recipient_email}.",
+        }
+
+    if cfg["resend_api_key"]:
+        resp = requests.post(
+            "https://api.resend.com/emails",
+            headers={
+                "Authorization": f"Bearer {cfg['resend_api_key']}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "from": cfg["smtp_from"],
+                "to": [recipient_email],
+                "subject": subject,
+                "text": text_body,
+                "html": html_body,
+            },
+            timeout=12,
+        )
+        if not resp.ok:
+            raise RuntimeError(f"Resend API error ({resp.status_code}): {resp.text}")
+        return {
+            "sent": True,
+            "smtp_configured": True,
+            "delivery_mode": "resend_api",
+            "message": f"A 6-digit verification OTP was sent to {recipient_email}.",
+        }
+
+    msg = EmailMessage()
+    msg["Subject"] = subject
+    msg["From"] = cfg["smtp_from"]
+    msg["To"] = recipient_email
+    msg.set_content(text_body)
+    msg.add_alternative(html_body, subtype="html")
+
+    if cfg["smtp_use_ssl"]:
+        with smtplib.SMTP_SSL(cfg["smtp_host"], cfg["smtp_port"], timeout=12) as server:
+            server.login(cfg["smtp_user"], cfg["smtp_pass"])
+            server.send_message(msg)
+    else:
+        with smtplib.SMTP(cfg["smtp_host"], cfg["smtp_port"], timeout=12) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
+            server.login(cfg["smtp_user"], cfg["smtp_pass"])
+            server.send_message(msg)
 
     return {
         "sent": True,

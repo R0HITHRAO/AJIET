@@ -131,6 +131,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email }),
     }),
+  emailStatus: () => request('/auth/email-status'),
   verifyOtp: (email, otp) =>
     request('/auth/verify-otp', {
       method: 'POST',
