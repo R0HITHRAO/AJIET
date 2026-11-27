@@ -979,6 +979,11 @@ def reset_demo() -> dict[str, Any]:
     return {"status": "reset_complete", "counts": counts, "model_run": run_info}
 
 
+@app.api_route("/api/{full_path:path}", methods=["GET", "POST", "PUT", "PATCH", "DELETE"], include_in_schema=False)
+def api_not_found(full_path: str):
+    raise HTTPException(status_code=404, detail=f"API route /api/{full_path} not found")
+
+
 # Serve built React frontend when available
 FRONTEND_DIST = Path(__file__).resolve().parent.parent.parent / "frontend" / "dist"
 if FRONTEND_DIST.exists():
@@ -988,8 +993,6 @@ if FRONTEND_DIST.exists():
 
     @app.get("/{full_path:path}")
     def serve_spa(full_path: str):
-        if full_path.startswith("api/"):
-            raise HTTPException(status_code=404, detail="API route not found")
         target = FRONTEND_DIST / full_path
         if full_path and target.exists() and target.is_file():
             return FileResponse(str(target))
