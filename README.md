@@ -8,7 +8,7 @@
 
 ## 🌍 About NOURISH AI
 
-NOURISH AI is an AI-powered smart kitchen management system designed to reduce food waste by predicting meal demand, optimizing cooking quantities, managing kitchen inventory, and facilitating the safe redistribution of eligible surplus food to nearby NGOs and food banks.
+NOURISH-AI is an AI-powered smart kitchen management system designed to reduce food waste by predicting meal demand, optimizing cooking quantities, managing kitchen inventory, and facilitating the safe redistribution of eligible surplus food to nearby NGOs and food banks.
 
 Unlike conventional food redistribution platforms that primarily focus on collecting and distributing leftover food, NOURISH AI focuses on **preventing food waste at its source through intelligent demand forecasting and batch-wise cooking optimization.**
 
