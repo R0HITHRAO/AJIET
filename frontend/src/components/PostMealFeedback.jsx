@@ -11,7 +11,6 @@ import {
 import {
   BrainCircuit,
   CheckCircle2,
-  ClipboardCheck,
   Download,
   RefreshCw,
   ShieldAlert,
@@ -55,7 +54,6 @@ export default function PostMealFeedback({ onDataUpdated }) {
       slotItems.map((item, idx) => {
         const pred = Math.round(expectedAttendance * item.uptake_rate);
         const prep = Math.round(pred * 1.06);
-        // Pre-fill first item with realistic surplus so judges can test immediately
         const serv = idx === 0 ? Math.max(20, prep - 75) : Math.max(20, prep - 12);
         return {
           menu_item_id: item.menu_item_id,
@@ -135,7 +133,7 @@ export default function PostMealFeedback({ onDataUpdated }) {
     setError('');
     try {
       const res = await api.importMealLogsCsv(file, true);
-      setCsvStatus(`Imported ${res.imported_count} kitchen records and retrained ML models (v${res.retrained_model?.version}).`);
+      setCsvStatus(`Imported ${res.imported_count} records and retrained ML models (v${res.retrained_model?.version}).`);
       await loadContext();
       onDataUpdated?.();
     } catch (err) {
@@ -148,74 +146,54 @@ export default function PostMealFeedback({ onDataUpdated }) {
 
   return (
     <div className="space-y-6">
-      {/* Post-Meal Logging Form */}
-      <form onSubmit={handleSubmit} className="card-surface p-5 space-y-4">
+      {/* Step 1 & 2: Post-Meal Feedback Form */}
+      <form onSubmit={handleSubmit} className="card-surface p-6 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold text-slate-900 flex items-center gap-2">
-              <ClipboardCheck className="w-5 h-5 text-emerald-700" />
-              Post-Meal Feedback &amp; Surplus Auto-Detection
-            </h2>
-            <p className="text-xs text-slate-500">
-              Record actual meals served &amp; leftovers to calibrate ML models and route safe surplus to NGOs
+            <h3 className="text-sm font-bold text-slate-900">Step 1 &amp; 2: Meal Turnout &amp; Leftover Telemetry</h3>
+            <p className="text-xs text-slate-500 mt-0.5">
+              Submit served counts and holding conditions; leftovers ≥ 10 servings trigger automatic safety inspection
             </p>
           </div>
-          <button
-            type="submit"
-            disabled={submitting}
-            className="px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold transition disabled:opacity-60"
-          >
-            {submitting ? 'Saving Feedback...' : 'Submit Post-Meal Record'}
+          <button type="submit" disabled={submitting} className="btn-primary">
+            {submitting ? 'Saving...' : 'Submit Post-Meal Record'}
           </button>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-4">
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Date</label>
-            <input
-              type="date"
-              value={dateStr}
-              onChange={(e) => setDateStr(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
-            />
+            <label className="field-label">Date</label>
+            <input type="date" value={dateStr} onChange={(e) => setDateStr(e.target.value)} className="field-control" />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Meal Slot</label>
-            <select
-              value={mealSlot}
-              onChange={(e) => setMealSlot(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"
-            >
+            <label className="field-label">Meal Slot</label>
+            <select value={mealSlot} onChange={(e) => setMealSlot(e.target.value)} className="field-control">
               {['Breakfast', 'Lunch', 'Snacks', 'Dinner'].map((s) => (
                 <option key={s} value={s}>{s}</option>
               ))}
             </select>
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Expected Attendance</label>
+            <label className="field-label">Expected</label>
             <input
               type="number"
               value={expectedAttendance}
               onChange={(e) => setExpectedAttendance(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              className="field-control stat-value"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Actual Turnout</label>
+            <label className="field-label">Actual Turnout</label>
             <input
               type="number"
               value={actualAttendance}
               onChange={(e) => setActualAttendance(Number(e.target.value))}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm"
+              className="field-control stat-value"
             />
           </div>
           <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1">Weather</label>
-            <select
-              value={weather}
-              onChange={(e) => setWeather(e.target.value)}
-              className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm bg-white"
-            >
+            <label className="field-label">Weather</label>
+            <select value={weather} onChange={(e) => setWeather(e.target.value)} className="field-control">
               {['Sunny', 'Cloudy', 'Rainy', 'Humid'].map((w) => (
                 <option key={w} value={w}>{w}</option>
               ))}
@@ -223,18 +201,18 @@ export default function PostMealFeedback({ onDataUpdated }) {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto pt-2">
           <table className="w-full text-xs text-left border-collapse">
             <thead>
-              <tr className="border-b border-slate-200 text-slate-500 uppercase">
-                <th className="py-2 pr-2">Menu Item</th>
-                <th className="py-2 px-2">Prepared</th>
-                <th className="py-2 px-2">Served</th>
-                <th className="py-2 px-2">Leftover</th>
-                <th className="py-2 px-2">Storage</th>
-                <th className="py-2 px-2">Temp (°C)</th>
-                <th className="py-2 px-2">Age (h)</th>
-                <th className="py-2 px-2">Sealed</th>
+              <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
+                <th className="py-2.5 pr-3">Dish</th>
+                <th className="py-2.5 px-2">Prepared</th>
+                <th className="py-2.5 px-2">Served</th>
+                <th className="py-2.5 px-2">Leftover</th>
+                <th className="py-2.5 px-2">Storage</th>
+                <th className="py-2.5 px-2">Temp (°C)</th>
+                <th className="py-2.5 px-2">Age (h)</th>
+                <th className="py-2.5 pl-2 text-center">Sealed</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
@@ -242,65 +220,70 @@ export default function PostMealFeedback({ onDataUpdated }) {
                 const leftover = Math.max(0, row.prepared_servings - row.served_servings);
                 return (
                   <tr key={row.menu_item_id}>
-                    <td className="py-2.5 pr-2 font-semibold text-slate-800">{row.name}</td>
-                    <td className="py-2.5 px-2">
+                    <td className="py-3 pr-3 font-semibold text-slate-800">{row.name}</td>
+                    <td className="py-3 px-2">
                       <input
                         type="number"
                         min="0"
                         value={row.prepared_servings}
                         onChange={(e) => updateRow(idx, 'prepared_servings', Number(e.target.value))}
-                        className="w-20 rounded-lg border border-slate-300 px-2 py-1"
+                        className="w-20 h-9 rounded-lg border border-slate-200 px-2.5 stat-value"
                       />
                     </td>
-                    <td className="py-2.5 px-2">
+                    <td className="py-3 px-2">
                       <input
                         type="number"
                         min="0"
                         value={row.served_servings}
                         onChange={(e) => updateRow(idx, 'served_servings', Number(e.target.value))}
-                        className="w-20 rounded-lg border border-slate-300 px-2 py-1"
+                        className="w-20 h-9 rounded-lg border border-slate-200 px-2.5 stat-value"
                       />
                     </td>
-                    <td className="py-2.5 px-2 font-bold stat-value">
-                      <span className={leftover >= 10 ? 'text-amber-700' : 'text-slate-500'}>
+                    <td className="py-3 px-2 font-bold stat-value">
+                      <span
+                        className={`px-2 py-1 rounded-lg ${
+                          leftover >= 10 ? 'bg-amber-50 text-amber-800' : 'text-slate-500'
+                        }`}
+                      >
                         {leftover} serv
                       </span>
                     </td>
-                    <td className="py-2.5 px-2">
+                    <td className="py-3 px-2">
                       <select
                         value={row.storage_type}
                         onChange={(e) => updateRow(idx, 'storage_type', e.target.value)}
-                        className="rounded-lg border border-slate-300 px-2 py-1 bg-white"
+                        className="h-9 rounded-lg border border-slate-200 px-2 bg-white"
                       >
                         <option value="hot_hold">Hot Hold</option>
                         <option value="chilled">Chilled</option>
                         <option value="ambient">Ambient</option>
                       </select>
                     </td>
-                    <td className="py-2.5 px-2">
+                    <td className="py-3 px-2">
                       <input
                         type="number"
                         step="0.5"
                         value={row.holding_temp_c}
                         onChange={(e) => updateRow(idx, 'holding_temp_c', Number(e.target.value))}
-                        className="w-16 rounded-lg border border-slate-300 px-2 py-1"
+                        className="w-16 h-9 rounded-lg border border-slate-200 px-2 stat-value"
                       />
                     </td>
-                    <td className="py-2.5 px-2">
+                    <td className="py-3 px-2">
                       <input
                         type="number"
                         step="0.5"
                         min="0"
                         value={row.hours_since_cooked}
                         onChange={(e) => updateRow(idx, 'hours_since_cooked', Number(e.target.value))}
-                        className="w-16 rounded-lg border border-slate-300 px-2 py-1"
+                        className="w-16 h-9 rounded-lg border border-slate-200 px-2 stat-value"
                       />
                     </td>
-                    <td className="py-2.5 px-2">
+                    <td className="py-3 pl-2 text-center">
                       <input
                         type="checkbox"
                         checked={row.is_sealed}
                         onChange={(e) => updateRow(idx, 'is_sealed', e.target.checked)}
+                        className="rounded accent-emerald-700"
                       />
                     </td>
                   </tr>
@@ -310,42 +293,40 @@ export default function PostMealFeedback({ onDataUpdated }) {
           </table>
         </div>
 
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100 text-xs">
-          <label className="flex items-center gap-2 font-medium text-slate-700 cursor-pointer">
+        <div className="pt-3 border-t border-slate-100 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-600">
+          <label className="flex items-center gap-2 font-medium cursor-pointer">
             <input
               type="checkbox"
               checked={autoRetrain}
               onChange={(e) => setAutoRetrain(e.target.checked)}
+              className="rounded accent-emerald-700"
             />
-            Automatically retrain Random Forest &amp; XGBoost after submission
+            Retrain Random Forest &amp; XGBoost automatically after saving
           </label>
-          <span className="text-slate-500">
-            Leftovers ≥ 10 servings automatically run through FSSAI safety inspection
-          </span>
         </div>
 
         {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>}
 
         {feedbackResult && (
-          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2">
+          <div className="p-4 rounded-xl bg-emerald-50 border border-emerald-200 space-y-2.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <p className="text-sm font-bold text-emerald-900 flex items-center gap-2">
+              <p className="text-xs font-bold text-emerald-900 flex items-center gap-2">
                 <CheckCircle2 className="w-4 h-4" />
-                Recorded {feedbackResult.logged_count} meal logs
+                Saved {feedbackResult.logged_count} meal logs
                 {feedbackResult.post_meal_mae !== null && ` • Post-Meal MAE: ${feedbackResult.post_meal_mae} servings`}
               </p>
               {feedbackResult.retrained_model && (
-                <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-emerald-700 text-white">
-                  Models updated to v{feedbackResult.retrained_model.version}
+                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-700 text-white">
+                  Model v{feedbackResult.retrained_model.version} active
                 </span>
               )}
             </div>
             {feedbackResult.detected_surplus?.length > 0 && (
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 pt-1">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                 {feedbackResult.detected_surplus.map((s) => (
                   <div
                     key={s.surplus_id}
-                    className={`p-2.5 rounded-lg border text-xs flex items-start gap-2 ${
+                    className={`p-3 rounded-xl border text-xs flex items-start gap-2 ${
                       s.safety_passed ? 'bg-white border-emerald-300 text-slate-800' : 'bg-red-50 border-red-200 text-red-900'
                     }`}
                   >
@@ -356,9 +337,9 @@ export default function PostMealFeedback({ onDataUpdated }) {
                     )}
                     <div>
                       <p className="font-bold">
-                        {s.menu_item_name} ({s.servings_available} serv / {s.weight_kg} kg)
+                        {s.menu_item_name} ({s.servings_available} serv)
                       </p>
-                      <p className="text-[11px]">{s.safety_status}: {s.safety_reasons?.[0]}</p>
+                      <p className="text-[11px] text-slate-500 mt-0.5">{s.safety_reasons?.[0]}</p>
                     </div>
                   </div>
                 ))}
@@ -368,61 +349,51 @@ export default function PostMealFeedback({ onDataUpdated }) {
         )}
       </form>
 
-      {/* CSV Import + ML Diagnostics */}
+      {/* Step 3: CSV Import & ML Diagnostics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card-surface p-5 space-y-4">
+        <div className="card-surface p-6 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+            <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <Upload className="w-4 h-4 text-sky-700" />
-              Import Actual Kitchen CSV &amp; Retrain
+              Step 3: Actual Kitchen CSV Import &amp; Retraining
             </h3>
-            <a
-              href="/api/meal-logs/sample-csv"
-              className="text-xs font-semibold text-emerald-700 hover:underline flex items-center gap-1"
-            >
+            <a href="/api/meal-logs/sample-csv" className="text-xs font-semibold text-emerald-700 hover:underline inline-flex items-center gap-1">
               <Download className="w-3.5 h-3.5" />
               Sample CSV
             </a>
           </div>
           <p className="text-xs text-slate-500">
-            Upload real hostel/canteen daily consumption CSV records to retrain Random Forest and XGBoost on live institutional patterns.
+            Import actual hostel/canteen consumption logs to evaluate and retrain both forecasting models.
           </p>
           <div className="flex flex-wrap items-center gap-3">
-            <label className="cursor-pointer px-4 py-2 rounded-xl border border-dashed border-slate-300 hover:border-emerald-500 bg-slate-50 text-xs font-semibold text-slate-700">
-              Choose CSV File
+            <label className="btn-secondary cursor-pointer">
+              Upload CSV File
               <input type="file" accept=".csv" onChange={handleCsvUpload} className="hidden" />
             </label>
-            <button
-              type="button"
-              onClick={handleRetrain}
-              disabled={retraining}
-              className="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-semibold flex items-center gap-1.5"
-            >
+            <button type="button" onClick={handleRetrain} disabled={retraining} className="btn-primary">
               <RefreshCw className={`w-3.5 h-3.5 ${retraining ? 'animate-spin' : ''}`} />
-              {retraining ? 'Retraining...' : 'Retrain Models Now'}
+              {retraining ? 'Retraining...' : 'Retrain Models'}
             </button>
           </div>
           {csvStatus && (
-            <p className="text-xs font-semibold text-emerald-700 bg-emerald-50 p-2.5 rounded-lg border border-emerald-200">
+            <p className="text-xs font-semibold text-emerald-800 bg-emerald-50 p-3 rounded-xl border border-emerald-200">
               {csvStatus}
             </p>
           )}
-
-          {/* Model Run History */}
-          <div>
-            <p className="text-xs font-bold uppercase text-slate-500 mb-2">Recent Model Training Runs</p>
-            <div className="space-y-1.5 max-h-40 overflow-y-auto">
+          <div className="pt-2">
+            <p className="field-label">Model Version History</p>
+            <div className="space-y-2 max-h-44 overflow-y-auto">
               {modelRuns.slice(0, 5).map((run) => (
                 <div
                   key={run.version}
-                  className="text-xs p-2.5 rounded-lg bg-slate-50 border border-slate-200/70 flex items-center justify-between"
+                  className="text-xs p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 flex items-center justify-between"
                 >
                   <div>
-                    <span className="font-bold text-slate-800">v{run.version}</span>{' '}
+                    <span className="font-bold text-slate-900">v{run.version}</span>{' '}
                     <span className="text-slate-500">({run.reason}) &bull; {run.training_samples} rows</span>
                   </div>
                   <span className="font-semibold text-emerald-700 stat-value">
-                    Ens MAE: {run.metrics?.ensemble?.mae} | R² {run.metrics?.ensemble?.r2}
+                    MAE {run.metrics?.ensemble?.mae} &bull; R² {run.metrics?.ensemble?.r2}
                   </span>
                 </div>
               ))}
@@ -430,20 +401,17 @@ export default function PostMealFeedback({ onDataUpdated }) {
           </div>
         </div>
 
-        {/* Feature Importance */}
-        <div className="card-surface p-5">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
-              <BrainCircuit className="w-4 h-4 text-emerald-700" />
-              Top Demand Drivers (RF + XGBoost Importance)
-            </h3>
+        <div className="card-surface p-6">
+          <div className="flex items-center gap-2 mb-4">
+            <BrainCircuit className="w-4 h-4 text-emerald-700" />
+            <h3 className="text-sm font-bold text-slate-900">Top Demand Feature Drivers</h3>
           </div>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={featureImp} layout="vertical" margin={{ top: 5, right: 20, left: 30, bottom: 5 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" />
-                <XAxis type="number" unit="%" tick={{ fontSize: 11 }} />
-                <YAxis type="category" dataKey="feature" width={140} tick={{ fontSize: 11 }} />
+              <BarChart data={featureImp} layout="vertical" margin={{ top: 4, right: 20, left: 28, bottom: 4 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
+                <XAxis type="number" unit="%" tick={{ fontSize: 11, fill: '#64748b' }} />
+                <YAxis type="category" dataKey="feature" width={145} tick={{ fontSize: 11, fill: '#475569' }} />
                 <Tooltip formatter={(v) => `${v}%`} />
                 <Bar dataKey="importance_pct" name="Importance" fill="#059669" radius={[0, 6, 6, 0]} />
               </BarChart>

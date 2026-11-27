@@ -5,13 +5,34 @@
 @layer base {
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #f4f7f5;
+    background-color: #f8fafc;
     color: #0f172a;
   }
 }
 
-.card-surface {
-  @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm;
+@layer components {
+  .card-surface {
+    @apply bg-white rounded-2xl border border-slate-200/90 shadow-[0_1px_2px_rgba(15,23,42,0.04)];
+  }
+
+  .field-label {
+    @apply block text-[11px] font-semibold uppercase tracking-wider text-slate-500 mb-1.5;
+  }
+
+  .field-control {
+    @apply w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800
+           focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition;
+  }
+
+  .btn-primary {
+    @apply h-10 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold
+           inline-flex items-center justify-center gap-2 transition disabled:opacity-50;
+  }
+
+  .btn-secondary {
+    @apply h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700
+           text-sm font-semibold inline-flex items-center justify-center gap-2 transition;
+  }
 }
 
 .stat-value {

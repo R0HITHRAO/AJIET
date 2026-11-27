@@ -6,10 +6,13 @@ import {
   Database,
   FlaskConical,
   LayoutDashboard,
+  Menu,
   Package,
+  RefreshCw,
   RotateCcw,
   Sprout,
   Truck,
+  X,
 } from 'lucide-react';
 import { api } from './api';
 import OverviewDashboard from './components/OverviewDashboard';
@@ -19,28 +22,80 @@ import PostMealFeedback from './components/PostMealFeedback';
 import RedistributionHub from './components/RedistributionHub';
 import InventoryData from './components/InventoryData';
 
-const TABS = [
-  { id: 'overview', label: 'Overview & Impact', icon: LayoutDashboard },
-  { id: 'planner', label: 'Forecast & Batch Plan', icon: ChefHat },
-  { id: 'simulator', label: 'What-If Simulator', icon: FlaskConical },
-  { id: 'feedback', label: 'Post-Meal & ML Retrain', icon: ClipboardCheck },
-  { id: 'redistribution', label: 'Surplus & NGO Hub', icon: Truck },
-  { id: 'inventory', label: 'Inventory & Logs', icon: Package },
+const NAV_GROUPS = [
+  {
+    title: 'Analytics',
+    items: [
+      {
+        id: 'overview',
+        label: 'Executive Overview',
+        subtitle: 'Kitchen waste reduction, savings, and system diagnostics',
+        icon: LayoutDashboard,
+      },
+    ],
+  },
+  {
+    title: 'Daily Kitchen Workflow',
+    items: [
+      {
+        id: 'planner',
+        label: '1. Forecast & Batch Plan',
+        subtitle: 'ML demand forecast paired with Google OR-Tools two-stage batch sizing',
+        icon: ChefHat,
+      },
+      {
+        id: 'simulator',
+        label: '2. What-If Simulator',
+        subtitle: 'Stress-test attendance shifts, menu swaps, and ingredient shortages',
+        icon: FlaskConical,
+      },
+      {
+        id: 'feedback',
+        label: '3. Post-Meal & Retrain',
+        subtitle: 'Log served meals, auto-detect surplus, and retrain ML models',
+        icon: ClipboardCheck,
+      },
+      {
+        id: 'redistribution',
+        label: '4. Surplus & NGO Hub',
+        subtitle: 'FSSAI food-safety screening, OR-Tools NGO matching, and dispatch',
+        icon: Truck,
+      },
+    ],
+  },
+  {
+    title: 'Kitchen Operations',
+    items: [
+      {
+        id: 'inventory',
+        label: 'Inventory & Logs',
+        subtitle: 'Manage live ingredient stock and inspect historical meal records',
+        icon: Package,
+      },
+    ],
+  },
 ];
+
+const ALL_TABS = NAV_GROUPS.flatMap((g) => g.items);
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [health, setHealth] = useState(null);
   const [overview, setOverview] = useState(null);
   const [resetting, setResetting] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const refreshGlobal = async () => {
+    setRefreshing(true);
     try {
       const [hRes, oRes] = await Promise.all([api.health(), api.dashboardOverview()]);
       setHealth(hRes);
       setOverview(oRes);
     } catch {
       // handled gracefully via empty state
+    } finally {
+      setRefreshing(false);
     }
   };
 
@@ -58,95 +113,169 @@ export default function App() {
     }
   };
 
+  const currentTab = ALL_TABS.find((t) => t.id === activeTab) || ALL_TABS[0];
   const liveSurplusCount = overview?.kpis?.eligible_surplus_servings_live || 0;
 
-  return (
-    <div className="min-h-screen flex flex-col bg-[#f4f7f5]">
-      {/* Top Command Header */}
-      <header className="sticky top-0 z-30 bg-emerald-950 text-white border-b border-emerald-900/80 shadow-md">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-400/40 flex items-center justify-center">
-              <Sprout className="w-6 h-6 text-emerald-300" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-lg sm:text-xl font-extrabold tracking-tight">NOURISH AI</h1>
-                <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-400/20 text-emerald-200 border border-emerald-400/30">
-                  Team Codeverse &bull; Sankalp&apos;26
-                </span>
-              </div>
-              <p className="text-xs text-emerald-200/80">
-                {health?.kitchen?.name || 'SMVITM Central Hostel & Canteen Kitchen'} &bull;{' '}
-                {health?.kitchen?.location || 'Bantakal, Udupi'}
-              </p>
-            </div>
+  const SidebarContent = () => (
+    <div className="flex flex-col h-full">
+      {/* Brand */}
+      <div className="px-5 py-5 border-b border-slate-200/80 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <div className="w-9 h-9 rounded-xl bg-emerald-700 text-white flex items-center justify-center shadow-sm">
+            <Sprout className="w-5 h-5" />
           </div>
-
-          <div className="flex flex-wrap items-center gap-2 text-xs">
-            {health?.ml_engine && (
-              <span className="px-2.5 py-1 rounded-full bg-emerald-900/90 border border-emerald-700/80 text-emerald-100 flex items-center gap-1.5">
-                <BrainCircuit className="w-3.5 h-3.5 text-emerald-300" />
-                ML v{health.ml_engine.model_version} (R² {health.ml_engine.metrics?.ensemble?.r2 ?? '-'})
-              </span>
-            )}
-            {health?.database && (
-              <span className="px-2.5 py-1 rounded-full bg-emerald-900/90 border border-emerald-700/80 text-emerald-100 flex items-center gap-1.5">
-                <Database className="w-3.5 h-3.5 text-sky-300" />
-                {health.database.mode === 'mongodb' ? 'MongoDB' : 'Mongo-Compatible Store'}
-              </span>
-            )}
-            <button
-              onClick={handleResetDemo}
-              disabled={resetting}
-              title="Reset demo data & retrain models"
-              className="px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white font-semibold flex items-center gap-1 transition"
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
-              Reset Demo
-            </button>
+          <div>
+            <h1 className="text-base font-extrabold tracking-tight text-slate-900 leading-none">NOURISH AI</h1>
+            <p className="text-[11px] font-medium text-slate-500 mt-1">Team Codeverse &bull; Sankalp&apos;26</p>
           </div>
         </div>
+        <button
+          onClick={() => setMobileMenuOpen(false)}
+          className="lg:hidden p-1.5 rounded-lg text-slate-500 hover:bg-slate-100"
+        >
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-        {/* Navigation Tabs */}
-        <nav className="max-w-7xl mx-auto px-4 sm:px-6 flex items-center gap-1 overflow-x-auto pb-2">
-          {TABS.map((tab) => {
-            const Icon = tab.icon;
-            const active = activeTab === tab.id;
-            return (
+      {/* Ordered Navigation Groups */}
+      <nav className="flex-1 px-3 py-4 space-y-6 overflow-y-auto">
+        {NAV_GROUPS.map((group) => (
+          <div key={group.title}>
+            <p className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-slate-400">
+              {group.title}
+            </p>
+            <div className="space-y-1">
+              {group.items.map((tab) => {
+                const Icon = tab.icon;
+                const active = activeTab === tab.id;
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => {
+                      setActiveTab(tab.id);
+                      setMobileMenuOpen(false);
+                    }}
+                    className={`w-full px-3 py-2.5 rounded-xl text-sm font-semibold flex items-center justify-between transition ${
+                      active
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-200/80'
+                        : 'text-slate-600 hover:bg-slate-100/80 hover:text-slate-900 border border-transparent'
+                    }`}
+                  >
+                    <span className="flex items-center gap-2.5 truncate">
+                      <Icon className={`w-4 h-4 shrink-0 ${active ? 'text-emerald-700' : 'text-slate-400'}`} />
+                      <span className="truncate">{tab.label}</span>
+                    </span>
+                    {tab.id === 'redistribution' && liveSurplusCount > 0 && (
+                      <span className="ml-2 px-2 py-0.5 text-[10px] font-bold rounded-full bg-amber-100 text-amber-800">
+                        {liveSurplusCount}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        ))}
+      </nav>
+
+      {/* Compact System Diagnostics Footer */}
+      <div className="p-4 border-t border-slate-200/80 bg-slate-50/70 space-y-2.5">
+        <div className="text-xs space-y-1.5">
+          <div className="flex items-center justify-between text-slate-600">
+            <span className="flex items-center gap-1.5 font-medium">
+              <BrainCircuit className="w-3.5 h-3.5 text-emerald-700" />
+              ML Ensemble
+            </span>
+            <span className="font-bold text-slate-900 stat-value">
+              v{health?.ml_engine?.model_version ?? 1} &bull; R² {health?.ml_engine?.metrics?.ensemble?.r2 ?? '-'}
+            </span>
+          </div>
+          <div className="flex items-center justify-between text-slate-600">
+            <span className="flex items-center gap-1.5 font-medium">
+              <Database className="w-3.5 h-3.5 text-sky-700" />
+              Storage
+            </span>
+            <span className="font-semibold text-slate-800">
+              {health?.database?.mode === 'mongodb' ? 'MongoDB' : 'Mongo-Store'}
+            </span>
+          </div>
+        </div>
+        <button
+          onClick={handleResetDemo}
+          disabled={resetting}
+          className="w-full h-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-slate-700 text-xs font-semibold flex items-center justify-center gap-1.5 transition"
+        >
+          <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
+          {resetting ? 'Resetting...' : 'Reset Demo Data'}
+        </button>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex bg-[#f8fafc]">
+      {/* Desktop Sidebar */}
+      <aside className="hidden lg:block w-64 shrink-0 bg-white border-r border-slate-200/90 sticky top-0 h-screen">
+        <SidebarContent />
+      </aside>
+
+      {/* Mobile Drawer */}
+      {mobileMenuOpen && (
+        <div className="fixed inset-0 z-50 lg:hidden flex">
+          <div className="w-72 bg-white h-full shadow-xl border-r border-slate-200">
+            <SidebarContent />
+          </div>
+          <div className="flex-1 bg-slate-900/40" onClick={() => setMobileMenuOpen(false)} />
+        </div>
+      )}
+
+      {/* Main Content Area */}
+      <div className="flex-1 min-w-0 flex flex-col">
+        {/* Clean Contextual Top Bar */}
+        <header className="sticky top-0 z-20 bg-white/90 backdrop-blur border-b border-slate-200/80">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3.5 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
               <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap flex items-center gap-2 transition ${
-                  active
-                    ? 'bg-white text-emerald-950 shadow-sm'
-                    : 'text-emerald-100/85 hover:bg-emerald-900/70 hover:text-white'
-                }`}
+                onClick={() => setMobileMenuOpen(true)}
+                className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-600 hover:bg-slate-50"
               >
-                <Icon className="w-4 h-4" />
-                {tab.label}
-                {tab.id === 'redistribution' && liveSurplusCount > 0 && (
-                  <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white">
-                    {liveSurplusCount}
-                  </span>
-                )}
+                <Menu className="w-5 h-5" />
               </button>
-            );
-          })}
-        </nav>
-      </header>
+              <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-bold text-slate-900 truncate">{currentTab.label}</h2>
+                <p className="text-xs text-slate-500 truncate">{currentTab.subtitle}</p>
+              </div>
+            </div>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6">
-        {activeTab === 'overview' && <OverviewDashboard data={overview} onNavigate={setActiveTab} />}
-        {activeTab === 'planner' && <ForecastBatchPlanner />}
-        {activeTab === 'simulator' && <WhatIfSimulator />}
-        {activeTab === 'feedback' && <PostMealFeedback onDataUpdated={refreshGlobal} />}
-        {activeTab === 'redistribution' && (
-          <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />
-        )}
-        {activeTab === 'inventory' && <InventoryData onDataUpdated={refreshGlobal} />}
-      </main>
+            <div className="flex items-center gap-2.5 shrink-0">
+              <span className="hidden md:inline-flex items-center px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 text-xs font-semibold">
+                {health?.kitchen?.name || 'SMVITM Kitchen'} &bull; Bantakal
+              </span>
+              <button
+                onClick={refreshGlobal}
+                disabled={refreshing}
+                className="btn-secondary h-9 px-3 text-xs"
+                title="Refresh metrics"
+              >
+                <RefreshCw className={`w-3.5 h-3.5 ${refreshing ? 'animate-spin' : ''}`} />
+                <span className="hidden sm:inline">Refresh</span>
+              </button>
+            </div>
+          </div>
+        </header>
+
+        {/* Main View Canvas */}
+        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-8 py-6">
+          {activeTab === 'overview' && <OverviewDashboard data={overview} onNavigate={setActiveTab} />}
+          {activeTab === 'planner' && <ForecastBatchPlanner />}
+          {activeTab === 'simulator' && <WhatIfSimulator />}
+          {activeTab === 'feedback' && <PostMealFeedback onDataUpdated={refreshGlobal} />}
+          {activeTab === 'redistribution' && (
+            <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />
+          )}
+          {activeTab === 'inventory' && <InventoryData onDataUpdated={refreshGlobal} />}
+        </main>
+      </div>
     </div>
   );
 }
