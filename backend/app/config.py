@@ -17,7 +17,11 @@ MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017")
 MONGODB_DB = os.getenv("MONGODB_DB", "nourish_ai")
 MONGODB_TIMEOUT_MS = int(os.getenv("MONGODB_TIMEOUT_MS", "800"))
 
-AUTH_SECRET = os.getenv("NOURISH_AUTH_SECRET", "nourish-ai-hackathon-secret-key")
+AUTH_SECRET = os.getenv("NOURISH_AUTH_SECRET", "").strip()
+if len(AUTH_SECRET) < 32:
+    raise RuntimeError(
+        "NOURISH_AUTH_SECRET must be configured with a random value of at least 32 characters."
+    )
 ACCESS_TOKEN_EXPIRE_HOURS = int(os.getenv("ACCESS_TOKEN_EXPIRE_HOURS", "24"))
 OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", "10"))
 

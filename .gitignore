@@ -8,3 +8,6 @@ frontend/dist/
 .env
 .env.*
 *.log
+
+backend/data/store/users.json
+backend/data/store/password_reset_otps.json

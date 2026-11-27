@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from pathlib import Path
+import os
 import sys
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
+
+os.environ.setdefault("NOURISH_AUTH_SECRET", "test-only-secret-not-for-production-2026")
 
 BACKEND_ROOT = Path(__file__).resolve().parent.parent
 if str(BACKEND_ROOT) not in sys.path:
