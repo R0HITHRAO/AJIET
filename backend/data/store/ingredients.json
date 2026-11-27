@@ -1,0 +1,182 @@
+[
+  {
+    "ingredient_id": "ing_rice",
+    "name": "Sona Masoori Rice",
+    "unit": "kg",
+    "stock_qty": 240.0,
+    "reorder_level": 60.0,
+    "unit_cost": 54.0,
+    "perishability_days": 180,
+    "_id": "926135b2-e2ea-4724-bb8a-75826196c163"
+  },
+  {
+    "ingredient_id": "ing_toor_dal",
+    "name": "Toor Dal",
+    "unit": "kg",
+    "stock_qty": 75.0,
+    "reorder_level": 20.0,
+    "unit_cost": 135.0,
+    "perishability_days": 120,
+    "_id": "354a5163-b958-4aa5-8a66-e9d8f9a3a4ea"
+  },
+  {
+    "ingredient_id": "ing_wheat",
+    "name": "Whole Wheat Atta",
+    "unit": "kg",
+    "stock_qty": 160.0,
+    "reorder_level": 40.0,
+    "unit_cost": 46.0,
+    "perishability_days": 90,
+    "_id": "2e28c63f-9fc2-4439-9ec2-2d1648f48707"
+  },
+  {
+    "ingredient_id": "ing_paneer",
+    "name": "Fresh Paneer",
+    "unit": "kg",
+    "stock_qty": 55.0,
+    "reorder_level": 15.0,
+    "unit_cost": 360.0,
+    "perishability_days": 4,
+    "_id": "3f7cffbf-b3a7-44c6-8d2e-91a6abe0cd1c"
+  },
+  {
+    "ingredient_id": "ing_potato",
+    "name": "Potatoes",
+    "unit": "kg",
+    "stock_qty": 110.0,
+    "reorder_level": 25.0,
+    "unit_cost": 34.0,
+    "perishability_days": 21,
+    "_id": "c534aa20-d39e-414d-8baa-7663afa01efa"
+  },
+  {
+    "ingredient_id": "ing_onion",
+    "name": "Onions",
+    "unit": "kg",
+    "stock_qty": 110.0,
+    "reorder_level": 25.0,
+    "unit_cost": 38.0,
+    "perishability_days": 21,
+    "_id": "935e3a08-ac47-4c97-a1e3-6a82be53531e"
+  },
+  {
+    "ingredient_id": "ing_tomato",
+    "name": "Tomatoes",
+    "unit": "kg",
+    "stock_qty": 90.0,
+    "reorder_level": 22.0,
+    "unit_cost": 42.0,
+    "perishability_days": 6,
+    "_id": "7f9a36c6-82a1-4e17-a86e-08b2392c5d01"
+  },
+  {
+    "ingredient_id": "ing_mixed_veg",
+    "name": "Seasonal Mixed Vegetables",
+    "unit": "kg",
+    "stock_qty": 120.0,
+    "reorder_level": 28.0,
+    "unit_cost": 65.0,
+    "perishability_days": 4,
+    "_id": "c5965ca1-c27c-4a96-99f0-ad9141bdce87"
+  },
+  {
+    "ingredient_id": "ing_oil",
+    "name": "Cold-Pressed Cooking Oil",
+    "unit": "L",
+    "stock_qty": 68.0,
+    "reorder_level": 18.0,
+    "unit_cost": 148.0,
+    "perishability_days": 180,
+    "_id": "9138d075-5009-4d9a-a95a-31638cf432f7"
+  },
+  {
+    "ingredient_id": "ing_curd",
+    "name": "Fresh Curd / Yogurt",
+    "unit": "L",
+    "stock_qty": 85.0,
+    "reorder_level": 18.0,
+    "unit_cost": 62.0,
+    "perishability_days": 3,
+    "_id": "8f22a417-7a8a-46bf-a9c6-48ad91c5e897"
+  },
+  {
+    "ingredient_id": "ing_idli_batter",
+    "name": "Fermented Idli/Dosa Batter",
+    "unit": "kg",
+    "stock_qty": 150.0,
+    "reorder_level": 35.0,
+    "unit_cost": 58.0,
+    "perishability_days": 2,
+    "_id": "ba65a49e-ffd3-41ee-9512-35dd0ab4b7e9"
+  },
+  {
+    "ingredient_id": "ing_poha",
+    "name": "Flattened Rice (Poha)",
+    "unit": "kg",
+    "stock_qty": 55.0,
+    "reorder_level": 15.0,
+    "unit_cost": 52.0,
+    "perishability_days": 90,
+    "_id": "20147ce3-eac5-4127-9aa3-593d57bbabec"
+  },
+  {
+    "ingredient_id": "ing_rava",
+    "name": "Bombay Rava (Sooji)",
+    "unit": "kg",
+    "stock_qty": 50.0,
+    "reorder_level": 15.0,
+    "unit_cost": 56.0,
+    "perishability_days": 90,
+    "_id": "a8eb2402-e11f-4ecb-80d6-da793e1399ea"
+  },
+  {
+    "ingredient_id": "ing_coconut",
+    "name": "Grated Coconut",
+    "unit": "kg",
+    "stock_qty": 45.0,
+    "reorder_level": 12.0,
+    "unit_cost": 120.0,
+    "perishability_days": 3,
+    "_id": "5082da58-70c5-4b3b-a1a5-267bac661fb0"
+  },
+  {
+    "ingredient_id": "ing_spices",
+    "name": "Masala & Whole Spices",
+    "unit": "kg",
+    "stock_qty": 28.0,
+    "reorder_level": 6.0,
+    "unit_cost": 420.0,
+    "perishability_days": 180,
+    "_id": "bd5059bc-2684-4b7d-ac30-b0bbfd24e961"
+  },
+  {
+    "ingredient_id": "ing_milk",
+    "name": "Toned Milk",
+    "unit": "L",
+    "stock_qty": 115.0,
+    "reorder_level": 25.0,
+    "unit_cost": 54.0,
+    "perishability_days": 2,
+    "_id": "684e0c5e-c5ba-4672-b746-eb53e11efba0"
+  },
+  {
+    "ingredient_id": "ing_sugar",
+    "name": "Cane Sugar / Jaggery",
+    "unit": "kg",
+    "stock_qty": 45.0,
+    "reorder_level": 12.0,
+    "unit_cost": 48.0,
+    "perishability_days": 180,
+    "_id": "ca95b710-10cf-47f3-a0b0-f472897cde93"
+  },
+  {
+    "ingredient_id": "ing_besan",
+    "name": "Gram Flour (Besan)",
+    "unit": "kg",
+    "stock_qty": 42.0,
+    "reorder_level": 10.0,
+    "unit_cost": 88.0,
+    "perishability_days": 90,
+    "_id": "4d4fb9ee-a569-4d56-b99d-63693d2aabe5"
+  }
+]

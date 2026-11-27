@@ -1,0 +1,19 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    background-color: #f4f7f5;
+    color: #0f172a;
+  }
+}
+
+.card-surface {
+  @apply bg-white rounded-2xl border border-slate-200/80 shadow-sm;
+}
+
+.stat-value {
+  font-variant-numeric: tabular-nums;
+}

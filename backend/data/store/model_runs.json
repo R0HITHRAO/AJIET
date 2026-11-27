@@ -1,0 +1,98 @@
+[
+  {
+    "version": 1,
+    "reason": "demo_reset",
+    "trained_at": "2026-11-27T11:36:14",
+    "training_samples": 1440,
+    "validation_samples": 272,
+    "weights": {
+      "random_forest": 0.492,
+      "xgboost": 0.508
+    },
+    "metrics": {
+      "random_forest": {
+        "mae": 31.88,
+        "rmse": 42.33,
+        "mape_pct": 6.18,
+        "r2": 0.909
+      },
+      "xgboost": {
+        "mae": 31.35,
+        "rmse": 40.93,
+        "mape_pct": 6.01,
+        "r2": 0.915
+      },
+      "ensemble": {
+        "mae": 31.01,
+        "rmse": 40.89,
+        "mape_pct": 5.98,
+        "r2": 0.9151
+      }
+    },
+    "_id": "a0353d44-dee6-41cf-a51c-914fd41ac723"
+  },
+  {
+    "version": 2,
+    "reason": "manual_retrain",
+    "trained_at": "2026-11-27T11:53:24",
+    "training_samples": 1440,
+    "validation_samples": 272,
+    "weights": {
+      "random_forest": 0.492,
+      "xgboost": 0.508
+    },
+    "metrics": {
+      "random_forest": {
+        "mae": 31.88,
+        "rmse": 42.33,
+        "mape_pct": 6.18,
+        "r2": 0.909
+      },
+      "xgboost": {
+        "mae": 31.35,
+        "rmse": 40.93,
+        "mape_pct": 6.01,
+        "r2": 0.915
+      },
+      "ensemble": {
+        "mae": 31.01,
+        "rmse": 40.89,
+        "mape_pct": 5.98,
+        "r2": 0.9151
+      }
+    },
+    "_id": "a535898e-9ce9-4564-a8b0-37f5cd12a9a4"
+  },
+  {
+    "version": 3,
+    "reason": "post_meal_feedback",
+    "trained_at": "2026-11-27T11:56:35",
+    "training_samples": 1445,
+    "validation_samples": 261,
+    "weights": {
+      "random_forest": 0.497,
+      "xgboost": 0.503
+    },
+    "metrics": {
+      "random_forest": {
+        "mae": 31.66,
+        "rmse": 42.01,
+        "mape_pct": 6.19,
+        "r2": 0.9089
+      },
+      "xgboost": {
+        "mae": 31.48,
+        "rmse": 41.49,
+        "mape_pct": 6.04,
+        "r2": 0.9112
+      },
+      "ensemble": {
+        "mae": 30.99,
+        "rmse": 40.94,
+        "mape_pct": 6.0,
+        "r2": 0.9135
+      }
+    },
+    "_id": "b832a6d1-1eeb-43b0-b232-7c4e1a35f49c"
+  }
+]
