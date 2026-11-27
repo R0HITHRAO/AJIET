@@ -75,7 +75,7 @@ Requirements: Python and Node.js/npm.
    $env:NOURISH_AUTH_SECRET = "<paste the generated value here>"
    ```
 
-   Keep the environment variable set in the same terminal used to start the backend. For persistent local setup, put `NOURISH_AUTH_SECRET=<generated value>` in `backend/.env`; `.env` files are ignored by Git. The backend refuses to start without a secret of at least 32 characters.
+   Keep the environment variable set in the same terminal used to start the backend. For persistent local setup, put `NOURISH_AUTH_SECRET=<generated value>` in `backend/.env`; `.env` files are ignored by Git. The backend refuses to start without a secret of at least 32 characters. `start_nourish_ai.ps1` generates and stores a random local secret in `backend/.env` if one is missing.
 
 4. Start the backend from the repository root:
 
