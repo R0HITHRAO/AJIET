@@ -2,22 +2,52 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --bg-canvas: #f5f7f6;
+  --bg-surface: #ffffff;
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --brand-primary: #047857;
+  --brand-primary-hover: #065f46;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.04), 0 4px 12px -4px rgba(15, 23, 42, 0.04);
+  --shadow-hover: 0 8px 24px -8px rgba(4, 47, 46, 0.14), 0 2px 6px -1px rgba(15, 23, 42, 0.05);
+}
+
 @layer base {
   body {
     font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    background-color: #f6f8f7;
+    background-color: var(--bg-canvas);
+    background-image: radial-gradient(rgba(6, 78, 59, 0.045) 1px, transparent 1px);
+    background-size: 24px 24px;
     color: #0f172a;
+  }
+
+  h1, h2, h3, .font-display {
+    font-family: 'Plus Jakarta Sans', 'Inter', system-ui, sans-serif;
   }
 }
 
 @layer components {
   .card-surface {
-    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)];
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
   }
 
   .card-interactive {
-    @apply bg-white rounded-2xl border border-slate-200/80 shadow-[0_1px_3px_rgba(15,23,42,0.04)]
-           hover:border-emerald-300 hover:shadow-[0_8px_24px_-8px_rgba(6,78,59,0.12)] transition-all duration-200;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border-subtle);
+    border-radius: 1rem;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1),
+      border-color 0.2s ease;
+  }
+
+  .card-interactive:hover {
+    transform: translateY(-2px);
+    border-color: rgba(5, 150, 105, 0.35);
+    box-shadow: var(--shadow-hover);
   }
 
   .field-label {
@@ -25,21 +55,142 @@
   }
 
   .field-control {
-    @apply w-full h-10 rounded-xl border border-slate-200 bg-white px-3 text-sm text-slate-800
+    @apply w-full h-10 rounded-xl border border-slate-200/90 bg-white px-3 text-sm text-slate-800
+           shadow-[inset_0_1px_1px_rgba(15,23,42,0.02)]
            focus:outline-none focus:ring-2 focus:ring-emerald-600/20 focus:border-emerald-600 transition;
   }
 
   .btn-primary {
-    @apply h-10 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold
-           inline-flex items-center justify-center gap-2 shadow-sm transition disabled:opacity-50;
+    @apply h-10 px-4 rounded-xl bg-emerald-700 hover:bg-emerald-800 active:scale-[0.99] text-white text-sm font-semibold
+           inline-flex items-center justify-center gap-2 shadow-[0_1px_2px_rgba(4,47,46,0.2)]
+           transition-all duration-150 disabled:opacity-50 disabled:pointer-events-none;
   }
 
   .btn-secondary {
-    @apply h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700
-           text-sm font-semibold inline-flex items-center justify-center gap-2 transition;
+    @apply h-10 px-3.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 hover:border-slate-300
+           active:scale-[0.99] text-slate-700 text-sm font-semibold inline-flex items-center justify-center gap-2 transition-all duration-150;
   }
+
+  .segmented-track {
+    @apply inline-flex p-1 rounded-xl bg-slate-200/70 border border-slate-200/80;
+  }
+
+  .segmented-pill {
+    @apply px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all duration-150;
+  }
+}
+
+/* Architectural Hero Mesh & Grid */
+.hero-mesh {
+  background:
+    radial-gradient(60% 80% at 92% 10%, rgba(16, 185, 129, 0.22) 0%, transparent 65%),
+    radial-gradient(45% 70% at 8% 95%, rgba(20, 184, 166, 0.16) 0%, transparent 60%),
+    linear-gradient(135deg, #032221 0%, #064e3b 52%, #0f5132 100%);
+}
+
+.hero-grid-overlay {
+  background-image:
+    linear-gradient(to right, rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+
+/* Smooth Transitions */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.97) translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fadeSlideUp 0.24s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-modal-in {
+  animation: modalScaleIn 0.2s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Custom Range Sliders */
+input[type='range'] {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 6px;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  outline: none;
+}
+
+input[type='range']::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  border-radius: 9999px;
+  background: #047857;
+  border: 2px solid #ffffff;
+  box-shadow: 0 1px 4px rgba(15, 23, 42, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease;
+}
+
+input[type='range']::-webkit-slider-thumb:hover {
+  transform: scale(1.12);
+}
+
+/* Precision Tables */
+.pro-table thead th {
+  @apply text-[11px] font-semibold uppercase tracking-wider text-slate-400 border-b border-slate-200/90 py-3;
+}
+
+.pro-table tbody tr {
+  @apply border-b border-slate-100 last:border-0 hover:bg-slate-50/70 transition-colors;
 }
 
 .stat-value {
   font-variant-numeric: tabular-nums;
+}
+
+/* Clean Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.45);
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(100, 116, 139, 0.65);
+}
+
+/* Print-clean mode for Safety Handover Slip */
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: #ffffff !important;
+  }
 }

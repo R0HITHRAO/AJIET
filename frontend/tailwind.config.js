@@ -4,11 +4,13 @@ export default {
   theme: {
     extend: {
       colors: {
-        emeraldDeep: '#064e3b',
-        sageBg: '#f4f7f5',
+        emeraldDeep: '#042f2e',
+        sageBg: '#f6f8f7',
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Plus Jakarta Sans', 'Inter', 'system-ui', 'sans-serif'],
+        mono: ['JetBrains Mono', 'ui-monospace', 'monospace'],
       },
     },
   },

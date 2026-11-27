@@ -232,7 +232,7 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
     <div className="space-y-6">
       {/* Clean Segmented Sub-Navigation */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex p-1 rounded-xl bg-slate-200/70">
+        <div className="segmented-track">
           {[
             { id: 'log', label: 'Log Post-Meal Actuals' },
             { id: 'csv', label: 'CSV Import & Retrain' },
@@ -241,7 +241,7 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
             <button
               key={t.id}
               onClick={() => setSubTab(t.id)}
-              className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+              className={`segmented-pill ${
                 subTab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >

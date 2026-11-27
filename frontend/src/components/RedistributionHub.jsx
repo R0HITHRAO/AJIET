@@ -101,15 +101,15 @@ function SafetyHandoverSlipModal({ slip, onClose }) {
   if (!slip) return null;
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+      <div className="animate-modal-in bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
               FSSAI Food-Safety Handover Slip
             </span>
-            <h3 className="text-lg font-extrabold text-slate-900 mt-0.5">{slip.menu_item_name}</h3>
+            <h3 className="font-display text-lg font-extrabold text-slate-900 mt-0.5">{slip.menu_item_name}</h3>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
+          <button onClick={onClose} className="no-print p-1.5 rounded-lg text-slate-400 hover:bg-slate-100">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -117,7 +117,7 @@ function SafetyHandoverSlipModal({ slip, onClose }) {
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
           <div>
             <p className="text-[11px] font-semibold uppercase text-emerald-800">Handover Verification Code</p>
-            <p className="text-xl font-extrabold tracking-widest text-emerald-950 stat-value">
+            <p className="text-xl font-mono font-bold tracking-widest text-emerald-950 stat-value">
               {slip.handover_code || slip.redistribution_id.slice(-6).toUpperCase()}
             </p>
           </div>
@@ -159,7 +159,7 @@ function SafetyHandoverSlipModal({ slip, onClose }) {
           <p className="text-slate-400">Logged at: {slip.created_at}</p>
         </div>
 
-        <div className="flex items-center justify-end gap-2 pt-2">
+        <div className="no-print flex items-center justify-end gap-2 pt-2">
           <button onClick={() => window.print()} className="btn-secondary">
             <Printer className="w-4 h-4" />
             Print Slip
@@ -312,7 +312,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
 
       {/* Clean Sub-Navigation + Contextual Action */}
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex p-1 rounded-xl bg-slate-200/70">
+        <div className="segmented-track">
           {[
             { id: 'matching', label: `Matching Queue (${surplusList.length})` },
             { id: 'tracker', label: `Dispatch Tracker (${redistributions.length})` },
@@ -321,7 +321,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
             <button
               key={t.id}
               onClick={() => setSubTab(t.id)}
-              className={`px-3.5 py-2 rounded-lg text-xs font-semibold transition ${
+              className={`segmented-pill ${
                 subTab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
               }`}
             >

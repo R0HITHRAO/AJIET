@@ -108,28 +108,35 @@ export default function App() {
   const liveSurplusCount = overview?.kpis?.eligible_surplus_servings_live || 0;
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#f6f8f7]">
-      {/* Modern Sticky Top Web Navbar */}
-      <header className="sticky top-0 z-40 bg-white/90 backdrop-blur-md border-b border-slate-200/80">
+    <div className="min-h-screen flex flex-col">
+      {/* Executive Glass Navigation Bar */}
+      <header className="no-print sticky top-0 z-40 bg-white/85 backdrop-blur-lg border-b border-slate-200/80">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
           <button
             onClick={() => setActiveTab('overview')}
-            className="flex items-center gap-2.5 text-left shrink-0"
+            className="flex items-center gap-3 text-left shrink-0 group"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-800 text-white flex items-center justify-center shadow-sm">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-900 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
               <Sprout className="w-5 h-5" />
             </div>
             <div>
-              <span className="text-base font-extrabold tracking-tight text-slate-900 block leading-none">
-                Nourish AI
+              <div className="flex items-center gap-1.5">
+                <span className="font-display text-base font-extrabold tracking-tight text-slate-900 leading-none">
+                  Nourish AI
+                </span>
+                <span className="hidden xl:inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                  Live
+                </span>
+              </div>
+              <span className="text-[11px] font-medium text-slate-500 block mt-0.5">
+                Smart Kitchen &amp; Redistribution
               </span>
-              <span className="text-[11px] font-medium text-slate-500">Smart Kitchen Platform</span>
             </div>
           </button>
 
           {/* Desktop Navigation Pills */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/80 p-1 rounded-2xl border border-slate-200/60">
+          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/70">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
@@ -137,16 +144,16 @@ export default function App() {
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`px-3.5 py-2 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all ${
+                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all duration-150 ${
                     active
-                      ? 'bg-white text-emerald-800 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/50'
+                      ? 'bg-white text-emerald-900 shadow-sm ring-1 ring-slate-200/70'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                   }`}
                 >
                   <Icon className={`w-3.5 h-3.5 ${active ? 'text-emerald-700' : 'text-slate-400'}`} />
                   {item.label}
                   {item.id === 'redistribution' && liveSurplusCount > 0 && (
-                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white leading-none">
+                    <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white leading-none stat-value">
                       {liveSurplusCount}
                     </span>
                   )}
@@ -155,14 +162,16 @@ export default function App() {
             })}
           </nav>
 
-          {/* Right Live Status & Actions */}
+          {/* Right Auth & System Controls */}
           <div className="flex items-center gap-2 shrink-0">
             {currentUser ? (
               <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200/80 text-xs font-semibold text-emerald-900">
-                  <User className="w-3.5 h-3.5 text-emerald-700" />
-                  <span className="max-w-[120px] truncate">{currentUser.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200">
+                <div className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-emerald-50/90 border border-emerald-200/80 text-xs font-semibold text-emerald-950">
+                  <span className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center text-[11px] font-bold">
+                    {currentUser.name?.[0]?.toUpperCase() || <User className="w-3 h-3" />}
+                  </span>
+                  <span className="max-w-[110px] truncate">{currentUser.name}</span>
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200/80">
                     {currentUser.role}
                   </span>
                 </div>
@@ -192,7 +201,7 @@ export default function App() {
                     setAuthModalMode('register');
                     setAuthModalOpen(true);
                   }}
-                  className="hidden sm:inline-flex h-9 px-3 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold items-center transition"
+                  className="hidden sm:inline-flex h-9 px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold items-center shadow-sm transition"
                 >
                   Register
                 </button>
@@ -203,7 +212,7 @@ export default function App() {
               onClick={handleResetDemo}
               disabled={resetting}
               title="Reset demo dataset"
-              className="h-9 px-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 text-xs font-semibold inline-flex items-center gap-1 transition"
+              className="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 inline-flex items-center justify-center transition"
             >
               <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
             </button>
@@ -242,8 +251,8 @@ export default function App() {
         )}
       </header>
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-7">
+      {/* Main Content Canvas with Smooth View Transition */}
+      <main key={activeTab} className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-7 animate-fade-up">
         {activeTab === 'overview' && (
           <OverviewDashboard
             data={overview}
@@ -260,16 +269,22 @@ export default function App() {
         {activeTab === 'inventory' && <InventoryData onDataUpdated={refreshGlobal} />}
       </main>
 
-      {/* Clean Product Footer */}
-      <footer className="border-t border-slate-200/80 bg-white/70 mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-2 text-xs text-slate-500">
-          <span>
-            <strong className="text-slate-700">Nourish AI</strong> &bull; Team Codeverse (SMVITM Bantakal, Udupi) &bull; Sankalp&apos;26
-          </span>
-          <span>
-            Powered by Scikit-learn, XGBoost, Google OR-Tools &amp;{' '}
-            {health?.database?.mode === 'mongodb' ? 'MongoDB' : 'Mongo-Compatible Store'}
-          </span>
+      {/* Clean Editorial Footer */}
+      <footer className="no-print border-t border-slate-200/80 bg-white/80 backdrop-blur-sm mt-8">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span>
+              <strong className="text-slate-800 font-semibold">Nourish AI</strong> &bull; Team Codeverse (SMVITM Bantakal, Udupi) &bull; Sankalp&apos;26
+            </span>
+          </div>
+          <div className="flex items-center gap-3 text-[11px]">
+            <span>ML v{health?.ml_engine?.model_version ?? 1}</span>
+            <span>&bull;</span>
+            <span>Google OR-Tools</span>
+            <span>&bull;</span>
+            <span>{health?.database?.mode === 'mongodb' ? 'MongoDB' : 'Mongo-Compatible Store'}</span>
+          </div>
         </div>
       </footer>
 

@@ -114,10 +114,10 @@ export default function InventoryData({ onDataUpdated }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="inline-flex p-1 rounded-xl bg-slate-200/70">
+        <div className="segmented-track">
           <button
             onClick={() => setSubTab('inventory')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`segmented-pill ${
               subTab === 'inventory' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -125,7 +125,7 @@ export default function InventoryData({ onDataUpdated }) {
           </button>
           <button
             onClick={() => setSubTab('menu')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`segmented-pill ${
               subTab === 'menu' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >
@@ -133,7 +133,7 @@ export default function InventoryData({ onDataUpdated }) {
           </button>
           <button
             onClick={() => setSubTab('logs')}
-            className={`px-4 py-2 rounded-lg text-xs font-semibold transition ${
+            className={`segmented-pill ${
               subTab === 'logs' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
             }`}
           >

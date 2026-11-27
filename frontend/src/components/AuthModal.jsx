@@ -126,28 +126,28 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full overflow-hidden">
+    <div className="no-print fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="animate-modal-in bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-emerald-900 to-teal-900 text-white px-6 py-5 flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center">
+        <div className="hero-mesh text-white px-6 py-5 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-white/15 border border-white/15 flex items-center justify-center">
               <Sprout className="w-5 h-5 text-emerald-200" />
             </div>
             <div>
-              <h3 className="text-base font-extrabold leading-tight">
+              <h3 className="font-display text-base font-extrabold leading-tight">
                 {mode === 'login'
                   ? 'Sign In to Nourish AI'
                   : mode === 'register'
                   ? 'Create Kitchen Account'
                   : 'Reset Password via Email OTP'}
               </h3>
-              <p className="text-[11px] text-emerald-200">
+              <p className="text-[11px] text-emerald-200/90">
                 Institutional Kitchen &amp; NGO Access Portal
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-emerald-200 hover:bg-white/10">
+          <button onClick={onClose} className="p-1.5 rounded-lg text-emerald-200 hover:bg-white/10 transition">
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -399,7 +399,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
                         placeholder="Enter 6-digit OTP"
                         value={forgotForm.otp}
                         onChange={(e) => setForgotForm({ ...forgotForm, otp: e.target.value.replace(/\D/g, '') })}
-                        className="field-control pl-9 tracking-widest font-bold stat-value"
+                        className="field-control pl-9 tracking-widest font-mono font-bold stat-value"
                       />
                     </div>
                   </div>
