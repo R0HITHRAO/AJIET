@@ -423,6 +423,27 @@ class DemandForecastEngine:
             same_weekday[menu_item_id] = average_served * attendance_ratio
         return rolling, same_weekday
 
+    def _resolve_model_choice(self, model_choice: str, meal_slot: str) -> str:
+        """Resolve 'optimal' or explicit model requests using validated CV performance."""
+        validation = self.metrics.get("validation", {})
+        reliable_models = validation.get("reliable_ml_models", {})
+        if model_choice != "optimal":
+            return model_choice if reliable_models.get(model_choice, False) else "baseline"
+
+        eligible = [name for name in ("ensemble", "xgboost", "random_forest") if reliable_models.get(name, False)]
+        if not eligible:
+            return "baseline"
+
+        slot_metrics = validation.get("by_meal_slot", {})
+        overall_selected = validation.get("selected_model", "ensemble")
+
+        def _score(name: str) -> tuple[float, int]:
+            slot_mae = slot_metrics.get(name, {}).get(meal_slot, {}).get("mae")
+            overall_mae = self.metrics.get(name, {}).get("mae", float("inf"))
+            return (float(slot_mae) if slot_mae is not None else float(overall_mae), 0 if name == overall_selected else 1)
+
+        return min(eligible, key=_score)
+
     def predict(
         self,
         db: DatabaseManager,
@@ -433,7 +454,7 @@ class DemandForecastEngine:
         special_event: str = "None",
         weather: str = "Cloudy",
         temperature_c: float = 28.0,
-        model_choice: str = "ensemble",
+        model_choice: str = "optimal",
         menu_item_ids: list[str] | None = None,
     ) -> dict[str, Any]:
         self.ensure_loaded_or_train(db)
@@ -459,9 +480,7 @@ class DemandForecastEngine:
         dow = dt.weekday()
         is_weekend = int(dow >= 5)
         rolling_map, baseline_map = self._history_features(db, target_date, dow, expected_attendance)
-        validation = self.metrics.get("validation", {})
-        reliable_models = validation.get("reliable_ml_models", {})
-        applied_model = model_choice if reliable_models.get(model_choice, False) else "baseline"
+        applied_model = self._resolve_model_choice(model_choice, meal_slot)
 
         rows = []
         for item in selected_items:
@@ -502,14 +521,9 @@ class DemandForecastEngine:
             rf_p = float(rf_preds[idx])
             xgb_p = float(xgb_preds[idx])
             ens_p = float(ens_preds[idx])
-            if model_choice == "random_forest":
-                model_prediction = rf_p
-            elif model_choice == "xgboost":
-                model_prediction = xgb_p
-            else:
-                model_prediction = ens_p
+            pred_map = {"random_forest": rf_p, "xgboost": xgb_p, "ensemble": ens_p}
             baseline = baseline_map.get(item_mid, item_fallback)
-            chosen = model_prediction if applied_model != "baseline" else baseline
+            chosen = pred_map[applied_model] if applied_model in pred_map else baseline
 
             drivers: list[str] = []
             if is_holiday:

@@ -35,8 +35,8 @@ def test_end_to_end_nourish_ai_workflow():
         assert d_data["kpis"]["monthly_waste_prevented_kg"] > 0
         assert len(d_data["daily_trend"]) > 0
 
-        # 3. Demand Forecast (Random Forest, XGBoost, Ensemble)
-        for model_choice in ("ensemble", "xgboost", "random_forest"):
+        # 3. Demand Forecast (Optimal, Ensemble, XGBoost, Random Forest)
+        for model_choice in ("optimal", "ensemble", "xgboost", "random_forest"):
             fc = client.post(
                 "/api/forecast",
                 json={
@@ -51,8 +51,12 @@ def test_end_to_end_nourish_ai_workflow():
             assert fc.status_code == 200
             fc_data = fc.json()
             assert fc_data["total_predicted_servings"] > 0
-            expected_model = model_choice if validation["reliable_ml_models"].get(model_choice) else "baseline"
-            assert fc_data["applied_model"] == expected_model
+            if model_choice == "optimal":
+                eligible = [m for m in ("ensemble", "xgboost", "random_forest") if validation["reliable_ml_models"].get(m)]
+                assert fc_data["applied_model"] in (eligible or ["baseline"])
+            else:
+                expected_model = model_choice if validation["reliable_ml_models"].get(model_choice) else "baseline"
+                assert fc_data["applied_model"] == expected_model
             assert all(it["p10_servings"] <= it["predicted_servings"] <= it["p90_servings"] for it in fc_data["items"])
 
         # 4. Google OR-Tools Batch Optimization
@@ -88,6 +92,8 @@ def test_end_to_end_nourish_ai_workflow():
         sim_data = sim.json()
         assert sim_data["deltas"]["predicted_servings_delta"] < 0
         assert len(sim_data["advisories"]) >= 1
+        assert sim_data["simulated"]["optimization"]["solver_status"] in ("OPTIMAL", "FEASIBLE")
+        assert sim_data["simulated"]["optimization"]["summary"]["total_initial_servings"] > 0
 
         # 6. Post-meal feedback + automatic surplus safety evaluation
         fb = client.post(
@@ -147,7 +153,19 @@ def test_end_to_end_nourish_ai_workflow():
         assert upd.status_code == 200
         assert upd.json()["redistribution"]["status"] == "Delivered"
 
-        # 9. Retrain models endpoint
+        # 9. CSV import with M/D/YYYY dates & Retrain models endpoint
+        csv_payload = (
+            "date,meal_slot,menu_item_id,expected_attendance,actual_attendance,"
+            "prepared_servings,served_servings,is_holiday,special_event,weather,temperature_c\n"
+            "11/27/2026,Lunch,item_steamed_rice,720,700,710,650,FALSE,None,Cloudy,27.0\n"
+        )
+        imp = client.post(
+            "/api/meal-logs/import-csv?retrain=false",
+            files={"file": ("sample_mdy.csv", csv_payload.encode("utf-8"), "text/csv")},
+        )
+        assert imp.status_code == 200
+        assert imp.json()["imported_count"] == 1
+
         ret = client.post("/api/models/retrain")
         assert ret.status_code == 200
         assert ret.json()["current_run"]["version"] >= 2

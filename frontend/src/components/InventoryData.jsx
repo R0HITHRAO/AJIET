@@ -2,8 +2,15 @@ import React, { useEffect, useState } from 'react';
 import { CheckCircle2, Package, Plus, Save, Search, Trash2, UtensilsCrossed } from 'lucide-react';
 import { api } from '../api';
 
-export default function InventoryData({ onDataUpdated }) {
-  const [subTab, setSubTab] = useState('inventory');
+export default function InventoryData({
+  initialSubTab = 'inventory',
+  initialFilter = 'all',
+  navNonce = 0,
+  onSelectSlot,
+  onDataUpdated,
+}) {
+  const [subTab, setSubTab] = useState(initialSubTab);
+  const [pantryFilter, setPantryFilter] = useState(initialFilter);
   const [query, setQuery] = useState('');
   const [ingredients, setIngredients] = useState([]);
   const [menuItems, setMenuItems] = useState([]);
@@ -27,6 +34,11 @@ export default function InventoryData({ onDataUpdated }) {
     secondary_qty: 0.06,
   });
   const [statusMsg, setStatusMsg] = useState('');
+
+  useEffect(() => {
+    setSubTab(initialSubTab || 'inventory');
+    setPantryFilter(initialFilter || 'all');
+  }, [initialSubTab, initialFilter, navNonce]);
 
   const loadData = async () => {
     const [ingRes, menuRes, logRes] = await Promise.all([
@@ -97,7 +109,14 @@ export default function InventoryData({ onDataUpdated }) {
   };
 
   const q = query.trim().toLowerCase();
-  const filteredIngredients = ingredients.filter((i) => i.name.toLowerCase().includes(q));
+  const lowCount = ingredients.filter((i) => i.stock_qty <= i.reorder_level * 1.2).length;
+  const perishableCount = ingredients.filter((i) => i.perishability_days <= 3).length;
+  const filteredIngredients = ingredients.filter((i) => {
+    if (!i.name.toLowerCase().includes(q)) return false;
+    if (pantryFilter === 'low_stock') return i.stock_qty <= i.reorder_level * 1.2;
+    if (pantryFilter === 'perishable') return i.perishability_days <= 3;
+    return true;
+  });
   const filteredMenu = menuItems.filter(
     (m) =>
       m.name.toLowerCase().includes(q) ||
@@ -176,8 +195,29 @@ export default function InventoryData({ onDataUpdated }) {
 
       {/* Visual Card Grid for Pantry Stock */}
       {subTab === 'inventory' && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {filteredIngredients.map((ing) => {
+        <div className="space-y-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {[
+              { id: 'all', label: `All Ingredients (${ingredients.length})` },
+              { id: 'low_stock', label: `Low Stock (${lowCount})` },
+              { id: 'perishable', label: `Use Soon ≤3d (${perishableCount})` },
+            ].map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setPantryFilter(f.id)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
+                  pantryFilter === f.id
+                    ? 'bg-emerald-700 text-white border-emerald-700'
+                    : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
+                }`}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {filteredIngredients.map((ing) => {
             const isLow = ing.stock_qty <= ing.reorder_level * 1.2;
             const isPerishable = ing.perishability_days <= 3;
             const ratio = Math.min(100, Math.round((ing.stock_qty / Math.max(ing.reorder_level * 3, 1)) * 100));
@@ -247,6 +287,7 @@ export default function InventoryData({ onDataUpdated }) {
               </div>
             );
           })}
+          </div>
         </div>
       )}
 

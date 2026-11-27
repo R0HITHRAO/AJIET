@@ -339,12 +339,12 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
 
             {perishabilityAlerts.length > 0 && (
               <button
-                onClick={() => onSelectSlot?.(perishabilityAlerts[0].suggested_dishes?.[0]?.meal_slot || 'Breakfast')}
+                onClick={() => onNavigate('inventory', { subTab: 'inventory', filter: 'perishable' })}
                 className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-sky-50/60 border border-slate-200/90 border-l-4 border-l-sky-600 text-left flex items-center justify-between transition"
               >
                 <div>
                   <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700">
-                    Use Soon &bull; {perishabilityAlerts[0].perishability_days}d Shelf Life
+                    Use Soon &bull; {perishabilityAlerts.length} Perishable Item{perishabilityAlerts.length > 1 ? 's' : ''} ({perishabilityAlerts[0].perishability_days}d Shelf Life)
                   </p>
                   <p className="text-xs text-slate-700 mt-0.5">
                     <strong>{perishabilityAlerts[0].name}</strong> ({perishabilityAlerts[0].stock_qty} {perishabilityAlerts[0].unit})
@@ -359,7 +359,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
 
             {kpis.low_stock_ingredients > 0 && (
               <button
-                onClick={() => onNavigate('inventory')}
+                onClick={() => onNavigate('inventory', { subTab: 'inventory', filter: 'low_stock' })}
                 className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-amber-50/60 border border-slate-200/90 border-l-4 border-l-amber-500 text-left flex items-center justify-between transition"
               >
                 <div className="flex items-center gap-3">
@@ -384,7 +384,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
                 Top Dishes to Watch
               </p>
               <button
-                onClick={() => onNavigate('feedback')}
+                onClick={() => onNavigate('feedback', { subTab: 'diagnostics' })}
                 className="text-xs font-semibold text-emerald-700 hover:underline"
               >
                 AI Validation →

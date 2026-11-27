@@ -35,6 +35,8 @@ const NAV_ITEMS = [
 export default function App() {
   const [activeTab, setActiveTab] = useState('overview');
   const [preferredSlot, setPreferredSlot] = useState('Lunch');
+  const [feedbackSubTab, setFeedbackSubTab] = useState('log');
+  const [inventoryNav, setInventoryNav] = useState({ subTab: 'inventory', filter: 'all', nonce: 0 });
   const [health, setHealth] = useState(null);
   const [overview, setOverview] = useState(null);
   const [resetting, setResetting] = useState(false);
@@ -100,6 +102,20 @@ export default function App() {
     }
   };
 
+  const navigateTo = (tab, opts = {}) => {
+    if (tab === 'feedback') {
+      setFeedbackSubTab(opts.subTab || 'log');
+    } else if (tab === 'inventory') {
+      setInventoryNav((prev) => ({
+        subTab: opts.subTab || 'inventory',
+        filter: opts.filter || 'all',
+        nonce: prev.nonce + 1,
+      }));
+    }
+    setActiveTab(tab);
+    setMobileMenuOpen(false);
+  };
+
   const openPlannerForSlot = (slot) => {
     if (slot) setPreferredSlot(slot);
     setActiveTab('planner');
@@ -136,15 +152,15 @@ export default function App() {
           </button>
 
           {/* Desktop Navigation Pills */}
-          <nav className="hidden lg:flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/70">
+          <nav className="hidden md:flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/70">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
               return (
                 <button
                   key={item.id}
-                  onClick={() => setActiveTab(item.id)}
-                  className={`px-3.5 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-2 transition-all duration-150 ${
+                  onClick={() => navigateTo(item.id)}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-150 ${
                     active
                       ? 'bg-white text-emerald-900 shadow-sm ring-1 ring-slate-200/70'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
@@ -234,10 +250,7 @@ export default function App() {
               return (
                 <button
                   key={item.id}
-                  onClick={() => {
-                    setActiveTab(item.id);
-                    setMobileMenuOpen(false);
-                  }}
+                  onClick={() => navigateTo(item.id)}
                   className={`px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
                     active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-50 text-slate-700'
                   }`}
@@ -256,7 +269,7 @@ export default function App() {
         {activeTab === 'overview' && (
           <OverviewDashboard
             data={overview}
-            onNavigate={setActiveTab}
+            onNavigate={navigateTo}
             onSelectSlot={openPlannerForSlot}
           />
         )}
@@ -265,8 +278,22 @@ export default function App() {
         {activeTab === 'redistribution' && (
           <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />
         )}
-        {activeTab === 'feedback' && <PostMealFeedback overviewData={overview} onDataUpdated={refreshGlobal} />}
-        {activeTab === 'inventory' && <InventoryData onDataUpdated={refreshGlobal} />}
+        {activeTab === 'feedback' && (
+          <PostMealFeedback
+            overviewData={overview}
+            initialSubTab={feedbackSubTab}
+            onDataUpdated={refreshGlobal}
+          />
+        )}
+        {activeTab === 'inventory' && (
+          <InventoryData
+            initialSubTab={inventoryNav.subTab}
+            initialFilter={inventoryNav.filter}
+            navNonce={inventoryNav.nonce}
+            onSelectSlot={openPlannerForSlot}
+            onDataUpdated={refreshGlobal}
+          />
+        )}
       </main>
 
       {/* Clean Editorial Footer */}

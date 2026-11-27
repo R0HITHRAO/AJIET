@@ -41,26 +41,32 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ stock_qty: Number(stockQty) }),
     }),
-  forecast: (payload) =>
+  forecast: (payload, { signal } = {}) =>
     request('/forecast', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal,
     }),
-  optimizeBatch: (payload, save = false) =>
+  optimizeBatch: (payload, save = false, { signal } = {}) =>
     request(`/optimize-batch?save=${save ? 'true' : 'false'}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal,
     }),
-  simulate: (payload) =>
+  simulate: (payload, { signal } = {}) =>
     request('/simulate', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
+      signal,
     }),
-  getMealLogs: (limit = 80, mealSlot = '') =>
-    request(`/meal-logs?limit=${limit}${mealSlot ? `&meal_slot=${encodeURIComponent(mealSlot)}` : ''}`),
+  getMealLogs: (limitOrOpts = 80, mealSlot = '') => {
+    const limit = typeof limitOrOpts === 'object' && limitOrOpts !== null ? (limitOrOpts.limit ?? 80) : limitOrOpts;
+    const slot = typeof limitOrOpts === 'object' && limitOrOpts !== null ? (limitOrOpts.mealSlot ?? '') : mealSlot;
+    return request(`/meal-logs?limit=${limit}${slot ? `&meal_slot=${encodeURIComponent(slot)}` : ''}`);
+  },
   submitPostMealLog: (payload) =>
     request('/meal-logs', {
       method: 'POST',

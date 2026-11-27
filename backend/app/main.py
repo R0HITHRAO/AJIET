@@ -742,8 +742,17 @@ async def import_meal_logs_csv(file: UploadFile = File(...), retrain: bool = Que
         mid = (row.get("menu_item_id") or "").strip()
         if mid not in menu_map:
             continue
-        date_str = (row.get("date") or "").strip()
-        dt = datetime.fromisoformat(date_str)
+        raw_date = (row.get("date") or "").strip()
+        dt = None
+        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%d/%m/%Y"):
+            try:
+                dt = datetime.strptime(raw_date, fmt)
+                break
+            except ValueError:
+                continue
+        if dt is None:
+            dt = datetime.fromisoformat(raw_date)
+        date_str = dt.strftime("%Y-%m-%d")
         prep = int(float(row["prepared_servings"]))
         serv = int(float(row["served_servings"]))
         new_docs.append(

@@ -24,7 +24,7 @@
       "ing_coconut": 0.02,
       "ing_spices": 0.006
     },
-    "_id": "f6866e89-00fe-4ff8-81e1-4e3c4ccfd5db"
+    "_id": "cf179373-5937-4520-aa24-d2d14708e46c"
   },
   {
     "menu_item_id": "item_masala_dosa",
@@ -51,7 +51,7 @@
       "ing_oil": 0.015,
       "ing_coconut": 0.02
     },
-    "_id": "42c78d88-8ec8-4b9d-b3a3-c7eb086b279b"
+    "_id": "7b4bfa53-4077-460d-a583-ca40a6445e99"
   },
   {
     "menu_item_id": "item_poha",
@@ -78,7 +78,7 @@
       "ing_oil": 0.01,
       "ing_coconut": 0.015
     },
-    "_id": "4e1bb699-10be-4adf-80a1-e4db50ddb2b4"
+    "_id": "5b10c654-9b64-4a55-96f6-2614c7d29d43"
   },
   {
     "menu_item_id": "item_upma",
@@ -105,7 +105,7 @@
       "ing_oil": 0.012,
       "ing_coconut": 0.015
     },
-    "_id": "62cb8236-8c01-484a-ab35-46c46239fab6"
+    "_id": "5418dddb-fb49-47fe-b655-7d42ac4f457f"
   },
   {
     "menu_item_id": "item_steamed_rice",
@@ -128,7 +128,7 @@
     "recipe": {
       "ing_rice": 0.11
     },
-    "_id": "f509975a-fc55-4f86-b7d8-8d0cc5abf8c3"
+    "_id": "dc1e526b-58a9-4d47-bff0-61a0cf4e1eff"
   },
   {
     "menu_item_id": "item_dal_sambar",
@@ -155,7 +155,7 @@
       "ing_mixed_veg": 0.04,
       "ing_spices": 0.008
     },
-    "_id": "de5fb4f4-6ec6-4459-a12c-f62492cd0882"
+    "_id": "0879952f-5d13-4321-bacf-86da3c397d07"
   },
   {
     "menu_item_id": "item_paneer_curry",
@@ -182,7 +182,7 @@
       "ing_oil": 0.015,
       "ing_spices": 0.01
     },
-    "_id": "96a2fd1f-f3a1-4924-b415-6845026b35bb"
+    "_id": "51f5415b-a2de-4a4a-83d9-fa8bb656e6e5"
   },
   {
     "menu_item_id": "item_curd_rice",
@@ -208,7 +208,7 @@
       "ing_oil": 0.006,
       "ing_spices": 0.003
     },
-    "_id": "970ca16a-d83f-47fe-b3e8-11666179a4ac"
+    "_id": "e5add264-ec8d-4bf8-8e8b-7fca362ad9fc"
   },
   {
     "menu_item_id": "item_veg_biryani",
@@ -235,7 +235,7 @@
       "ing_curd": 0.03,
       "ing_spices": 0.012
     },
-    "_id": "86ecbb65-3ed3-445a-bb18-c96825544f14"
+    "_id": "8e6bb59a-0ba5-46a7-9572-d2dc7482093b"
   },
   {
     "menu_item_id": "item_veg_cutlet",
@@ -262,7 +262,7 @@
       "ing_oil": 0.018,
       "ing_spices": 0.005
     },
-    "_id": "f6a402ef-613a-4ba3-8223-3156803408df"
+    "_id": "b7fd7ed2-a0b5-475c-9bc9-f1fb5f9ae9cf"
   },
   {
     "menu_item_id": "item_buns_tea",
@@ -288,7 +288,7 @@
       "ing_sugar": 0.025,
       "ing_oil": 0.015
     },
-    "_id": "37b8de95-5bfc-434f-a145-7d91b1d56df5"
+    "_id": "ce1b3c07-275e-4fd5-b604-ddeab7337366"
   },
   {
     "menu_item_id": "item_pakora",
@@ -314,7 +314,7 @@
       "ing_oil": 0.02,
       "ing_spices": 0.005
     },
-    "_id": "469417f9-9600-4c9c-a4c0-2a9b8d79551b"
+    "_id": "fa5b7f8d-cb4d-4135-9d8c-0fff79e7c61b"
   },
   {
     "menu_item_id": "item_chapati",
@@ -338,7 +338,7 @@
       "ing_wheat": 0.1,
       "ing_oil": 0.006
     },
-    "_id": "92b6ba5d-09f8-4827-a15a-4d22408454f3"
+    "_id": "5b8f5413-ee1d-4597-be26-43af02566a03"
   },
   {
     "menu_item_id": "item_mixed_veg_curry",
@@ -365,7 +365,7 @@
       "ing_oil": 0.012,
       "ing_spices": 0.008
     },
-    "_id": "d5e80ae7-0e0f-4591-ad3a-1c127c25693a"
+    "_id": "09adf82a-ad2d-4153-bfbc-169999aec0b8"
   },
   {
     "menu_item_id": "item_veg_pulao",
@@ -392,7 +392,7 @@
       "ing_oil": 0.01,
       "ing_spices": 0.007
     },
-    "_id": "483bc52a-fb1a-4fbf-92c7-d7de9ad50420"
+    "_id": "62921b5e-aa4f-4ece-a18e-b7aceb4b78ce"
   },
   {
     "menu_item_id": "item_kheer",
@@ -417,6 +417,889 @@
       "ing_sugar": 0.035,
       "ing_rava": 0.025
     },
-    "_id": "33d3533e-a632-4a4e-8796-611a44c5bd16"
+    "_id": "1a487091-ec77-4b10-89ee-2ccf03c1e874"
+  },
+  {
+    "menu_item_id": "item_avalakki_uppittu",
+    "name": "Avalakki Uppittu",
+    "meal_slot": "Breakfast",
+    "category": "South Indian Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.8,
+    "uptake_rate": 0.8,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_poha": 0.11,
+      "ing_onion": 0.03,
+      "ing_oil": 0.015,
+      "ing_coconut": 0.02,
+      "ing_spices": 0.005
+    },
+    "_id": "1d0ecc3b-f9ee-4f3f-a73f-b801664f9152"
+  },
+  {
+    "menu_item_id": "item_bendekai_gojju_palya",
+    "name": "Bendekai Gojju & Palya",
+    "meal_slot": "Lunch",
+    "category": "Coastal Side Dish",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.81,
+    "uptake_rate": 0.81,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_mixed_veg": 0.14,
+      "ing_coconut": 0.03,
+      "ing_oil": 0.015,
+      "ing_spices": 0.008
+    },
+    "_id": "4b72ec68-6489-4e41-b567-84a98db3b544"
+  },
+  {
+    "menu_item_id": "item_boiled_rice",
+    "name": "Coastal Boiled Rice",
+    "meal_slot": "Lunch",
+    "category": "Staple",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.89,
+    "uptake_rate": 0.89,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.15
+    },
+    "_id": "03677d53-9e7e-4c0b-9cc5-4a48b4934a9d"
+  },
+  {
+    "menu_item_id": "item_buns_kurma",
+    "name": "Mangalore Buns & Kurma",
+    "meal_slot": "Breakfast",
+    "category": "Coastal Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.94,
+    "uptake_rate": 0.94,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_wheat": 0.12,
+      "ing_mixed_veg": 0.08,
+      "ing_coconut": 0.03,
+      "ing_oil": 0.025,
+      "ing_spices": 0.008
+    },
+    "_id": "bd47fa2c-7d91-44d2-8a3c-3425bbf7f7aa"
+  },
+  {
+    "menu_item_id": "item_cabbage_palya",
+    "name": "Cabbage Coconut Palya",
+    "meal_slot": "Lunch",
+    "category": "South Indian Side",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.79,
+    "uptake_rate": 0.79,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_mixed_veg": 0.15,
+      "ing_coconut": 0.03,
+      "ing_oil": 0.012,
+      "ing_spices": 0.005
+    },
+    "_id": "63800e1f-ffa5-4614-9bf3-d76745cbc99e"
+  },
+  {
+    "menu_item_id": "item_chapati_dal_fry",
+    "name": "Chapati & Dal Fry",
+    "meal_slot": "Dinner",
+    "category": "Dinner Combo",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.89,
+    "uptake_rate": 0.89,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_wheat": 0.12,
+      "ing_toor_dal": 0.06,
+      "ing_onion": 0.03,
+      "ing_tomato": 0.03,
+      "ing_oil": 0.015,
+      "ing_spices": 0.006
+    },
+    "_id": "cb83610e-ddeb-4b45-91cd-b54097364ad1"
+  },
+  {
+    "menu_item_id": "item_chapati_dal_tadka",
+    "name": "Chapati & Dal Tadka",
+    "meal_slot": "Dinner",
+    "category": "Dinner Combo",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.9,
+    "uptake_rate": 0.9,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_wheat": 0.12,
+      "ing_toor_dal": 0.06,
+      "ing_onion": 0.03,
+      "ing_tomato": 0.03,
+      "ing_oil": 0.015,
+      "ing_spices": 0.006
+    },
+    "_id": "483eba5a-bc21-4b2a-be71-769aa0bf60de"
+  },
+  {
+    "menu_item_id": "item_coastal_veg_pulao",
+    "name": "Coastal Veg Pulao",
+    "meal_slot": "Lunch",
+    "category": "Rice Dish",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.94,
+    "uptake_rate": 0.94,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.14,
+      "ing_mixed_veg": 0.08,
+      "ing_coconut": 0.02,
+      "ing_oil": 0.015,
+      "ing_spices": 0.008
+    },
+    "_id": "47e66989-d0ea-42de-8d66-00026ee9702a"
+  },
+  {
+    "menu_item_id": "item_curd_rice_pickle",
+    "name": "Curd Rice & Pickle",
+    "meal_slot": "Dinner",
+    "category": "Comfort Meal",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.87,
+    "uptake_rate": 0.87,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": true,
+    "max_safe_hold_hours": 3.5,
+    "rain_affinity": 1.06,
+    "heat_affinity": 1.05,
+    "recipe": {
+      "ing_rice": 0.12,
+      "ing_curd": 0.11,
+      "ing_spices": 0.004
+    },
+    "_id": "b70bbe33-8c22-4954-95a4-bfc167d77b57"
+  },
+  {
+    "menu_item_id": "item_ghee_rice_rasam",
+    "name": "Ghee Rice & Rasam",
+    "meal_slot": "Dinner",
+    "category": "Coastal Combo",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.89,
+    "uptake_rate": 0.89,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.14,
+      "ing_toor_dal": 0.04,
+      "ing_tomato": 0.03,
+      "ing_oil": 0.02,
+      "ing_spices": 0.007
+    },
+    "_id": "7267bf52-9ff3-4b61-9df4-13a102fdb15a"
+  },
+  {
+    "menu_item_id": "item_idli_vada_sambar",
+    "name": "Idli Vada & Sambar",
+    "meal_slot": "Breakfast",
+    "category": "South Indian Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.93,
+    "uptake_rate": 0.93,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_idli_batter": 0.14,
+      "ing_toor_dal": 0.04,
+      "ing_oil": 0.02,
+      "ing_coconut": 0.02,
+      "ing_spices": 0.006
+    },
+    "_id": "f46ea85f-6a72-4875-806f-4072b276db56"
+  },
+  {
+    "menu_item_id": "item_jackfruit_kadgi_chakko",
+    "name": "Jackfruit Kadgi Chakko",
+    "meal_slot": "Lunch",
+    "category": "Coastal Special",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.93,
+    "uptake_rate": 0.93,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_mixed_veg": 0.16,
+      "ing_coconut": 0.04,
+      "ing_oil": 0.015,
+      "ing_spices": 0.008
+    },
+    "_id": "f4b29dc3-f31b-4e3c-b691-5dbdcc7aaa59"
+  },
+  {
+    "menu_item_id": "item_jeera_ghee_rice",
+    "name": "Jeera Ghee Rice",
+    "meal_slot": "Lunch",
+    "category": "Rice Dish",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.93,
+    "uptake_rate": 0.93,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.14,
+      "ing_oil": 0.02,
+      "ing_spices": 0.005
+    },
+    "_id": "68dcfeb8-680a-4672-898f-49c556f62e64"
+  },
+  {
+    "menu_item_id": "item_jeera_rice",
+    "name": "Jeera Rice",
+    "meal_slot": "Dinner",
+    "category": "Rice Dish",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.87,
+    "uptake_rate": 0.87,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.14,
+      "ing_oil": 0.018,
+      "ing_spices": 0.005
+    },
+    "_id": "9e569784-4b98-4cf8-9a6b-e7120f47be41"
+  },
+  {
+    "menu_item_id": "item_jeera_rice_dal",
+    "name": "Jeera Rice & Dal",
+    "meal_slot": "Dinner",
+    "category": "Dinner Combo",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.86,
+    "uptake_rate": 0.86,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.13,
+      "ing_toor_dal": 0.06,
+      "ing_oil": 0.018,
+      "ing_spices": 0.006
+    },
+    "_id": "4139a644-0457-43aa-87ff-90dc185add2a"
+  },
+  {
+    "menu_item_id": "item_kotte_kadubu_chutney",
+    "name": "Kotte Kadubu & Chutney",
+    "meal_slot": "Breakfast",
+    "category": "Coastal Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.93,
+    "uptake_rate": 0.93,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_idli_batter": 0.15,
+      "ing_coconut": 0.04,
+      "ing_spices": 0.005
+    },
+    "_id": "ca9ab4e2-3681-4655-86b6-acc6f7c97894"
+  },
+  {
+    "menu_item_id": "item_kuchlakki_red_rice",
+    "name": "Kuchlakki Boiled Red Rice",
+    "meal_slot": "Lunch",
+    "category": "Coastal Staple",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.92,
+    "uptake_rate": 0.92,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.15
+    },
+    "_id": "e98c3eb8-8915-407c-8e08-249cec3a64ff"
+  },
+  {
+    "menu_item_id": "item_malabar_parotta_kurma",
+    "name": "Malabar Parotta & Veg Kurma",
+    "meal_slot": "Dinner",
+    "category": "Dinner Combo",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.95,
+    "uptake_rate": 0.95,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 28.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_wheat": 0.13,
+      "ing_mixed_veg": 0.09,
+      "ing_coconut": 0.03,
+      "ing_oil": 0.025,
+      "ing_spices": 0.008
+    },
+    "_id": "d9ff0895-a1aa-48cb-b1c6-1902946851e6"
+  },
+  {
+    "menu_item_id": "item_mangalore_buns_sagu",
+    "name": "Mangalore Buns & Sagu",
+    "meal_slot": "Breakfast",
+    "category": "Coastal Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.94,
+    "uptake_rate": 0.94,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_wheat": 0.12,
+      "ing_potato": 0.06,
+      "ing_mixed_veg": 0.06,
+      "ing_oil": 0.025,
+      "ing_spices": 0.006
+    },
+    "_id": "c834871e-5343-4216-b8d5-ea90f579db4f"
+  },
+  {
+    "menu_item_id": "item_mangalore_sambar",
+    "name": "Mangalore Sambar",
+    "meal_slot": "Lunch",
+    "category": "Coastal Gravy",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.87,
+    "uptake_rate": 0.87,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_toor_dal": 0.06,
+      "ing_mixed_veg": 0.07,
+      "ing_coconut": 0.03,
+      "ing_spices": 0.008
+    },
+    "_id": "27d2c887-43af-4ef1-aff9-9eafb7080277"
+  },
+  {
+    "menu_item_id": "item_masala_dosa_sambar",
+    "name": "Masala Dosa & Sambar",
+    "meal_slot": "Breakfast",
+    "category": "South Indian Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.97,
+    "uptake_rate": 0.97,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_idli_batter": 0.14,
+      "ing_potato": 0.07,
+      "ing_toor_dal": 0.03,
+      "ing_oil": 0.015,
+      "ing_spices": 0.006
+    },
+    "_id": "99fc9358-f1a2-4ee8-8140-aef69e8c9bdd"
+  },
+  {
+    "menu_item_id": "item_neer_dosa_chutney",
+    "name": "Neer Dosa & Coconut Chutney",
+    "meal_slot": "Breakfast",
+    "category": "Coastal Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.95,
+    "uptake_rate": 0.95,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.11,
+      "ing_coconut": 0.05,
+      "ing_spices": 0.004
+    },
+    "_id": "30a70bca-cd10-4dc6-8a41-9119ebdb22b4"
+  },
+  {
+    "menu_item_id": "item_paneer_ghee_roast",
+    "name": "Paneer Ghee Roast",
+    "meal_slot": "Lunch",
+    "category": "Coastal Special",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.95,
+    "uptake_rate": 0.95,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 28.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_paneer": 0.1,
+      "ing_onion": 0.04,
+      "ing_oil": 0.025,
+      "ing_spices": 0.01
+    },
+    "_id": "9c8bb8b1-a912-44be-a278-d3973d4408e9"
+  },
+  {
+    "menu_item_id": "item_paneer_tikka_masala",
+    "name": "Paneer Tikka Masala",
+    "meal_slot": "Lunch",
+    "category": "Main Gravy",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.96,
+    "uptake_rate": 0.96,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 28.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_paneer": 0.09,
+      "ing_tomato": 0.06,
+      "ing_onion": 0.04,
+      "ing_oil": 0.02,
+      "ing_spices": 0.008
+    },
+    "_id": "a0b0b93f-ee0c-4bc2-8754-336564ff7a67"
+  },
+  {
+    "menu_item_id": "item_parboiled_red_rice",
+    "name": "Parboiled Red Rice",
+    "meal_slot": "Lunch",
+    "category": "Coastal Staple",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.91,
+    "uptake_rate": 0.91,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.15
+    },
+    "_id": "7d425498-83fd-401e-a8a5-038e7cff53c6"
+  },
+  {
+    "menu_item_id": "item_rasam",
+    "name": "Udupi Tomato Rasam",
+    "meal_slot": "Dinner",
+    "category": "South Indian Gravy",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.84,
+    "uptake_rate": 0.84,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_tomato": 0.06,
+      "ing_toor_dal": 0.03,
+      "ing_spices": 0.007
+    },
+    "_id": "6770b8af-2894-4fe4-b344-00458490415e"
+  },
+  {
+    "menu_item_id": "item_steamed_white_rice",
+    "name": "Steamed White Rice",
+    "meal_slot": "Lunch",
+    "category": "Staple",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.88,
+    "uptake_rate": 0.88,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.14
+    },
+    "_id": "335bfb91-93ae-4d18-b5e0-a1c1dd90804f"
+  },
+  {
+    "menu_item_id": "item_tendli_cashew_palya",
+    "name": "Tendli Cashew Palya",
+    "meal_slot": "Lunch",
+    "category": "Coastal Side Dish",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.82,
+    "uptake_rate": 0.82,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_mixed_veg": 0.14,
+      "ing_coconut": 0.03,
+      "ing_oil": 0.015,
+      "ing_spices": 0.006
+    },
+    "_id": "cec6beb9-16d1-4685-bb4a-c6d0ba1625f3"
+  },
+  {
+    "menu_item_id": "item_udupi_sambar_rasam",
+    "name": "Udupi Sambar & Rasam",
+    "meal_slot": "Lunch",
+    "category": "Coastal Gravy",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.88,
+    "uptake_rate": 0.88,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_toor_dal": 0.06,
+      "ing_tomato": 0.04,
+      "ing_mixed_veg": 0.05,
+      "ing_coconut": 0.02,
+      "ing_spices": 0.007
+    },
+    "_id": "e1cfcb27-1fba-4e3e-8adb-ab7686161edd"
+  },
+  {
+    "menu_item_id": "item_upma_chutney",
+    "name": "Rava Upma & Chutney",
+    "meal_slot": "Breakfast",
+    "category": "South Indian Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.83,
+    "uptake_rate": 0.83,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rava": 0.11,
+      "ing_coconut": 0.03,
+      "ing_oil": 0.015,
+      "ing_spices": 0.005
+    },
+    "_id": "0434e8d8-c245-4f3d-9464-c95448a71609"
+  },
+  {
+    "menu_item_id": "item_uppittu_sheera",
+    "name": "Uppittu & Kesari Sheera",
+    "meal_slot": "Breakfast",
+    "category": "South Indian Breakfast",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.81,
+    "uptake_rate": 0.81,
+    "batch_size": 40,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rava": 0.12,
+      "ing_sugar": 0.03,
+      "ing_oil": 0.02,
+      "ing_spices": 0.004
+    },
+    "_id": "c1c52ef5-b556-4621-83d5-c2345a058911"
+  },
+  {
+    "menu_item_id": "item_veg_fried_rice",
+    "name": "Veg Fried Rice",
+    "meal_slot": "Dinner",
+    "category": "Rice Dish",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.91,
+    "uptake_rate": 0.91,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_rice": 0.14,
+      "ing_mixed_veg": 0.07,
+      "ing_onion": 0.03,
+      "ing_oil": 0.02,
+      "ing_spices": 0.006
+    },
+    "_id": "629ed121-ba22-48a0-8303-167677a6ed8f"
+  },
+  {
+    "menu_item_id": "item_veg_kurma",
+    "name": "Mixed Veg Kurma",
+    "meal_slot": "Dinner",
+    "category": "Main Gravy",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.89,
+    "uptake_rate": 0.89,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 22.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_mixed_veg": 0.11,
+      "ing_coconut": 0.03,
+      "ing_tomato": 0.04,
+      "ing_oil": 0.015,
+      "ing_spices": 0.007
+    },
+    "_id": "6c3e8511-a4e3-44c9-b34c-3b504359c150"
+  },
+  {
+    "menu_item_id": "item_wheat_parotta_kurma",
+    "name": "Wheat Parotta & Kurma",
+    "meal_slot": "Dinner",
+    "category": "Dinner Combo",
+    "dietary_tag": "Veg",
+    "popularity_score": 0.93,
+    "uptake_rate": 0.93,
+    "batch_size": 35,
+    "min_initial_ratio": 0.65,
+    "cost_per_serving": 28.0,
+    "waste_penalty": 28.0,
+    "shortage_penalty": 48.0,
+    "serving_weight_kg": 0.28,
+    "requires_cold_chain": false,
+    "max_safe_hold_hours": 4.0,
+    "rain_affinity": 1.06,
+    "heat_affinity": 0.96,
+    "recipe": {
+      "ing_wheat": 0.13,
+      "ing_mixed_veg": 0.08,
+      "ing_coconut": 0.03,
+      "ing_oil": 0.02,
+      "ing_spices": 0.007
+    },
+    "_id": "ccbd5e56-e236-4a32-b89f-9a1d37f276b1"
   }
 ]

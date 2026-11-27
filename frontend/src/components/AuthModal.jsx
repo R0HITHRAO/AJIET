@@ -35,6 +35,15 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
     confirm_password: '',
   });
 
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose?.();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
+
   useEffect(() => {}, [isOpen, mode]);
 
   if (!isOpen) return null;
@@ -143,7 +152,12 @@ export default function AuthModal({ isOpen, initialMode = 'login', onClose, onAu
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="p-1.5 rounded-lg text-emerald-200 hover:bg-white/10 transition">
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close authentication modal"
+            className="p-1.5 rounded-lg text-emerald-200 hover:bg-white/10 transition"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>

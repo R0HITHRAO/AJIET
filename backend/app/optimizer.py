@@ -104,11 +104,6 @@ def optimize_batch_preparation(
             solver.Add(sf_mid >= p50 - init_servings)
             solver.Add(ex_mid >= init_servings - p50)
             solver.Add(sf_peak >= p90 - total_servings)
-            # Ensure reserve is non-negative and meaningful when uncertainty spread exists
-            if p90 > p50 and p50 >= bsz:
-                min_init_floor = int(math.floor(p10 * 0.85 / bsz))
-                if min_init_floor > 0:
-                    solver.Add(init_b >= 1)
         else:
             # Single-batch mode: must satisfy demand in initial batch only
             solver.Add(sf_mid >= p50 - init_servings)

@@ -20,8 +20,8 @@ import {
 } from 'lucide-react';
 import { api } from '../api';
 
-export default function PostMealFeedback({ overviewData, onDataUpdated }) {
-  const [subTab, setSubTab] = useState('log');
+export default function PostMealFeedback({ overviewData, initialSubTab = 'log', onDataUpdated }) {
+  const [subTab, setSubTab] = useState(initialSubTab);
   const [mealSlot, setMealSlot] = useState('Lunch');
   const [dateStr, setDateStr] = useState('2026-11-27');
   const [expectedAttendance, setExpectedAttendance] = useState(740);
@@ -42,6 +42,10 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
   const [csvStatus, setCsvStatus] = useState('');
   const [error, setError] = useState('');
 
+  useEffect(() => {
+    setSubTab(initialSubTab || 'log');
+  }, [initialSubTab]);
+
   const loadContext = async () => {
     const [mRes, rRes] = await Promise.all([api.getMenu(), api.getModelRuns()]);
     setMenuItems(mRes.items || []);
@@ -60,7 +64,7 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
       slotItems.map((item, idx) => {
         const estimatedDemand = Math.round(expectedAttendance * item.uptake_rate);
         const prep = Math.round(estimatedDemand * 1.06);
-        const serv = idx === 0 ? Math.max(20, prep - 75) : Math.max(20, prep - 12);
+        const serv = idx === 0 ? Math.max(20, prep - 75) : Math.max(20, prep - 5);
         return {
           menu_item_id: item.menu_item_id,
           name: item.name,
@@ -91,7 +95,7 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
         weather,
         is_holiday: isHoliday,
         special_event: specialEvent,
-        model_choice: 'ensemble',
+        model_choice: 'optimal',
         menu_item_ids: menuItemIds,
       })
       .then((forecast) => {
@@ -188,6 +192,24 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
       onDataUpdated?.();
     } catch (err) {
       setCsvStatus('');
+      setError(err.message);
+    }
+  };
+
+  const downloadSampleCsv = async () => {
+    try {
+      const res = await fetch('/api/meal-logs/sample-csv');
+      if (!res.ok) throw new Error('Unable to download sample CSV');
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'nourish_ai_kitchen_sample.csv';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      URL.revokeObjectURL(url);
+    } catch (err) {
       setError(err.message);
     }
   };
@@ -492,10 +514,14 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
                 <Upload className="w-4 h-4 text-sky-700" />
                 Upload Kitchen CSV &amp; Retrain
               </h3>
-              <a href="/api/meal-logs/sample-csv" className="text-xs font-semibold text-emerald-700 hover:underline inline-flex items-center gap-1">
+              <button
+                type="button"
+                onClick={downloadSampleCsv}
+                className="text-xs font-semibold text-emerald-700 hover:underline inline-flex items-center gap-1"
+              >
                 <Download className="w-3.5 h-3.5" />
                 Sample CSV
-              </a>
+              </button>
             </div>
             <p className="text-xs text-slate-500">
               Import actual hostel/canteen consumption logs to evaluate and retrain both Random Forest and XGBoost models.
@@ -627,7 +653,8 @@ export default function PostMealFeedback({ overviewData, onDataUpdated }) {
               <div>
                 <h3 className="text-base font-bold text-slate-900">Weekly Forecast Error Review</h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Prediction-linked meal records across the latest {errorReview?.weeks_included?.length || 0} weeks
+                  Prediction-linked meal records across the latest {errorReview?.weeks_included?.length || 0}{' '}
+                  {(errorReview?.weeks_included?.length || 0) === 1 ? 'week' : 'weeks'}
                 </p>
               </div>
               <div className="flex flex-wrap gap-5 text-xs">

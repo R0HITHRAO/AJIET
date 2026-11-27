@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -11,6 +11,8 @@ import {
 } from 'recharts';
 import { AlertTriangle, Play, RefreshCw } from 'lucide-react';
 import { api } from '../api';
+
+const SLOT_ATTENDANCE = { Breakfast: 610, Lunch: 740, Snacks: 520, Dinner: 690 };
 
 const PRESETS = [
   {
@@ -75,7 +77,7 @@ export default function WhatIfSimulator() {
     special_event: 'None',
     weather: 'Rainy',
     temperature_c: 24.0,
-    model_choice: 'ensemble',
+    model_choice: 'optimal',
     batch_cooking_enabled: true,
     menu_swaps: {},
     ingredient_stock_pct_overrides: {},
@@ -83,17 +85,27 @@ export default function WhatIfSimulator() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const abortRef = useRef(null);
+  const requestSeqRef = useRef(0);
+  const initializedRef = useRef(false);
 
   const runSimulation = async (payload = simReq) => {
+    const reqId = ++requestSeqRef.current;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError('');
     try {
-      const res = await api.simulate(payload);
+      const res = await api.simulate(payload, { signal: controller.signal });
+      if (reqId !== requestSeqRef.current || controller.signal.aborted) return;
       setResult(res);
     } catch (err) {
-      setError(err.message);
+      if (err.name === 'AbortError') return;
+      if (reqId === requestSeqRef.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (reqId === requestSeqRef.current) setLoading(false);
     }
   };
 
@@ -103,12 +115,34 @@ export default function WhatIfSimulator() {
       setIngredients(iRes.items || []);
     });
     runSimulation(simReq);
+    return () => abortRef.current?.abort();
   }, []);
+
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      runSimulation(simReq);
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [
+    simReq.meal_slot,
+    simReq.base_attendance,
+    simReq.attendance_delta_pct,
+    simReq.is_holiday,
+    simReq.special_event,
+    simReq.weather,
+    simReq.temperature_c,
+    simReq.batch_cooking_enabled,
+    simReq.menu_swaps,
+    simReq.ingredient_stock_pct_overrides,
+  ]);
 
   const applyPreset = (preset) => {
     const updated = { ...simReq, ...preset.patch };
     setSimReq(updated);
-    runSimulation(updated);
   };
 
   const slotItems = menuItems.filter((m) => m.meal_slot === simReq.meal_slot);
@@ -199,7 +233,15 @@ export default function WhatIfSimulator() {
               <label className="block text-[11px] font-medium text-slate-500 mb-1">Meal Slot</label>
               <select
                 value={simReq.meal_slot}
-                onChange={(e) => setSimReq({ ...simReq, meal_slot: e.target.value, menu_swaps: {} })}
+                onChange={(e) => {
+                  const slot = e.target.value;
+                  setSimReq({
+                    ...simReq,
+                    meal_slot: slot,
+                    base_attendance: SLOT_ATTENDANCE[slot] || simReq.base_attendance,
+                    menu_swaps: {},
+                  });
+                }}
                 className="field-control h-9 text-xs"
               >
                 {['Breakfast', 'Lunch', 'Snacks', 'Dinner'].map((s) => (
@@ -221,17 +263,20 @@ export default function WhatIfSimulator() {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3 items-center">
-            <select
-              value={simReq.special_event}
-              onChange={(e) => setSimReq({ ...simReq, special_event: e.target.value })}
-              className="field-control h-9 text-xs"
-            >
-              {['None', 'Exam Week', 'Tech Fest', 'Sports Day', 'Hackathon', 'Parent Meet'].map((ev) => (
-                <option key={ev} value={ev}>{ev}</option>
-              ))}
-            </select>
-            <label className="flex items-center gap-2 text-xs font-medium text-slate-700 cursor-pointer">
+          <div className="grid grid-cols-2 gap-3 items-end">
+            <div>
+              <label className="block text-[11px] font-medium text-slate-500 mb-1">Special Event</label>
+              <select
+                value={simReq.special_event}
+                onChange={(e) => setSimReq({ ...simReq, special_event: e.target.value })}
+                className="field-control h-9 text-xs"
+              >
+                {['None', 'Exam Week', 'Tech Fest', 'Sports Day', 'Hackathon', 'Parent Meet'].map((ev) => (
+                  <option key={ev} value={ev}>{ev}</option>
+                ))}
+              </select>
+            </div>
+            <label className="flex items-center gap-2 h-9 text-xs font-medium text-slate-700 cursor-pointer">
               <input
                 type="checkbox"
                 checked={simReq.batch_cooking_enabled}

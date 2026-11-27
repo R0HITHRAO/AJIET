@@ -25,74 +25,159 @@ const AREA_COORDS = {
 };
 
 function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
-  const maxKm = 26;
-  const cx = 140;
-  const cy = 115;
-  const scale = 92 / maxKm;
+  const maxKm = 25;
+  const cx = 190;
+  const cy = 140;
+  const maxR = 104;
+  const radiusForKm = (km) => maxR * Math.sqrt(Math.max(0.25, Math.min(km, maxKm)) / maxKm);
+
+  // Place each NGO using radial sqrt scaling and de-overlap label coordinates
+  const plotted = ngos.map((ngo) => {
+    const dLat = (ngo.lat - kitchen.lat) * 111.0;
+    const dLon = (ngo.lon - kitchen.lon) * 108.0;
+    const distKm = ngo.distance_km ?? Math.hypot(dLat, dLon);
+    const angle = Math.atan2(-dLat, dLon);
+    const r = radiusForKm(distKm);
+    const x = cx + Math.cos(angle) * r;
+    const y = cy + Math.sin(angle) * r;
+    const labelR = r + 15;
+    const lx = cx + Math.cos(angle) * labelR;
+    const ly = cy + Math.sin(angle) * labelR;
+    const anchor = Math.cos(angle) > 0.28 ? 'start' : Math.cos(angle) < -0.28 ? 'end' : 'middle';
+    return { ngo, distKm, x, y, lx, ly, anchor };
+  });
+
+  // Simple vertical separation pass for labels that sit close horizontally
+  for (let i = 0; i < plotted.length; i += 1) {
+    for (let j = i + 1; j < plotted.length; j += 1) {
+      const a = plotted[i];
+      const b = plotted[j];
+      if (Math.abs(a.lx - b.lx) < 52 && Math.abs(a.ly - b.ly) < 14) {
+        if (a.ly <= b.ly) {
+          a.ly -= 7;
+          b.ly += 7;
+        } else {
+          a.ly += 7;
+          b.ly -= 7;
+        }
+      }
+    }
+  }
+
+  const sortedNgos = [...plotted].sort((a, b) => a.distKm - b.distKm);
 
   return (
-    <div className="card-surface p-4 bg-slate-900 text-white border-0">
-      <div className="flex items-center justify-between mb-2">
+    <div className="card-surface p-4 bg-slate-900 text-white border-0 space-y-3">
+      <div className="flex items-center justify-between">
         <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
           <Navigation className="w-3.5 h-3.5" />
           Udupi – Bantakal Zone
         </p>
         <span className="text-[11px] text-slate-400">25 km radius</span>
       </div>
-      <svg viewBox="0 0 280 230" className="w-full h-48">
-        {[8, 16, 24].map((km) => (
-          <g key={km}>
-            <circle cx={cx} cy={cy} r={km * scale} fill="none" stroke="#334155" strokeDasharray="3 3" />
-            <text x={cx + 3} y={cy - km * scale + 9} fill="#64748b" fontSize="8">
-              {km}km
-            </text>
-          </g>
-        ))}
 
-        {ngos.map((ngo) => {
-          const dLat = (ngo.lat - kitchen.lat) * 111.0;
-          const dLon = (ngo.lon - kitchen.lon) * 108.0;
-          const x = Math.max(18, Math.min(262, cx + dLon * scale));
-          const y = Math.max(18, Math.min(212, cy - dLat * scale));
+      <div className="max-w-sm mx-auto">
+        <svg viewBox="0 0 380 280" className="w-full h-auto block">
+          {[5, 12, 24].map((km) => {
+            const r = radiusForKm(km);
+            return (
+              <g key={km}>
+                <circle cx={cx} cy={cy} r={r} fill="none" stroke="#334155" strokeDasharray="3 3" />
+                <text
+                  x={cx}
+                  y={cy + r + 3}
+                  textAnchor="middle"
+                  fill="#64748b"
+                  fontSize="8.5"
+                  stroke="#0f172a"
+                  strokeWidth="2.5"
+                  paintOrder="stroke"
+                >
+                  {km}km
+                </text>
+              </g>
+            );
+          })}
+
+          {plotted.map(({ ngo, x, y, lx, ly, anchor }) => {
+            const isHighlighted = ngo.ngo_id === highlightedNgoId;
+            return (
+              <g key={ngo.ngo_id}>
+                <line
+                  x1={cx}
+                  y1={cy}
+                  x2={x}
+                  y2={y}
+                  stroke={isHighlighted ? '#34d399' : ngo.is_available ? '#475569' : '#334155'}
+                  strokeWidth={isHighlighted ? 2 : 1}
+                  strokeDasharray={isHighlighted ? '' : '2 2'}
+                />
+                <circle
+                  cx={x}
+                  cy={y}
+                  r={isHighlighted ? 6 : 4.2}
+                  fill={isHighlighted ? '#10b981' : ngo.is_available ? '#38bdf8' : '#64748b'}
+                  stroke="#0f172a"
+                  strokeWidth="1.5"
+                />
+                <text
+                  x={Math.max(10, Math.min(370, lx))}
+                  y={Math.max(14, Math.min(270, ly + 3))}
+                  textAnchor={anchor}
+                  fill={isHighlighted ? '#a7f3d0' : '#e2e8f0'}
+                  fontSize="9.5"
+                  fontWeight={isHighlighted ? '700' : '500'}
+                  stroke="#0f172a"
+                  strokeWidth="3.5"
+                  paintOrder="stroke"
+                >
+                  {ngo.area}
+                </text>
+              </g>
+            );
+          })}
+
+          <circle cx={cx} cy={cy} r="6.5" fill="#f59e0b" stroke="#fff" strokeWidth="2" />
+          <text
+            x={cx}
+            y={cy + 16}
+            textAnchor="middle"
+            fill="#fde68a"
+            fontSize="9.5"
+            fontWeight="700"
+            stroke="#0f172a"
+            strokeWidth="3.5"
+            paintOrder="stroke"
+          >
+            SMVITM
+          </text>
+        </svg>
+      </div>
+
+      <div className="flex flex-wrap gap-1.5 pt-2 border-t border-slate-800">
+        {sortedNgos.map(({ ngo, distKm }) => {
           const isHighlighted = ngo.ngo_id === highlightedNgoId;
-
           return (
-            <g key={ngo.ngo_id}>
-              <line
-                x1={cx}
-                y1={cy}
-                x2={x}
-                y2={y}
-                stroke={isHighlighted ? '#34d399' : ngo.is_available ? '#475569' : '#334155'}
-                strokeWidth={isHighlighted ? 2 : 1}
-                strokeDasharray={isHighlighted ? '' : '2 2'}
+            <span
+              key={ngo.ngo_id}
+              className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                isHighlighted
+                  ? 'bg-emerald-500/20 text-emerald-200 border border-emerald-500/40'
+                  : ngo.is_available
+                  ? 'bg-slate-800 text-slate-300 border border-slate-700'
+                  : 'bg-slate-800/60 text-slate-500 border border-slate-800'
+              }`}
+            >
+              <span
+                className={`w-1.5 h-1.5 rounded-full ${
+                  isHighlighted ? 'bg-emerald-400' : ngo.is_available ? 'bg-sky-400' : 'bg-slate-500'
+                }`}
               />
-              <circle
-                cx={x}
-                cy={y}
-                r={isHighlighted ? 6 : 4}
-                fill={isHighlighted ? '#10b981' : ngo.is_available ? '#38bdf8' : '#64748b'}
-                stroke="#0f172a"
-                strokeWidth="1.5"
-              />
-              <text
-                x={x + 6}
-                y={y + 3}
-                fill={isHighlighted ? '#a7f3d0' : '#cbd5e1'}
-                fontSize="8.5"
-                fontWeight={isHighlighted ? '700' : '500'}
-              >
-                {ngo.area}
-              </text>
-            </g>
+              {ngo.area} · {distKm.toFixed(1)} km
+            </span>
           );
         })}
-
-        <circle cx={cx} cy={cy} r="6.5" fill="#f59e0b" stroke="#fff" strokeWidth="2" />
-        <text x={cx - 28} y={cy + 16} fill="#fde68a" fontSize="8.5" fontWeight="700">
-          SMVITM Kitchen
-        </text>
-      </svg>
+      </div>
     </div>
   );
 }
@@ -100,8 +185,8 @@ function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
 function SafetyHandoverSlipModal({ slip, onClose }) {
   if (!slip) return null;
   return (
-    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="animate-modal-in bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full p-6 space-y-4">
+    <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+      <div className="animate-modal-in my-auto bg-white rounded-3xl border border-slate-200 shadow-2xl max-w-md w-full max-h-[90vh] overflow-y-auto p-6 space-y-4">
         <div className="flex items-start justify-between gap-3 border-b border-slate-100 pb-3">
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-emerald-700">
@@ -553,7 +638,9 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
       {subTab === 'matching' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
           <div className="lg:col-span-5 space-y-3">
-            {surplusList.map((s) => {
+            {surplusList
+              .filter((s) => !(s.servings_available <= 0 && s.status === 'Dispatched'))
+              .map((s) => {
               const isSelected = s.surplus_id === selectedSurplusId;
               return (
                 <div

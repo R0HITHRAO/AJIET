@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 MealSlot = Literal["Breakfast", "Lunch", "Snacks", "Dinner"]
 WeatherCondition = Literal["Sunny", "Cloudy", "Rainy", "Humid"]
 SpecialEvent = Literal["None", "Exam Week", "Tech Fest", "Sports Day", "Hackathon", "Parent Meet"]
-ModelChoice = Literal["ensemble", "xgboost", "random_forest"]
+ModelChoice = Literal["optimal", "ensemble", "xgboost", "random_forest"]
 StorageType = Literal["hot_hold", "chilled", "ambient"]
 
 
@@ -19,7 +19,7 @@ class ForecastRequest(BaseModel):
     special_event: SpecialEvent = "None"
     weather: WeatherCondition = "Cloudy"
     temperature_c: float = Field(default=28.0, ge=5.0, le=48.0)
-    model_choice: ModelChoice = "ensemble"
+    model_choice: ModelChoice = "optimal"
     menu_item_ids: list[str] | None = None
 
 
@@ -40,7 +40,7 @@ class WhatIfSimulationRequest(BaseModel):
     special_event: SpecialEvent = "None"
     weather: WeatherCondition = "Cloudy"
     temperature_c: float = Field(default=28.0, ge=5.0, le=48.0)
-    model_choice: ModelChoice = "ensemble"
+    model_choice: ModelChoice = "optimal"
     batch_cooking_enabled: bool = True
     waste_penalty_per_serving: float = Field(default=28.0, ge=0.0, le=500.0)
     shortage_penalty_per_serving: float = Field(default=55.0, ge=0.0, le=500.0)

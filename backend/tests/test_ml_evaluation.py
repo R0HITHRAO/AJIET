@@ -73,3 +73,28 @@ def test_baseline_uses_recent_same_dish_and_weekday_average():
     prediction = DemandForecastEngine._baseline_predictions(train, test)
 
     assert prediction.tolist() == [220.0]
+
+
+def test_optimal_model_choice_picks_best_reliable_slot_model():
+    engine = DemandForecastEngine()
+    engine.metrics = {
+        "ensemble": {"mae": 25.0},
+        "xgboost": {"mae": 25.5},
+        "random_forest": {"mae": 25.8},
+        "validation": {
+            "selected_model": "ensemble",
+            "reliable_ml_models": {"ensemble": True, "xgboost": True, "random_forest": True},
+            "by_meal_slot": {
+                "ensemble": {"Lunch": {"mae": 27.2}, "Dinner": {"mae": 23.5}, "Snacks": {"mae": 25.8}},
+                "xgboost": {"Lunch": {"mae": 27.3}, "Dinner": {"mae": 24.8}, "Snacks": {"mae": 25.2}},
+                "random_forest": {"Lunch": {"mae": 28.5}, "Dinner": {"mae": 23.2}, "Snacks": {"mae": 28.4}},
+            },
+        },
+    }
+
+    assert engine._resolve_model_choice("optimal", "Lunch") == "ensemble"
+    assert engine._resolve_model_choice("optimal", "Dinner") == "random_forest"
+    assert engine._resolve_model_choice("optimal", "Snacks") == "xgboost"
+
+    engine.metrics["validation"]["reliable_ml_models"] = {"ensemble": False, "xgboost": False, "random_forest": False}
+    assert engine._resolve_model_choice("optimal", "Lunch") == "baseline"

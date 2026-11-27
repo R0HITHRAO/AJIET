@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -15,8 +15,16 @@ import { api } from '../api';
 
 const MEAL_SLOTS = ['Breakfast', 'Lunch', 'Snacks', 'Dinner'];
 const DEFAULT_ATTENDANCE = { Breakfast: 610, Lunch: 740, Snacks: 520, Dinner: 690 };
+const MODEL_LABELS = {
+  optimal: 'Optimal',
+  ensemble: 'Ensemble (RF + XGB)',
+  xgboost: 'XGBoost',
+  random_forest: 'Random Forest',
+  baseline: 'Statistical Baseline',
+};
 
 export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpdated }) {
+  const [slotAttendance, setSlotAttendance] = useState(DEFAULT_ATTENDANCE);
   const [form, setForm] = useState({
     date: '2026-11-28',
     meal_slot: initialSlot,
@@ -25,7 +33,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
     temperature_c: 28.0,
     special_event: 'None',
     is_holiday: false,
-    model_choice: 'ensemble',
+    model_choice: 'optimal',
     batch_cooking_enabled: true,
     waste_penalty_per_serving: 28,
     shortage_penalty_per_serving: 55,
@@ -41,13 +49,22 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
   const [loading, setLoading] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
   const [error, setError] = useState('');
+  const requestSeqRef = useRef(0);
+  const abortRef = useRef(null);
+  const initializedRef = useRef(false);
 
   const runPlan = async (save = false, targetForm = form, targetExcluded = excludedIds, menuOverride = null) => {
+    const reqId = ++requestSeqRef.current;
+    abortRef.current?.abort();
+    const controller = new AbortController();
+    abortRef.current = controller;
+
     setLoading(true);
     setError('');
     if (save) setSavedMsg('');
     try {
       const menuList = menuOverride || (await api.getMenu(targetForm.meal_slot)).items || [];
+      if (reqId !== requestSeqRef.current || controller.signal.aborted) return;
       setSlotMenu(menuList);
       const activeIds = menuList
         .map((m) => m.menu_item_id)
@@ -55,40 +72,84 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
 
       const payload = { ...targetForm, menu_item_ids: activeIds };
       const [fcRes, optRes] = await Promise.all([
-        api.forecast(payload),
-        api.optimizeBatch(payload, save),
+        api.forecast(payload, { signal: controller.signal }),
+        api.optimizeBatch(payload, save, { signal: controller.signal }),
       ]);
+      if (reqId !== requestSeqRef.current || controller.signal.aborted) return;
       setForecast(fcRes);
       setOptResult(optRes);
-      setFiredReserves({});
+      if (!save) setFiredReserves({});
       if (save && optRes.saved_plan_id) {
         setSavedMsg(`Preparation plan saved (${optRes.saved_plan_id})`);
       }
     } catch (err) {
-      setError(err.message);
+      if (err.name === 'AbortError') return;
+      if (reqId === requestSeqRef.current) setError(err.message);
     } finally {
-      setLoading(false);
+      if (reqId === requestSeqRef.current) setLoading(false);
     }
   };
+
+  useEffect(() => {
+    api.getMealLogs(400).then((res) => {
+      const grouped = {};
+      for (const log of res.logs || []) {
+        const slot = log.meal_slot;
+        const att = Number(log.actual_attendance || log.expected_attendance || 0);
+        if (!slot || att <= 0) continue;
+        (grouped[slot] ||= []).push(att);
+      }
+      const dynamicDefaults = { ...DEFAULT_ATTENDANCE };
+      for (const slot of MEAL_SLOTS) {
+        const vals = grouped[slot];
+        if (vals?.length) {
+          dynamicDefaults[slot] = Math.round(vals.reduce((a, b) => a + b, 0) / vals.length / 10) * 10;
+        }
+      }
+      setSlotAttendance(dynamicDefaults);
+    }).catch(() => {});
+  }, []);
 
   useEffect(() => {
     const nextForm = {
       ...form,
       meal_slot: initialSlot,
-      expected_attendance: DEFAULT_ATTENDANCE[initialSlot] || form.expected_attendance,
+      expected_attendance: slotAttendance[initialSlot] || DEFAULT_ATTENDANCE[initialSlot] || form.expected_attendance,
     };
+    initializedRef.current = false;
     setForm(nextForm);
     setExcludedIds([]);
     setConfirmDeleteId(null);
     runPlan(false, nextForm, []);
   }, [initialSlot]);
 
+  useEffect(() => {
+    if (!initializedRef.current) {
+      initializedRef.current = true;
+      return undefined;
+    }
+    const timer = setTimeout(() => {
+      runPlan(false, form, excludedIds, slotMenu.length ? slotMenu : null);
+    }, 220);
+    return () => clearTimeout(timer);
+  }, [
+    form.date,
+    form.expected_attendance,
+    form.weather,
+    form.temperature_c,
+    form.special_event,
+    form.is_holiday,
+    form.model_choice,
+    form.batch_cooking_enabled,
+  ]);
+
   const handleSlotChange = (slot) => {
     const nextForm = {
       ...form,
       meal_slot: slot,
-      expected_attendance: DEFAULT_ATTENDANCE[slot] || form.expected_attendance,
+      expected_attendance: slotAttendance[slot] || DEFAULT_ATTENDANCE[slot] || form.expected_attendance,
     };
+    initializedRef.current = false;
     setForm(nextForm);
     setExcludedIds([]);
     setConfirmDeleteId(null);
@@ -234,6 +295,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
               onChange={(e) => setForm({ ...form, model_choice: e.target.value })}
               className="field-control"
             >
+              <option value="optimal">Optimal (Auto-Best)</option>
               <option value="ensemble">Ensemble (RF + XGB)</option>
               <option value="xgboost">XGBoost</option>
               <option value="random_forest">Random Forest</option>
@@ -262,9 +324,19 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
               Two-Stage Batch Cooking (Initial + Reserve)
             </label>
           </div>
-          <span className="text-slate-500">
-            OR-Tools Status: <strong className="text-emerald-700">{opt?.solver_status || 'READY'}</strong>
-          </span>
+          <div className="flex flex-wrap items-center gap-4 text-slate-500">
+            <span>
+              Forecast Model:{' '}
+              <strong className="text-sky-700">
+                {form.model_choice === 'optimal' && forecast?.applied_model
+                  ? `Optimal → ${MODEL_LABELS[forecast.applied_model] || forecast.applied_model}`
+                  : MODEL_LABELS[forecast?.applied_model || form.model_choice] || form.model_choice}
+              </strong>
+            </span>
+            <span>
+              OR-Tools Status: <strong className="text-emerald-700">{opt?.solver_status || 'READY'}</strong>
+            </span>
+          </div>
         </div>
 
         {error && <div className="p-3 rounded-xl bg-red-50 border border-red-200 text-xs text-red-700">{error}</div>}
