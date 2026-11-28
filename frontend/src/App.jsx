@@ -1,8 +1,10 @@
-import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import {
+  BellRing,
   ChefHat,
   ClipboardCheck,
   FlaskConical,
+  HeartHandshake,
   Home,
   LogIn,
   LogOut,
@@ -16,6 +18,7 @@ import {
 } from 'lucide-react';
 import { api } from './api';
 import AuthModal from './components/AuthModal';
+import KitchenAlertsPanel from './components/KitchenAlertsPanel';
 
 const OverviewDashboard = lazy(() => import('./components/OverviewDashboard'));
 const ForecastBatchPlanner = lazy(() => import('./components/ForecastBatchPlanner'));
@@ -23,6 +26,8 @@ const WhatIfSimulator = lazy(() => import('./components/WhatIfSimulator'));
 const PostMealFeedback = lazy(() => import('./components/PostMealFeedback'));
 const RedistributionHub = lazy(() => import('./components/RedistributionHub'));
 const InventoryData = lazy(() => import('./components/InventoryData'));
+const ChefWorkspace = lazy(() => import('./components/ChefWorkspace'));
+const NgoCoordinatorWorkspace = lazy(() => import('./components/NgoCoordinatorWorkspace'));
 
 function TabSkeleton() {
   return (
@@ -38,7 +43,7 @@ function TabSkeleton() {
   );
 }
 
-const NAV_ITEMS = [
+const MANAGER_NAV_ITEMS = [
   { id: 'overview', label: 'Home', icon: Home },
   { id: 'planner', label: 'Meal Planner', icon: ChefHat },
   { id: 'simulator', label: 'Simulator', icon: FlaskConical },
@@ -47,7 +52,31 @@ const NAV_ITEMS = [
   { id: 'inventory', label: 'Inventory', icon: Package },
 ];
 
+const CHEF_NAV_ITEMS = [
+  { id: 'chef_prep', label: 'Prep Display', icon: ChefHat },
+  { id: 'chef_handover', label: 'Leftover Handover', icon: ClipboardCheck },
+];
+
+const NGO_NAV_ITEMS = [
+  { id: 'ngo_queue', label: 'Rescue Queue', icon: HeartHandshake },
+  { id: 'ngo_pickups', label: 'Active Pickups', icon: Truck },
+  { id: 'ngo_partners', label: 'NGO Hubs', icon: Package },
+];
+
+const roleToWorkspace = (role) => {
+  if (role === 'Chef') return 'chef';
+  if (role === 'NGO Coordinator') return 'ngo';
+  return 'manager';
+};
+
+const defaultTabForWorkspace = (mode) => {
+  if (mode === 'chef') return 'chef_prep';
+  if (mode === 'ngo') return 'ngo_queue';
+  return 'overview';
+};
+
 export default function App() {
+  const [workspaceMode, setWorkspaceMode] = useState('manager');
   const [activeTab, setActiveTab] = useState('overview');
   const [preferredSlot, setPreferredSlot] = useState('Lunch');
   const [feedbackSubTab, setFeedbackSubTab] = useState('log');
@@ -56,20 +85,57 @@ export default function App() {
   const [overview, setOverview] = useState(null);
   const [resetting, setResetting] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [kitchenAlerts, setKitchenAlerts] = useState([]);
+  const [alertsPanelOpen, setAlertsPanelOpen] = useState(false);
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState('login');
   const [currentUser, setCurrentUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(() => Boolean(localStorage.getItem('nourish_auth_token')));
+
+  const refreshInFlightRef = useRef(false);
+
+  const refreshAlerts = useCallback(async (signal) => {
+    if (!currentUser?.verified || currentUser?.role === 'NGO Coordinator') return;
+    if (refreshInFlightRef.current && !signal) return;
+    refreshInFlightRef.current = true;
+    try {
+      const res = await api.getKitchenAlerts(signal ? { signal } : {});
+      if (!signal?.aborted) setKitchenAlerts(res.alerts || []);
+    } catch {
+      // ignore transient abort
+    } finally {
+      refreshInFlightRef.current = false;
+    }
+  }, [currentUser]);
 
   const refreshGlobal = useCallback(async () => {
     try {
       const [hRes, oRes] = await Promise.all([api.health(), api.dashboardOverview()]);
       setHealth(hRes);
       setOverview(oRes);
+      await refreshAlerts();
     } catch {
       // handled gracefully via empty state or unauthorized handler
     }
-  }, []);
+  }, [refreshAlerts]);
+
+  useEffect(() => {
+    if (!currentUser?.verified || currentUser?.role === 'NGO Coordinator') {
+      setKitchenAlerts([]);
+      return undefined;
+    }
+    const controller = new AbortController();
+    refreshAlerts(controller.signal);
+    const interval = setInterval(() => {
+      if (typeof document === 'undefined' || !document.hidden) {
+        refreshAlerts(controller.signal);
+      }
+    }, 15000);
+    return () => {
+      clearInterval(interval);
+      controller.abort();
+    };
+  }, [currentUser, refreshAlerts]);
 
   useEffect(() => {
     const token = localStorage.getItem('nourish_auth_token');
@@ -81,6 +147,9 @@ export default function App() {
       .me(token)
       .then((res) => {
         if (res.user?.verified) {
+          const nextWorkspace = roleToWorkspace(res.user.role);
+          setWorkspaceMode(nextWorkspace);
+          setActiveTab(defaultTabForWorkspace(nextWorkspace));
           setCurrentUser(res.user);
           localStorage.setItem('nourish_auth_user', JSON.stringify(res.user));
         } else {
@@ -104,7 +173,7 @@ export default function App() {
     } else {
       setOverview(null);
     }
-  }, [currentUser]);
+  }, [currentUser, refreshGlobal]);
 
   useEffect(() => {
     const onUnauthorized = () => {
@@ -119,6 +188,9 @@ export default function App() {
   const handleAuthSuccess = (token, user) => {
     localStorage.setItem('nourish_auth_token', token);
     localStorage.setItem('nourish_auth_user', JSON.stringify(user));
+    const nextWorkspace = roleToWorkspace(user?.role);
+    setWorkspaceMode(nextWorkspace);
+    setActiveTab(defaultTabForWorkspace(nextWorkspace));
     setCurrentUser(user);
   };
 
@@ -159,6 +231,25 @@ export default function App() {
     setActiveTab('planner');
   }, []);
 
+  const isManagerOrAdmin = currentUser?.role === 'Kitchen Manager' || currentUser?.role === 'Admin';
+  const effectiveWorkspace = isManagerOrAdmin ? workspaceMode : roleToWorkspace(currentUser?.role);
+  const currentNavItems =
+    effectiveWorkspace === 'chef'
+      ? CHEF_NAV_ITEMS
+      : effectiveWorkspace === 'ngo'
+      ? NGO_NAV_ITEMS
+      : MANAGER_NAV_ITEMS;
+
+  const switchWorkspace = useCallback(
+    (mode) => {
+      if (!isManagerOrAdmin) return;
+      setWorkspaceMode(mode);
+      setActiveTab(defaultTabForWorkspace(mode));
+      setMobileMenuOpen(false);
+    },
+    [isManagerOrAdmin]
+  );
+
   const liveSurplusCount = overview?.kpis?.eligible_surplus_servings_live || 0;
 
   if (authChecking) {
@@ -189,52 +280,46 @@ export default function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col overflow-x-hidden">
       {/* Executive Glass Navigation Bar */}
-      <header className="no-print sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/70 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <header className="no-print sticky top-0 z-40 bg-white/85 backdrop-blur-xl border-b border-slate-200/70 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
+        <div className="max-w-[1440px] mx-auto px-3 sm:px-5 h-16 flex items-center justify-between gap-2">
           {/* Brand */}
           <button
-            onClick={() => setActiveTab('overview')}
-            className="flex items-center gap-3 text-left shrink-0 group"
+            onClick={() => navigateTo(defaultTabForWorkspace(effectiveWorkspace))}
+            className="flex items-center gap-2.5 text-left shrink-0 group"
           >
             <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-900 via-teal-700 to-teal-500 text-white flex items-center justify-center shadow-[0_4px_12px_-2px_rgba(13,148,136,0.4)] group-hover:scale-105 transition-transform">
               <Sprout className="w-5 h-5" />
             </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="font-display text-base font-extrabold tracking-tight text-slate-900 leading-none">
-                  Nourish AI
-                </span>
-                <span className="hidden xl:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/80">
-                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
-                  Live
-                </span>
-              </div>
-              <span className="text-[11px] font-medium text-slate-500 block mt-0.5">
-                Smart Kitchen &amp; Redistribution
+            <div className="whitespace-nowrap">
+              <span className="font-display text-base font-extrabold tracking-tight text-slate-900 leading-none block">
+                Nourish AI
+              </span>
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-teal-700 block mt-0.5">
+                {effectiveWorkspace === 'chef' ? 'Chef KDS' : effectiveWorkspace === 'ngo' ? 'NGO Hub' : 'Kitchen Ops'}
               </span>
             </div>
           </button>
 
           {/* Desktop Navigation Pills */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100/85 backdrop-blur-sm p-1 rounded-2xl border border-slate-200/75 shadow-[inset_0_1px_1px_rgba(15,23,42,0.03)]">
-            {NAV_ITEMS.map((item) => {
+          <nav className="hidden lg:flex items-center gap-0.5 bg-slate-100/85 backdrop-blur-sm p-1 rounded-2xl border border-slate-200/75 shadow-[inset_0_1px_1px_rgba(15,23,42,0.03)] shrink-0">
+            {currentNavItems.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
               return (
                 <button
                   key={item.id}
                   onClick={() => navigateTo(item.id)}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-150 ${
+                  className={`px-2.5 xl:px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 whitespace-nowrap shrink-0 transition-all duration-150 ${
                     active
-                      ? 'bg-white text-emerald-950 shadow-[0_1px_3px_rgba(6,78,59,0.12)] ring-1 ring-emerald-900/5'
+                      ? 'bg-white text-slate-950 shadow-[0_1px_3px_rgba(15,23,42,0.12)] ring-1 ring-slate-900/5'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                   }`}
                 >
-                  <Icon className={`w-3.5 h-3.5 ${active ? 'text-emerald-700' : 'text-slate-400'}`} />
+                  <Icon className={`w-3.5 h-3.5 shrink-0 ${active ? 'text-teal-700' : 'text-slate-400'}`} />
                   {item.label}
-                  {item.id === 'redistribution' && liveSurplusCount > 0 && (
+                  {(item.id === 'redistribution' || item.id === 'ngo_queue') && liveSurplusCount > 0 && (
                     <span className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-amber-500 text-white leading-none stat-value">
                       {liveSurplusCount}
                     </span>
@@ -245,25 +330,79 @@ export default function App() {
           </nav>
 
           {/* Right Auth & System Controls */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 shrink-0">
+            {isManagerOrAdmin && (
+              <div
+                title="Switch portal view for live role demo"
+                className="hidden sm:inline-flex items-center p-0.5 rounded-xl bg-slate-100 border border-slate-200/80 text-[11px] font-semibold shrink-0"
+              >
+                {[
+                  { id: 'manager', label: 'Manager' },
+                  { id: 'chef', label: 'Chef' },
+                  { id: 'ngo', label: 'NGO' },
+                ].map((w) => (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => switchWorkspace(w.id)}
+                    className={`px-2 py-1 rounded-lg whitespace-nowrap transition ${
+                      effectiveWorkspace === w.id
+                        ? 'bg-slate-900 text-white shadow-xs'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    {w.label}
+                  </button>
+                ))}
+              </div>
+            )}
             {currentUser ? (
-              <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-teal-50/90 border border-teal-200/80 text-xs font-semibold text-slate-900">
-                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[11px] font-bold">
+              <div className="flex items-center gap-1.5">
+                <div
+                  title={`${currentUser.name} (${currentUser.role})`}
+                  className="hidden xl:flex items-center gap-1.5 pl-1.5 pr-2.5 py-1 rounded-full bg-teal-50/90 border border-teal-200/80 text-xs font-semibold text-slate-900 whitespace-nowrap"
+                >
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[11px] font-bold shrink-0">
                     {currentUser.name?.[0]?.toUpperCase() || <User className="w-3 h-3" />}
                   </span>
-                  <span className="max-w-[110px] truncate">{currentUser.name}</span>
                   <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-teal-700 border border-teal-200/80">
                     {currentUser.role}
                   </span>
                 </div>
+                {isManagerOrAdmin && (() => {
+                  const pendingAlerts = kitchenAlerts.filter((a) => a.status === 'Pending Manager').length;
+                  const activeAlerts = kitchenAlerts.filter((a) => a.status !== 'Resolved').length;
+                  return (
+                    <button
+                      type="button"
+                      onClick={() => setAlertsPanelOpen(true)}
+                      title="Live Chef dish-shortage notifications"
+                      className={`h-9 px-2.5 rounded-xl border text-xs font-bold inline-flex items-center gap-1.5 whitespace-nowrap shrink-0 transition ${
+                        pendingAlerts > 0
+                          ? 'border-amber-300 bg-amber-50 text-amber-900 shadow-xs'
+                          : 'border-slate-200 bg-white hover:bg-slate-50 text-slate-600'
+                      }`}
+                    >
+                      <BellRing className={`w-3.5 h-3.5 ${pendingAlerts > 0 ? 'text-amber-600 animate-pulse' : 'text-slate-400'}`} />
+                      {(pendingAlerts > 0 || activeAlerts > 0) && (
+                        <span
+                          className={`px-1.5 py-0.5 text-[10px] rounded-full text-white leading-none stat-value ${
+                            pendingAlerts > 0 ? 'bg-amber-600' : 'bg-teal-600'
+                          }`}
+                        >
+                          {pendingAlerts > 0 ? pendingAlerts : activeAlerts}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })()}
                 <button
                   onClick={handleSignOut}
                   title="Sign out"
-                  className="h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 text-xs font-semibold inline-flex items-center gap-1.5 transition"
+                  aria-label="Sign out"
+                  className="hidden sm:inline-flex h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 items-center justify-center shrink-0 transition"
                 >
                   <LogOut className="w-3.5 h-3.5" />
-                  <span className="hidden md:inline">Sign Out</span>
                 </button>
               </div>
             ) : (
@@ -275,7 +414,7 @@ export default function App() {
                   }}
                   className="h-9 px-3 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-700 text-xs font-semibold inline-flex items-center gap-1.5 transition"
                 >
-                  <LogIn className="w-3.5 h-3.5 text-emerald-700" />
+                  <LogIn className="w-3.5 h-3.5 text-teal-700" />
                   Sign In
                 </button>
                 <button
@@ -283,24 +422,27 @@ export default function App() {
                     setAuthModalMode('register');
                     setAuthModalOpen(true);
                   }}
-                  className="hidden sm:inline-flex h-9 px-3.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold items-center shadow-sm transition"
+                  className="hidden sm:inline-flex h-9 px-3.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold items-center shadow-sm transition"
                 >
                   Register
                 </button>
               </div>
             )}
 
-            <button
-              onClick={handleResetDemo}
-              disabled={resetting}
-              title="Reset demo dataset"
-              className="h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 inline-flex items-center justify-center transition"
-            >
-              <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
-            </button>
+            {isManagerOrAdmin && (
+              <button
+                onClick={handleResetDemo}
+                disabled={resetting}
+                title="Reset demo dataset"
+                className="hidden sm:inline-flex h-9 w-9 rounded-xl border border-slate-200 bg-white hover:bg-slate-50 text-slate-500 items-center justify-center shrink-0 transition"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 ${resetting ? 'animate-spin' : ''}`} />
+              </button>
+            )}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50"
+              aria-label="Toggle navigation menu"
+              className="lg:hidden p-2 rounded-xl border border-slate-200 text-slate-700 hover:bg-slate-50 shrink-0"
             >
               {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
@@ -309,57 +451,135 @@ export default function App() {
 
         {/* Mobile Dropdown Navigation */}
         {mobileMenuOpen && (
-          <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 grid grid-cols-2 gap-2">
-            {NAV_ITEMS.map((item) => {
-              const Icon = item.icon;
-              const active = activeTab === item.id;
-              return (
-                <button
-                  key={item.id}
-                  onClick={() => navigateTo(item.id)}
-                  className={`px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
-                    active ? 'bg-emerald-50 text-emerald-800 border border-emerald-200' : 'bg-slate-50 text-slate-700'
-                  }`}
-                >
-                  <Icon className="w-4 h-4" />
-                  {item.label}
-                </button>
-              );
-            })}
+          <div className="lg:hidden border-t border-slate-200 bg-white px-4 py-3 space-y-2.5">
+            {isManagerOrAdmin && (
+              <div className="flex sm:hidden items-center gap-1 p-1 rounded-xl bg-slate-100 text-xs font-semibold">
+                {[
+                  { id: 'manager', label: 'Manager' },
+                  { id: 'chef', label: 'Chef' },
+                  { id: 'ngo', label: 'NGO' },
+                ].map((w) => (
+                  <button
+                    key={w.id}
+                    type="button"
+                    onClick={() => switchWorkspace(w.id)}
+                    className={`flex-1 py-1.5 rounded-lg transition ${
+                      effectiveWorkspace === w.id ? 'bg-slate-900 text-white' : 'text-slate-600'
+                    }`}
+                  >
+                    {w.label}
+                  </button>
+                ))}
+              </div>
+            )}
+            <div className="grid grid-cols-2 gap-2">
+              {currentNavItems.map((item) => {
+                const Icon = item.icon;
+                const active = activeTab === item.id;
+                return (
+                  <button
+                    key={item.id}
+                    onClick={() => navigateTo(item.id)}
+                    className={`px-3 py-2.5 rounded-xl text-xs font-semibold flex items-center gap-2 ${
+                      active ? 'bg-teal-50 text-teal-800 border border-teal-200' : 'bg-slate-50 text-slate-700'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {item.label}
+                  </button>
+                );
+              })}
+            </div>
+            {currentUser && (
+              <div className="sm:hidden pt-2 border-t border-slate-100 flex items-center justify-between text-xs">
+                <span className="font-semibold text-slate-700 truncate">
+                  {currentUser.name} ({currentUser.role})
+                </span>
+                <div className="flex items-center gap-2">
+                  {isManagerOrAdmin && (
+                    <button
+                      onClick={handleResetDemo}
+                      disabled={resetting}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-slate-600 font-semibold"
+                    >
+                      Reset
+                    </button>
+                  )}
+                  <button
+                    onClick={handleSignOut}
+                    className="px-2.5 py-1.5 rounded-lg bg-slate-900 text-white font-semibold"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </header>
 
-      {/* Main Content Canvas with Lazy-Loaded Code-Split Views */}
-      <main key={activeTab} className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-7 animate-fade-up">
+      {/* Main Content Canvas with Lazy-Loaded Role-Based Views */}
+      <main
+        key={effectiveWorkspace === 'manager' ? activeTab : effectiveWorkspace}
+        className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-7 animate-fade-up"
+      >
         <Suspense fallback={<TabSkeleton />}>
-          {activeTab === 'overview' && (
-            <OverviewDashboard
-              data={overview}
-              onNavigate={navigateTo}
-              onSelectSlot={openPlannerForSlot}
-            />
-          )}
-          {activeTab === 'planner' && <ForecastBatchPlanner initialSlot={preferredSlot} onDataUpdated={refreshGlobal} />}
-          {activeTab === 'simulator' && <WhatIfSimulator />}
-          {activeTab === 'redistribution' && (
-            <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />
-          )}
-          {activeTab === 'feedback' && (
-            <PostMealFeedback
-              overviewData={overview}
-              initialSubTab={feedbackSubTab}
+          {effectiveWorkspace === 'chef' && (
+            <ChefWorkspace
+              initialTab={activeTab === 'chef_handover' ? 'handover' : 'prep'}
+              currentUser={currentUser}
+              alerts={kitchenAlerts}
+              onRefreshAlerts={refreshAlerts}
               onDataUpdated={refreshGlobal}
             />
           )}
-          {activeTab === 'inventory' && (
-            <InventoryData
-              initialSubTab={inventoryNav.subTab}
-              initialFilter={inventoryNav.filter}
-              navNonce={inventoryNav.nonce}
-              onSelectSlot={openPlannerForSlot}
+
+          {effectiveWorkspace === 'ngo' && (
+            <NgoCoordinatorWorkspace
+              initialTab={
+                activeTab === 'ngo_pickups' ? 'pickups' : activeTab === 'ngo_partners' ? 'partners' : 'queue'
+              }
+              currentUser={currentUser}
+              kitchenInfo={health?.kitchen}
               onDataUpdated={refreshGlobal}
             />
+          )}
+
+          {effectiveWorkspace === 'manager' && (
+            <>
+              {activeTab === 'overview' && (
+                <OverviewDashboard
+                  data={overview}
+                  pendingAlertsCount={kitchenAlerts.filter((a) => a.status === 'Pending Manager').length}
+                  onNavigate={navigateTo}
+                  onSelectSlot={openPlannerForSlot}
+                  onOpenKitchenAlerts={() => setAlertsPanelOpen(true)}
+                />
+              )}
+              {activeTab === 'planner' && (
+                <ForecastBatchPlanner initialSlot={preferredSlot} onDataUpdated={refreshGlobal} />
+              )}
+              {activeTab === 'simulator' && <WhatIfSimulator />}
+              {activeTab === 'redistribution' && (
+                <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />
+              )}
+              {activeTab === 'feedback' && (
+                <PostMealFeedback
+                  overviewData={overview}
+                  initialSubTab={feedbackSubTab}
+                  onDataUpdated={refreshGlobal}
+                />
+              )}
+              {activeTab === 'inventory' && (
+                <InventoryData
+                  initialSubTab={inventoryNav.subTab}
+                  initialFilter={inventoryNav.filter}
+                  navNonce={inventoryNav.nonce}
+                  onSelectSlot={openPlannerForSlot}
+                  onDataUpdated={refreshGlobal}
+                />
+              )}
+            </>
           )}
         </Suspense>
       </main>
@@ -383,6 +603,13 @@ export default function App() {
           </div>
         </div>
       </footer>
+
+      <KitchenAlertsPanel
+        isOpen={alertsPanelOpen}
+        alerts={kitchenAlerts}
+        onClose={() => setAlertsPanelOpen(false)}
+        onUpdated={refreshGlobal}
+      />
 
       <AuthModal
         key={authModalMode + String(authModalOpen)}
