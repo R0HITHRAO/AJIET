@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { memo, useState } from 'react';
 import {
   Area,
   AreaChart,
@@ -22,6 +22,7 @@ import {
   Leaf,
   Moon,
   Sparkles,
+  Sprout,
   Sun,
   TrendingDown,
   Truck,
@@ -35,7 +36,7 @@ const SLOT_META = {
   Dinner: { icon: Moon, time: '19:30 – 21:30', badge: 'text-indigo-700 bg-indigo-50 border-indigo-200/80' },
 };
 
-export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
+export default memo(function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
   const [chartView, setChartView] = useState('trend');
 
   if (!data) {
@@ -58,38 +59,61 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
   return (
     <div className="space-y-8">
       {/* 1. Architectural Hero Banner */}
-      <section className="relative overflow-hidden rounded-3xl hero-mesh text-white p-7 sm:p-10 shadow-[0_20px_50px_-15px_rgba(4,47,46,0.45)] border border-emerald-800/40">
-        <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-60" />
+      <section className="relative overflow-hidden rounded-3xl hero-mesh text-white p-7 sm:p-10 shadow-[0_24px_60px_-15px_rgba(11,18,34,0.58)] border border-slate-700/60">
+        <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-65" />
+        <div className="absolute -top-24 -right-24 w-72 h-72 rounded-full bg-teal-400/20 blur-3xl pointer-events-none" />
+        <div className="absolute -bottom-24 -left-16 w-64 h-64 rounded-full bg-amber-400/12 blur-3xl pointer-events-none" />
 
         <div className="relative grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
           <div className="lg:col-span-7 space-y-5">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-sm border border-white/15 text-xs font-semibold text-emerald-100">
-              <Sparkles className="w-3.5 h-3.5 text-amber-300" />
-              SMVITM Institutional Kitchen &bull; Sample-data demo
+            <div className="inline-flex items-center gap-2 px-3.5 py-1 rounded-full bg-white/[0.07] backdrop-blur-md border border-white/15 text-[11px] font-semibold uppercase tracking-wider text-teal-200 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)]">
+              <span className="w-1.5 h-1.5 rounded-full bg-teal-400 animate-pulse" />
+              Institutional Kitchen &amp; Mess &bull; Live Operations
             </div>
 
-            <h1 className="font-display text-3xl sm:text-[42px] font-extrabold tracking-tight leading-[1.12]">
-              Cook what&apos;s needed. <br className="hidden sm:block" />
-              Rescue what&apos;s left.
-            </h1>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3.5">
+                <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-2xl bg-gradient-to-br from-teal-400/25 via-emerald-400/15 to-amber-300/20 border border-white/20 flex items-center justify-center shadow-[inset_0_1px_0_rgba(255,255,255,0.25),0_12px_24px_-8px_rgba(0,0,0,0.4)] shrink-0">
+                  <Sprout className="w-6 h-6 sm:w-7 sm:h-7 text-teal-200" />
+                </div>
+                <div>
+                  <h1 className="font-display text-4xl sm:text-[52px] font-extrabold tracking-tight leading-none text-white">
+                    Nourish{' '}
+                    <span className="bg-gradient-to-r from-teal-300 via-cyan-200 to-amber-200 bg-clip-text text-transparent">
+                      AI
+                    </span>
+                  </h1>
+                  <p className="text-[11px] sm:text-xs font-semibold uppercase tracking-[0.18em] text-slate-400 mt-1.5">
+                    Smart Kitchen Forecasting &amp; Surplus Redistribution
+                  </p>
+                </div>
+              </div>
 
-            <p className="text-sm sm:text-base text-emerald-100/85 max-w-xl leading-relaxed">
-              Forecast institutional meal demand with Random Forest &amp; XGBoost, optimize two-stage batch cooking via
-              Google OR-Tools, and screen surplus before recommending nearby NGO matches.
+              <p className="font-display text-xl sm:text-[26px] font-bold tracking-tight leading-snug text-slate-100">
+                Cook what&apos;s needed.{' '}
+                <span className="bg-gradient-to-r from-teal-200 via-cyan-100 to-amber-200 bg-clip-text text-transparent">
+                  Rescue what&apos;s left.
+                </span>
+              </p>
+            </div>
+
+            <p className="text-sm sm:text-[15px] text-slate-300/90 max-w-xl leading-relaxed">
+              Forecast daily dining turnout, schedule two-stage batch cooking, and verify safe surplus before
+              recommending nearby NGO matches.
             </p>
 
             <div className="pt-1 flex flex-wrap items-center gap-3">
               <button
                 onClick={() => onSelectSlot?.('Lunch')}
-                className="h-11 px-5 rounded-xl bg-white text-emerald-950 hover:bg-emerald-50 text-sm font-bold inline-flex items-center gap-2 shadow-sm transition"
+                className="h-11 px-5 rounded-xl bg-white text-slate-950 hover:bg-teal-50 active:scale-[0.985] text-sm font-bold inline-flex items-center gap-2 shadow-[0_8px_22px_-6px_rgba(255,255,255,0.32)] transition-all"
               >
-                <ChefHat className="w-4 h-4" />
+                <ChefHat className="w-4 h-4 text-teal-700" />
                 Plan Next Meal
                 <ArrowRight className="w-4 h-4" />
               </button>
               <button
                 onClick={() => onNavigate('redistribution')}
-                className="h-11 px-5 rounded-xl bg-white/10 hover:bg-white/15 backdrop-blur-sm border border-white/20 text-white text-sm font-semibold inline-flex items-center gap-2 transition"
+                className="h-11 px-5 rounded-xl bg-white/[0.08] hover:bg-white/[0.14] active:scale-[0.985] backdrop-blur-md border border-white/20 text-white text-sm font-semibold inline-flex items-center gap-2 transition-all"
               >
                 <Truck className="w-4 h-4 text-amber-300" />
                 Rescue {kpis.eligible_surplus_servings_live} Surplus Servings
@@ -97,52 +121,55 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
             </div>
           </div>
 
-          {/* Illustrative impact estimates based on the checked-in demo dataset. */}
+          {/* Executive KPI glass tiles */}
           <div className="lg:col-span-5 grid grid-cols-2 gap-3.5">
             {[
               {
                 icon: TrendingDown,
-                iconColor: 'text-emerald-300',
-                label: 'Projected Waste Prevented / mo',
+                iconBg: 'bg-teal-400/15 border-teal-300/20',
+                iconColor: 'text-teal-300',
+                label: 'Waste Prevented / mo',
                 value: `${kpis.monthly_waste_prevented_kg.toLocaleString()} kg`,
-                sub: `Illustrative estimate · ${kpis.waste_reduction_pct}%`,
+                sub: `${kpis.waste_reduction_pct}% reduction vs baseline`,
               },
               {
                 icon: Wallet,
+                iconBg: 'bg-sky-400/15 border-sky-300/20',
                 iconColor: 'text-sky-300',
-                label: 'Projected Cost Saved / mo',
+                label: 'Cost Saved / mo',
                 value: `₹${Math.round(kpis.monthly_cost_saved_inr).toLocaleString('en-IN')}`,
-                sub: `Demo-data sufficiency · ${kpis.meal_sufficiency_pct}%`,
+                sub: `${kpis.meal_sufficiency_pct}% meal sufficiency`,
               },
               {
                 icon: HeartHandshake,
+                iconBg: 'bg-amber-400/15 border-amber-300/20',
                 iconColor: 'text-amber-300',
-                label: 'Demo Meals Rescued',
+                label: 'Meals Rescued',
                 value: kpis.meals_redistributed.toLocaleString(),
-                sub: `${kpis.active_ngo_partners} demo NGO partners`,
+                sub: `${kpis.active_ngo_partners} active NGO partners`,
               },
               {
                 icon: Leaf,
+                iconBg: 'bg-emerald-400/15 border-emerald-300/20',
                 iconColor: 'text-emerald-300',
-                label: 'Estimated CO₂ Avoided',
+                label: 'CO₂ Avoided',
                 value: `${kpis.co2_avoided_kg.toLocaleString()} kg`,
-                sub: `Illustrative estimate · Model v${ml?.model_version || 1}`,
+                sub: `Model v${ml?.model_version || 1} active`,
               },
             ].map((tile) => {
               const TileIcon = tile.icon;
               return (
-                <div
-                  key={tile.label}
-                  className="p-4 rounded-2xl bg-white/[0.08] backdrop-blur-md border border-white/15 hover:bg-white/[0.12] transition"
-                >
-                  <div className="flex items-center gap-2 text-emerald-100/90 text-xs font-medium">
-                    <TileIcon className={`w-4 h-4 ${tile.iconColor}`} />
-                    {tile.label}
+                <div key={tile.label} className="kpi-tile">
+                  <div className="flex items-center gap-2 text-slate-200 text-xs font-medium">
+                    <span className={`w-6 h-6 rounded-lg border flex items-center justify-center shrink-0 ${tile.iconBg}`}>
+                      <TileIcon className={`w-3.5 h-3.5 ${tile.iconColor}`} />
+                    </span>
+                    <span className="truncate">{tile.label}</span>
                   </div>
-                  <p className="mt-2 font-display text-2xl font-extrabold stat-value tracking-tight">
+                  <p className="mt-2.5 font-display text-2xl font-extrabold stat-value tracking-tight">
                     {tile.value}
                   </p>
-                  <p className="text-[11px] text-emerald-200/75 mt-0.5">{tile.sub}</p>
+                  <p className="text-[11px] text-slate-300/80 mt-0.5 truncate">{tile.sub}</p>
                 </div>
               );
             })}
@@ -175,11 +202,12 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
                 onClick={() => onSelectSlot?.(slot.meal_slot)}
                 className="card-interactive p-5 text-left group flex flex-col justify-between relative overflow-hidden"
               >
+                <span className="absolute inset-x-0 top-0 h-0.5 bg-gradient-to-r from-emerald-500/0 via-emerald-500/70 to-teal-500/0 opacity-0 group-hover:opacity-100 transition-opacity" />
                 <div className="flex items-center justify-between w-full">
-                  <span className={`w-10 h-10 rounded-xl border flex items-center justify-center ${meta.badge}`}>
+                  <span className={`w-10 h-10 rounded-xl border flex items-center justify-center shadow-sm ${meta.badge}`}>
                     <Icon className="w-5 h-5" />
                   </span>
-                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/70 stat-value">
+                  <span className="text-[11px] font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/80 stat-value">
                     {slot.ai_projected_waste_pct}% projected waste
                   </span>
                 </div>
@@ -247,8 +275,8 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
                 <AreaChart data={dailyTrend} margin={{ top: 8, right: 12, left: 0, bottom: 0 }}>
                   <defs>
                     <linearGradient id="servedGlow" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#059669" stopOpacity={0.2} />
-                      <stop offset="95%" stopColor="#059669" stopOpacity={0.01} />
+                      <stop offset="5%" stopColor="#0d9488" stopOpacity={0.22} />
+                      <stop offset="95%" stopColor="#0d9488" stopOpacity={0.01} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" vertical={false} />
@@ -284,7 +312,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
                     type="monotone"
                     dataKey="served_servings"
                     name="Actual Served"
-                    stroke="#059669"
+                    stroke="#0d9488"
                     fill="url(#servedGlow)"
                     strokeWidth={2.5}
                   />
@@ -304,7 +332,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
                   />
                   <Legend wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                   <Bar dataKey="waste_pct" name="Baseline Waste %" fill="#cbd5e1" radius={[8, 8, 0, 0]} />
-                  <Bar dataKey="ai_projected_waste_pct" name="Nourish AI Waste %" fill="#059669" radius={[8, 8, 0, 0]} />
+                  <Bar dataKey="ai_projected_waste_pct" name="Nourish AI Waste %" fill="#0d9488" radius={[8, 8, 0, 0]} />
                 </BarChart>
               )}
             </ResponsiveContainer>
@@ -321,7 +349,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
           <div className="space-y-3">
             <button
               onClick={() => onNavigate('redistribution')}
-              className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-emerald-50/60 border border-slate-200/90 border-l-4 border-l-emerald-600 text-left flex items-center justify-between transition"
+              className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-emerald-50/70 border border-slate-200/90 border-l-4 border-l-emerald-600 text-left flex items-center justify-between hover:shadow-md hover:-translate-y-0.5 transition"
             >
               <div className="flex items-center gap-3">
                 <span className="w-9 h-9 rounded-xl bg-emerald-100 text-emerald-700 flex items-center justify-center shrink-0">
@@ -340,18 +368,23 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
             {perishabilityAlerts.length > 0 && (
               <button
                 onClick={() => onNavigate('inventory', { subTab: 'inventory', filter: 'perishable' })}
-                className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-sky-50/60 border border-slate-200/90 border-l-4 border-l-sky-600 text-left flex items-center justify-between transition"
+                className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-sky-50/70 border border-slate-200/90 border-l-4 border-l-sky-600 text-left flex items-center justify-between hover:shadow-md hover:-translate-y-0.5 transition"
               >
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700">
-                    Use Soon &bull; {perishabilityAlerts.length} Perishable Item{perishabilityAlerts.length > 1 ? 's' : ''} ({perishabilityAlerts[0].perishability_days}d Shelf Life)
-                  </p>
-                  <p className="text-xs text-slate-700 mt-0.5">
-                    <strong>{perishabilityAlerts[0].name}</strong> ({perishabilityAlerts[0].stock_qty} {perishabilityAlerts[0].unit})
-                    {perishabilityAlerts[0].suggested_dishes?.[0]
-                      ? ` → Prioritize ${perishabilityAlerts[0].suggested_dishes[0].name}`
-                      : ''}
-                  </p>
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-sky-100 text-sky-700 flex items-center justify-center shrink-0">
+                    <Sparkles className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-[11px] font-bold uppercase tracking-wider text-sky-700">
+                      Use Soon &bull; {perishabilityAlerts.length} Perishable Item{perishabilityAlerts.length > 1 ? 's' : ''} ({perishabilityAlerts[0].perishability_days}d Shelf Life)
+                    </p>
+                    <p className="text-xs text-slate-700 mt-0.5">
+                      <strong>{perishabilityAlerts[0].name}</strong> ({perishabilityAlerts[0].stock_qty} {perishabilityAlerts[0].unit})
+                      {perishabilityAlerts[0].suggested_dishes?.[0]
+                        ? ` → Prioritize ${perishabilityAlerts[0].suggested_dishes[0].name}`
+                        : ''}
+                    </p>
+                  </div>
                 </div>
                 <ArrowRight className="w-4 h-4 text-slate-400 shrink-0" />
               </button>
@@ -360,7 +393,7 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
             {kpis.low_stock_ingredients > 0 && (
               <button
                 onClick={() => onNavigate('inventory', { subTab: 'inventory', filter: 'low_stock' })}
-                className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-amber-50/60 border border-slate-200/90 border-l-4 border-l-amber-500 text-left flex items-center justify-between transition"
+                className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-amber-50/70 border border-slate-200/90 border-l-4 border-l-amber-500 text-left flex items-center justify-between hover:shadow-md hover:-translate-y-0.5 transition"
               >
                 <div className="flex items-center gap-3">
                   <span className="w-9 h-9 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0">
@@ -408,4 +441,4 @@ export default function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
       </section>
     </div>
   );
-}
+});
