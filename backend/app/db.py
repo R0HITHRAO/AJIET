@@ -251,6 +251,7 @@ class DatabaseManager:
         "prep_plans",
         "users",
         "password_reset_otps",
+        "kitchen_alerts",
     )
 
     def __init__(self, store_dir: Path | None = None) -> None:
