@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { Suspense, lazy, useCallback, useEffect, useState } from 'react';
 import {
   ChefHat,
   ClipboardCheck,
@@ -15,13 +15,28 @@ import {
   X,
 } from 'lucide-react';
 import { api } from './api';
-import OverviewDashboard from './components/OverviewDashboard';
-import ForecastBatchPlanner from './components/ForecastBatchPlanner';
-import WhatIfSimulator from './components/WhatIfSimulator';
-import PostMealFeedback from './components/PostMealFeedback';
-import RedistributionHub from './components/RedistributionHub';
-import InventoryData from './components/InventoryData';
 import AuthModal from './components/AuthModal';
+
+const OverviewDashboard = lazy(() => import('./components/OverviewDashboard'));
+const ForecastBatchPlanner = lazy(() => import('./components/ForecastBatchPlanner'));
+const WhatIfSimulator = lazy(() => import('./components/WhatIfSimulator'));
+const PostMealFeedback = lazy(() => import('./components/PostMealFeedback'));
+const RedistributionHub = lazy(() => import('./components/RedistributionHub'));
+const InventoryData = lazy(() => import('./components/InventoryData'));
+
+function TabSkeleton() {
+  return (
+    <div className="space-y-6 animate-pulse">
+      <div className="h-36 rounded-3xl bg-slate-200/80" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        {[1, 2, 3, 4].map((n) => (
+          <div key={n} className="h-28 rounded-2xl bg-slate-200/70" />
+        ))}
+      </div>
+      <div className="h-72 rounded-2xl bg-slate-200/60" />
+    </div>
+  );
+}
 
 const NAV_ITEMS = [
   { id: 'overview', label: 'Home', icon: Home },
@@ -46,7 +61,7 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState(null);
   const [authChecking, setAuthChecking] = useState(() => Boolean(localStorage.getItem('nourish_auth_token')));
 
-  const refreshGlobal = async () => {
+  const refreshGlobal = useCallback(async () => {
     try {
       const [hRes, oRes] = await Promise.all([api.health(), api.dashboardOverview()]);
       setHealth(hRes);
@@ -54,7 +69,7 @@ export default function App() {
     } catch {
       // handled gracefully via empty state or unauthorized handler
     }
-  };
+  }, []);
 
   useEffect(() => {
     const token = localStorage.getItem('nourish_auth_token');
@@ -113,17 +128,19 @@ export default function App() {
     setCurrentUser(null);
   };
 
-  const handleResetDemo = async () => {
+  const handleResetDemo = useCallback(async () => {
     setResetting(true);
     try {
       await api.resetDemo();
       await refreshGlobal();
+    } catch {
+      // handled gracefully via refresh / next action
     } finally {
       setResetting(false);
     }
-  };
+  }, [refreshGlobal]);
 
-  const navigateTo = (tab, opts = {}) => {
+  const navigateTo = useCallback((tab, opts = {}) => {
     if (tab === 'feedback') {
       setFeedbackSubTab(opts.subTab || 'log');
     } else if (tab === 'inventory') {
@@ -135,23 +152,23 @@ export default function App() {
     }
     setActiveTab(tab);
     setMobileMenuOpen(false);
-  };
+  }, []);
 
-  const openPlannerForSlot = (slot) => {
+  const openPlannerForSlot = useCallback((slot) => {
     if (slot) setPreferredSlot(slot);
     setActiveTab('planner');
-  };
+  }, []);
 
   const liveSurplusCount = overview?.kpis?.eligible_surplus_servings_live || 0;
 
   if (authChecking) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50">
-        <div className="text-center space-y-2">
-          <div className="w-10 h-10 rounded-xl bg-emerald-700 text-white flex items-center justify-center mx-auto animate-pulse">
+      <div className="min-h-screen flex items-center justify-center hero-mesh">
+        <div className="text-center space-y-2.5">
+          <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/15 text-teal-200 flex items-center justify-center mx-auto animate-pulse">
             <Sprout className="w-5 h-5" />
           </div>
-          <p className="text-xs font-semibold text-slate-600">Verifying Nourish AI session...</p>
+          <p className="text-xs font-semibold text-slate-300">Verifying Nourish AI session...</p>
         </div>
       </div>
     );
@@ -174,22 +191,23 @@ export default function App() {
   return (
     <div className="min-h-screen flex flex-col">
       {/* Executive Glass Navigation Bar */}
-      <header className="no-print sticky top-0 z-40 bg-white/85 backdrop-blur-lg border-b border-slate-200/80">
+      <header className="no-print sticky top-0 z-40 bg-white/80 backdrop-blur-xl border-b border-slate-200/70 shadow-[0_1px_0_rgba(15,23,42,0.04)]">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           {/* Brand */}
           <button
             onClick={() => setActiveTab('overview')}
             className="flex items-center gap-3 text-left shrink-0 group"
           >
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-600 to-emerald-900 text-white flex items-center justify-center shadow-sm group-hover:scale-105 transition-transform">
+            <div className="w-9 h-9 rounded-xl bg-gradient-to-br from-slate-900 via-teal-700 to-teal-500 text-white flex items-center justify-center shadow-[0_4px_12px_-2px_rgba(13,148,136,0.4)] group-hover:scale-105 transition-transform">
               <Sprout className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-2">
                 <span className="font-display text-base font-extrabold tracking-tight text-slate-900 leading-none">
                   Nourish AI
                 </span>
-                <span className="hidden xl:inline-block text-[10px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200/80">
+                <span className="hidden xl:inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-teal-50 text-teal-700 border border-teal-200/80">
+                  <span className="w-1.5 h-1.5 rounded-full bg-teal-500 animate-pulse" />
                   Live
                 </span>
               </div>
@@ -200,7 +218,7 @@ export default function App() {
           </button>
 
           {/* Desktop Navigation Pills */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-100/90 p-1 rounded-2xl border border-slate-200/70">
+          <nav className="hidden md:flex items-center gap-1 bg-slate-100/85 backdrop-blur-sm p-1 rounded-2xl border border-slate-200/75 shadow-[inset_0_1px_1px_rgba(15,23,42,0.03)]">
             {NAV_ITEMS.map((item) => {
               const Icon = item.icon;
               const active = activeTab === item.id;
@@ -210,7 +228,7 @@ export default function App() {
                   onClick={() => navigateTo(item.id)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-semibold flex items-center gap-1.5 transition-all duration-150 ${
                     active
-                      ? 'bg-white text-emerald-900 shadow-sm ring-1 ring-slate-200/70'
+                      ? 'bg-white text-emerald-950 shadow-[0_1px_3px_rgba(6,78,59,0.12)] ring-1 ring-emerald-900/5'
                       : 'text-slate-600 hover:text-slate-900 hover:bg-white/60'
                   }`}
                 >
@@ -230,12 +248,12 @@ export default function App() {
           <div className="flex items-center gap-2 shrink-0">
             {currentUser ? (
               <div className="flex items-center gap-2">
-                <div className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-emerald-50/90 border border-emerald-200/80 text-xs font-semibold text-emerald-950">
-                  <span className="w-6 h-6 rounded-full bg-emerald-700 text-white flex items-center justify-center text-[11px] font-bold">
+                <div className="hidden sm:flex items-center gap-2 pl-2 pr-3 py-1 rounded-full bg-teal-50/90 border border-teal-200/80 text-xs font-semibold text-slate-900">
+                  <span className="w-6 h-6 rounded-full bg-slate-900 text-white flex items-center justify-center text-[11px] font-bold">
                     {currentUser.name?.[0]?.toUpperCase() || <User className="w-3 h-3" />}
                   </span>
                   <span className="max-w-[110px] truncate">{currentUser.name}</span>
-                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-emerald-700 border border-emerald-200/80">
+                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-white text-teal-700 border border-teal-200/80">
                     {currentUser.role}
                   </span>
                 </div>
@@ -312,45 +330,48 @@ export default function App() {
         )}
       </header>
 
-      {/* Main Content Canvas with Smooth View Transition */}
+      {/* Main Content Canvas with Lazy-Loaded Code-Split Views */}
       <main key={activeTab} className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-7 animate-fade-up">
-        {activeTab === 'overview' && (
-          <OverviewDashboard
-            data={overview}
-            onNavigate={navigateTo}
-            onSelectSlot={openPlannerForSlot}
-          />
-        )}
-        {activeTab === 'planner' && <ForecastBatchPlanner initialSlot={preferredSlot} onDataUpdated={refreshGlobal} />}
-        {activeTab === 'simulator' && <WhatIfSimulator />}
-        {activeTab === 'redistribution' && (
-          <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />
-        )}
-        {activeTab === 'feedback' && (
-          <PostMealFeedback
-            overviewData={overview}
-            initialSubTab={feedbackSubTab}
-            onDataUpdated={refreshGlobal}
-          />
-        )}
-        {activeTab === 'inventory' && (
-          <InventoryData
-            initialSubTab={inventoryNav.subTab}
-            initialFilter={inventoryNav.filter}
-            navNonce={inventoryNav.nonce}
-            onSelectSlot={openPlannerForSlot}
-            onDataUpdated={refreshGlobal}
-          />
-        )}
+        <Suspense fallback={<TabSkeleton />}>
+          {activeTab === 'overview' && (
+            <OverviewDashboard
+              data={overview}
+              onNavigate={navigateTo}
+              onSelectSlot={openPlannerForSlot}
+            />
+          )}
+          {activeTab === 'planner' && <ForecastBatchPlanner initialSlot={preferredSlot} onDataUpdated={refreshGlobal} />}
+          {activeTab === 'simulator' && <WhatIfSimulator />}
+          {activeTab === 'redistribution' && (
+            <RedistributionHub kitchenInfo={health?.kitchen} onDataUpdated={refreshGlobal} />
+          )}
+          {activeTab === 'feedback' && (
+            <PostMealFeedback
+              overviewData={overview}
+              initialSubTab={feedbackSubTab}
+              onDataUpdated={refreshGlobal}
+            />
+          )}
+          {activeTab === 'inventory' && (
+            <InventoryData
+              initialSubTab={inventoryNav.subTab}
+              initialFilter={inventoryNav.filter}
+              navNonce={inventoryNav.nonce}
+              onSelectSlot={openPlannerForSlot}
+              onDataUpdated={refreshGlobal}
+            />
+          )}
+        </Suspense>
       </main>
 
       {/* Clean Editorial Footer */}
       <footer className="no-print border-t border-slate-200/80 bg-white/80 backdrop-blur-sm mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 flex flex-wrap items-center justify-between gap-3 text-xs text-slate-500">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-emerald-500" />
+            <span className="w-2 h-2 rounded-full bg-teal-500" />
             <span>
-              <strong className="text-slate-800 font-semibold">Nourish AI</strong> &bull; Team Codeverse (SMVITM Bantakal, Udupi) &bull; Sankalp&apos;26
+              <strong className="text-slate-800 font-semibold">Nourish AI</strong> &bull; Institutional Kitchen &amp;
+              Surplus Redistribution Platform
             </span>
           </div>
           <div className="flex items-center gap-3 text-[11px]">
