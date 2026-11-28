@@ -307,6 +307,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', locked = fals
                     className="field-control text-xs"
                   >
                     <option value="Kitchen Manager">Kitchen Manager</option>
+                    <option value="Chef">Chef (Kitchen Execution)</option>
                     <option value="NGO Coordinator">NGO Coordinator</option>
                     <option value="Admin">Admin</option>
                   </select>
