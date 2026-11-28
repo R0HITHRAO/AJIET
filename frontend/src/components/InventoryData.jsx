@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { CheckCircle2, Package, Plus, Save, Search, Trash2, UtensilsCrossed } from 'lucide-react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
+import { AlertCircle, CheckCircle2, Package, Plus, Save, Search, Trash2, UtensilsCrossed } from 'lucide-react';
 import { api } from '../api';
 
 export default function InventoryData({
@@ -34,6 +34,10 @@ export default function InventoryData({
     secondary_qty: 0.06,
   });
   const [statusMsg, setStatusMsg] = useState('');
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(true);
+  const loadAbortRef = useRef(null);
+  const savedTimerRef = useRef(null);
 
   useEffect(() => {
     setSubTab(initialSubTab || 'inventory');
@@ -41,32 +45,55 @@ export default function InventoryData({
   }, [initialSubTab, initialFilter, navNonce]);
 
   const loadData = async () => {
-    const [ingRes, menuRes, logRes] = await Promise.all([
-      api.getIngredients(),
-      api.getMenu(),
-      api.getMealLogs(60),
-    ]);
-    setIngredients(ingRes.items || []);
-    setMenuItems(menuRes.items || []);
-    setLogs(logRes.logs || []);
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
+    setLoading(true);
+    setError('');
+    try {
+      const [ingRes, menuRes, logRes] = await Promise.all([
+        api.getIngredients({ signal: controller.signal }),
+        api.getMenu('', { signal: controller.signal }),
+        api.getMealLogs(60, '', { signal: controller.signal }),
+      ]);
+      if (controller.signal.aborted) return;
+      setIngredients(ingRes.items || []);
+      setMenuItems(menuRes.items || []);
+      setLogs(logRes.logs || []);
+    } catch (err) {
+      if (err.name !== 'AbortError') setError(err.message);
+    } finally {
+      if (!controller.signal.aborted) setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadData();
+    return () => {
+      loadAbortRef.current?.abort();
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+    };
   }, []);
 
   const saveStock = async (ing) => {
-    const val = editing[ing.ingredient_id] ?? ing.stock_qty;
-    await api.updateIngredient(ing.ingredient_id, Number(val));
-    setSavedId(ing.ingredient_id);
-    await loadData();
-    onDataUpdated?.();
-    setTimeout(() => setSavedId(''), 1800);
+    setError('');
+    try {
+      const val = editing[ing.ingredient_id] ?? ing.stock_qty;
+      await api.updateIngredient(ing.ingredient_id, Number(val));
+      setSavedId(ing.ingredient_id);
+      await loadData();
+      onDataUpdated?.();
+      if (savedTimerRef.current) clearTimeout(savedTimerRef.current);
+      savedTimerRef.current = setTimeout(() => setSavedId(''), 1800);
+    } catch (err) {
+      setError(err.message);
+    }
   };
 
   const handleDeleteDish = async (item) => {
     setDeletingId(item.menu_item_id);
     setStatusMsg('');
+    setError('');
     try {
       const res = await api.deleteMenuItem(item.menu_item_id, true, true);
       setConfirmDeleteId(null);
@@ -75,6 +102,8 @@ export default function InventoryData({
       );
       await loadData();
       onDataUpdated?.();
+    } catch (err) {
+      setError(err.message);
     } finally {
       setDeletingId(null);
     }
@@ -84,113 +113,156 @@ export default function InventoryData({
     e.preventDefault();
     if (!newDish.name.trim()) return;
     setStatusMsg('');
-    const recipe = {};
-    if (newDish.primary_ing && Number(newDish.primary_qty) > 0) {
-      recipe[newDish.primary_ing] = Number(newDish.primary_qty);
+    setError('');
+    try {
+      const recipe = {};
+      if (newDish.primary_ing && Number(newDish.primary_qty) > 0) {
+        recipe[newDish.primary_ing] = Number(newDish.primary_qty);
+      }
+      if (newDish.secondary_ing && Number(newDish.secondary_qty) > 0) {
+        recipe[newDish.secondary_ing] = Number(newDish.secondary_qty);
+      }
+      const res = await api.createMenuItem({
+        name: newDish.name,
+        meal_slot: newDish.meal_slot,
+        category: newDish.category,
+        batch_size: Number(newDish.batch_size),
+        cost_per_serving: Number(newDish.cost_per_serving),
+        uptake_rate: Number(newDish.uptake_rate),
+        requires_cold_chain: newDish.requires_cold_chain,
+        recipe,
+      });
+      setShowAddDish(false);
+      setNewDish({ ...newDish, name: '' });
+      setStatusMsg(`Added "${res.item.name}" to ${res.item.meal_slot} menu.`);
+      await loadData();
+      onDataUpdated?.();
+    } catch (err) {
+      setError(err.message);
     }
-    if (newDish.secondary_ing && Number(newDish.secondary_qty) > 0) {
-      recipe[newDish.secondary_ing] = Number(newDish.secondary_qty);
-    }
-    const res = await api.createMenuItem({
-      name: newDish.name,
-      meal_slot: newDish.meal_slot,
-      category: newDish.category,
-      batch_size: Number(newDish.batch_size),
-      cost_per_serving: Number(newDish.cost_per_serving),
-      uptake_rate: Number(newDish.uptake_rate),
-      requires_cold_chain: newDish.requires_cold_chain,
-      recipe,
-    });
-    setShowAddDish(false);
-    setNewDish({ ...newDish, name: '' });
-    setStatusMsg(`Added "${res.item.name}" to ${res.item.meal_slot} menu.`);
-    await loadData();
-    onDataUpdated?.();
   };
 
   const q = query.trim().toLowerCase();
-  const lowCount = ingredients.filter((i) => i.stock_qty <= i.reorder_level * 1.2).length;
-  const perishableCount = ingredients.filter((i) => i.perishability_days <= 3).length;
-  const filteredIngredients = ingredients.filter((i) => {
-    if (!i.name.toLowerCase().includes(q)) return false;
-    if (pantryFilter === 'low_stock') return i.stock_qty <= i.reorder_level * 1.2;
-    if (pantryFilter === 'perishable') return i.perishability_days <= 3;
-    return true;
-  });
-  const filteredMenu = menuItems.filter(
-    (m) =>
-      m.name.toLowerCase().includes(q) ||
-      m.meal_slot.toLowerCase().includes(q) ||
-      m.category.toLowerCase().includes(q)
+  const lowCount = useMemo(
+    () => ingredients.filter((i) => i.stock_qty <= i.reorder_level * 1.2).length,
+    [ingredients]
   );
-  const filteredLogs = logs.filter(
-    (l) =>
-      l.menu_item_name.toLowerCase().includes(q) ||
-      l.meal_slot.toLowerCase().includes(q) ||
-      l.date.includes(q)
+  const perishableCount = useMemo(
+    () => ingredients.filter((i) => i.perishability_days <= 3).length,
+    [ingredients]
+  );
+  const filteredIngredients = useMemo(
+    () =>
+      ingredients.filter((i) => {
+        if (q && !i.name.toLowerCase().includes(q)) return false;
+        if (pantryFilter === 'low_stock') return i.stock_qty <= i.reorder_level * 1.2;
+        if (pantryFilter === 'perishable') return i.perishability_days <= 3;
+        return true;
+      }),
+    [ingredients, pantryFilter, q]
+  );
+  const filteredMenu = useMemo(
+    () =>
+      menuItems.filter(
+        (m) =>
+          !q ||
+          m.name.toLowerCase().includes(q) ||
+          m.meal_slot.toLowerCase().includes(q) ||
+          m.category.toLowerCase().includes(q)
+      ),
+    [menuItems, q]
+  );
+  const filteredLogs = useMemo(
+    () =>
+      logs.filter(
+        (l) =>
+          !q ||
+          (l.menu_item_name || '').toLowerCase().includes(q) ||
+          (l.meal_slot || '').toLowerCase().includes(q) ||
+          (l.date || '').includes(q)
+      ),
+    [logs, q]
   );
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="segmented-track">
-          <button
-            onClick={() => setSubTab('inventory')}
-            className={`segmented-pill ${
-              subTab === 'inventory' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Pantry Stock ({ingredients.length})
-          </button>
-          <button
-            onClick={() => setSubTab('menu')}
-            className={`segmented-pill ${
-              subTab === 'menu' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Menu Dishes ({menuItems.length})
-          </button>
-          <button
-            onClick={() => setSubTab('logs')}
-            className={`segmented-pill ${
-              subTab === 'logs' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            Meal Logs ({logs.length})
-          </button>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2.5 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-64">
-            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
-            <input
-              type="text"
-              placeholder={
-                subTab === 'inventory'
-                  ? 'Search ingredients...'
-                  : subTab === 'menu'
-                  ? 'Search dishes or slot...'
-                  : 'Search dish or date...'
-              }
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="field-control pl-9 h-9 text-xs"
-            />
+      {/* Flagship Inventory & Menu Telemetry Banner */}
+      <section className="module-banner">
+        <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-45" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-200">
+              Pantry Telemetry &amp; Institutional Menu
+            </p>
+            <h2 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
+              Inventory, Dishes &amp; Historical Logs
+            </h2>
+            <p className="text-xs text-emerald-100/85">
+              <strong className="text-white">{ingredients.length}</strong> Ingredients &bull;{' '}
+              <strong className="text-white">{menuItems.length}</strong> Menu Dishes &bull;{' '}
+              <strong className={lowCount > 0 ? 'text-amber-300' : 'text-emerald-300'}>{lowCount} Low Stock</strong> &bull;{' '}
+              <strong className="text-sky-300">{perishableCount} Use Soon</strong>
+            </p>
           </div>
-          {subTab === 'menu' && (
-            <button onClick={() => setShowAddDish(!showAddDish)} className="btn-primary h-9 px-3.5 text-xs">
-              <Plus className="w-3.5 h-3.5" />
-              Add Custom Dish
-            </button>
-          )}
+          <div className="inline-flex p-1 rounded-xl bg-white/10 border border-white/15 backdrop-blur-sm flex-wrap gap-1">
+            {[
+              { id: 'inventory', label: `Pantry Stock (${ingredients.length})` },
+              { id: 'menu', label: `Menu Dishes (${menuItems.length})` },
+              { id: 'logs', label: `Meal Logs (${logs.length})` },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setSubTab(t.id)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  subTab === t.id ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-200 hover:bg-white/10'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
+      </section>
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="relative flex-1 sm:max-w-sm">
+          <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+          <input
+            type="text"
+            placeholder={
+              subTab === 'inventory'
+                ? 'Search ingredients...'
+                : subTab === 'menu'
+                ? 'Search dishes or slot...'
+                : 'Search dish or date...'
+            }
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="field-control pl-9 h-9 text-xs"
+          />
+        </div>
+        {subTab === 'menu' && (
+          <button onClick={() => setShowAddDish(!showAddDish)} className="btn-primary h-9 px-3.5 text-xs">
+            <Plus className="w-3.5 h-3.5" />
+            Add Custom Dish
+          </button>
+        )}
       </div>
 
+      {error && (
+        <div className="p-3.5 rounded-xl bg-red-50 border border-red-200 text-xs font-semibold text-red-800 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+          {error}
+        </div>
+      )}
       {statusMsg && (
         <div className="p-3.5 rounded-xl bg-emerald-50 border border-emerald-200 text-xs font-semibold text-emerald-900 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
           {statusMsg}
         </div>
+      )}
+      {loading && ingredients.length === 0 && (
+        <div className="card-surface p-8 text-center text-sm text-slate-500">Loading pantry &amp; menu catalog...</div>
       )}
 
       {/* Visual Card Grid for Pantry Stock */}
@@ -208,7 +280,7 @@ export default function InventoryData({
                 onClick={() => setPantryFilter(f.id)}
                 className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition ${
                   pantryFilter === f.id
-                    ? 'bg-emerald-700 text-white border-emerald-700'
+                    ? 'bg-teal-600 text-white border-teal-600'
                     : 'bg-white text-slate-600 border-slate-200 hover:border-slate-300'
                 }`}
               >
@@ -222,7 +294,7 @@ export default function InventoryData({
             const isPerishable = ing.perishability_days <= 3;
             const ratio = Math.min(100, Math.round((ing.stock_qty / Math.max(ing.reorder_level * 3, 1)) * 100));
             return (
-              <div key={ing.ingredient_id} className="card-surface p-5 space-y-3.5">
+              <div key={ing.ingredient_id} className="card-interactive p-5 space-y-3.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex items-center gap-2.5">
                     <span
@@ -430,7 +502,7 @@ export default function InventoryData({
             {filteredMenu.map((item) => {
               const isConfirming = confirmDeleteId === item.menu_item_id;
               return (
-                <div key={item.menu_item_id} className="card-surface p-5 space-y-3.5 flex flex-col justify-between">
+                <div key={item.menu_item_id} className="card-interactive p-5 space-y-3.5 flex flex-col justify-between">
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2.5">
                       <span className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
@@ -490,7 +562,7 @@ export default function InventoryData({
 
       {subTab === 'logs' && (
         <div className="card-surface p-6 overflow-x-auto">
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-xs text-left pro-table">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
                 <th className="py-2.5">Date</th>
