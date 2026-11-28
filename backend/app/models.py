@@ -125,7 +125,7 @@ class RegisterRequest(BaseModel):
     email: str = Field(..., min_length=5, max_length=160)
     password: str = Field(..., min_length=6, max_length=128)
     role: Literal["Kitchen Manager", "NGO Coordinator", "Admin"] = "Kitchen Manager"
-    organization: str = Field(default="SMVITM Central Kitchen", max_length=120)
+    organization: str = Field(default="Central Kitchen", max_length=120)
 
 
 class LoginRequest(BaseModel):

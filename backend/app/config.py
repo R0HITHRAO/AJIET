@@ -50,7 +50,7 @@ def get_email_settings() -> dict[str, Any]:
     }
 
 
-KITCHEN_NAME = os.getenv("KITCHEN_NAME", "SMVITM Central Hostel & Canteen Kitchen")
+KITCHEN_NAME = os.getenv("KITCHEN_NAME", "Central Hostel & Canteen Kitchen")
 KITCHEN_LAT = float(os.getenv("KITCHEN_LAT", "13.2557"))
 KITCHEN_LON = float(os.getenv("KITCHEN_LON", "74.7850"))
 KITCHEN_LOCATION = os.getenv("KITCHEN_LOCATION", "Bantakal, Udupi, Karnataka")
