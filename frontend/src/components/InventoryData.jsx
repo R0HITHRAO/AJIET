@@ -2,6 +2,12 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { AlertCircle, CheckCircle2, Package, Plus, Save, Search, Trash2, UtensilsCrossed } from 'lucide-react';
 import { api } from '../api';
 
+const SOURCE_LABELS = {
+  post_meal_feedback: 'Post-Meal Log',
+  historical_seed: 'Historical Baseline',
+  csv_import: 'CSV Import',
+};
+
 export default function InventoryData({
   initialSubTab = 'inventory',
   initialFilter = 'all',
@@ -564,30 +570,32 @@ export default function InventoryData({
         <div className="card-surface p-6 overflow-x-auto">
           <table className="w-full text-xs text-left pro-table">
             <thead>
-              <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
-                <th className="py-2.5">Date</th>
-                <th className="py-2.5">Meal</th>
-                <th className="py-2.5">Dish</th>
-                <th className="py-2.5">Attendance (Exp/Act)</th>
-                <th className="py-2.5">Prepared</th>
-                <th className="py-2.5">Served</th>
-                <th className="py-2.5">Leftover</th>
-                <th className="py-2.5 text-right">Source</th>
+              <tr>
+                <th>Date</th>
+                <th>Meal</th>
+                <th>Dish</th>
+                <th>Attendance (Exp / Act)</th>
+                <th>Prepared</th>
+                <th>Served</th>
+                <th>Leftover</th>
+                <th className="text-right">Source</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-100">
+            <tbody>
               {filteredLogs.map((l) => (
                 <tr key={l.log_id}>
-                  <td className="py-2.5 stat-value">{l.date}</td>
-                  <td className="py-2.5">{l.meal_slot}</td>
+                  <td className="py-2.5 stat-value whitespace-nowrap">{l.date}</td>
+                  <td className="py-2.5 whitespace-nowrap">{l.meal_slot}</td>
                   <td className="py-2.5 font-semibold text-slate-800">{l.menu_item_name}</td>
-                  <td className="py-2.5 stat-value text-slate-500">
+                  <td className="py-2.5 stat-value text-slate-500 whitespace-nowrap">
                     {l.expected_attendance} / {l.actual_attendance}
                   </td>
                   <td className="py-2.5 stat-value">{l.prepared_servings}</td>
                   <td className="py-2.5 stat-value text-emerald-700 font-semibold">{l.served_servings}</td>
                   <td className="py-2.5 stat-value text-amber-700 font-semibold">{l.leftover_servings}</td>
-                  <td className="py-2.5 text-right text-slate-400">{l.source}</td>
+                  <td className="py-2.5 text-right text-slate-500 whitespace-nowrap">
+                    {SOURCE_LABELS[l.source] || l.source}
+                  </td>
                 </tr>
               ))}
             </tbody>
