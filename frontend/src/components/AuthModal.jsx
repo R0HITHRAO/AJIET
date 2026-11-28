@@ -26,7 +26,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', locked = fals
     email: '',
     password: '',
     role: 'Kitchen Manager',
-    organization: 'SMVITM Central Kitchen',
+    organization: 'Central Campus Kitchen',
   });
   const [forgotForm, setForgotForm] = useState({
     email: '',
@@ -129,16 +129,23 @@ export default function AuthModal({ isOpen, initialMode = 'login', locked = fals
     <div
       className={
         locked
-          ? 'no-print min-h-screen w-full hero-mesh flex items-center justify-center p-4'
+          ? 'no-print relative overflow-hidden min-h-screen w-full hero-mesh flex flex-col items-center justify-center p-4 gap-5'
           : 'no-print fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-sm flex items-center justify-center p-4'
       }
     >
-      <div className="animate-modal-in bg-white rounded-3xl border border-slate-200/90 shadow-2xl max-w-md w-full overflow-hidden max-h-[92vh] overflow-y-auto">
+      {locked && (
+        <>
+          <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-60" />
+          <div className="absolute -top-32 -right-24 w-96 h-96 rounded-full bg-teal-400/20 blur-3xl pointer-events-none" />
+          <div className="absolute -bottom-32 left-10 w-80 h-80 rounded-full bg-amber-400/12 blur-3xl pointer-events-none" />
+        </>
+      )}
+      <div className="relative animate-modal-in bg-white rounded-3xl border border-white/25 ring-1 ring-slate-900/5 shadow-[0_28px_70px_-15px_rgba(11,18,34,0.62)] max-w-md w-full overflow-hidden max-h-[92vh] overflow-y-auto">
         {/* Header */}
         <div className="hero-mesh text-white px-6 py-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-white/15 border border-white/15 flex items-center justify-center">
-              <Sprout className="w-5 h-5 text-emerald-200" />
+            <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center">
+              <Sprout className="w-5 h-5 text-teal-200" />
             </div>
             <div>
               <h3 className="font-display text-base font-extrabold leading-tight">
@@ -148,7 +155,7 @@ export default function AuthModal({ isOpen, initialMode = 'login', locked = fals
                   ? 'Create Kitchen Account'
                   : 'Reset Password via Email OTP'}
               </h3>
-              <p className="text-[11px] text-emerald-200/90">
+              <p className="text-[11px] text-slate-300">
                 Verified Institutional Kitchen &amp; NGO Portal
               </p>
             </div>
