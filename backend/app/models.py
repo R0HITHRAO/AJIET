@@ -124,7 +124,7 @@ class RegisterRequest(BaseModel):
     name: str = Field(..., min_length=2, max_length=100)
     email: str = Field(..., min_length=5, max_length=160)
     password: str = Field(..., min_length=6, max_length=128)
-    role: Literal["Kitchen Manager", "NGO Coordinator", "Admin"] = "Kitchen Manager"
+    role: Literal["Kitchen Manager", "Chef", "NGO Coordinator", "Admin"] = "Kitchen Manager"
     organization: str = Field(default="Central Kitchen", max_length=120)
 
 
@@ -172,3 +172,22 @@ class NGOCreateRequest(BaseModel):
     contact_person: str
     phone: str
     reliability_score: float = Field(default=0.92, ge=0.5, le=1.0)
+
+
+class KitchenAlertCreateRequest(BaseModel):
+    menu_item_id: str
+    menu_item_name: str
+    meal_slot: Literal["Breakfast", "Lunch", "Snacks", "Dinner"] = "Lunch"
+    remaining_servings: int = Field(default=0, ge=0, le=5000)
+    batch_size: int = Field(default=40, ge=1, le=500)
+    alert_level: Literal["Running Low", "Out of Stock"] = "Running Low"
+    note: str = Field(default="", max_length=240)
+
+
+class KitchenAlertRespondRequest(BaseModel):
+    remaining_customers: int = Field(..., ge=0, le=5000)
+    decision: Literal["Prepare Additional Batch", "Hold Counter (No More Batches)", "Switch to Standby Alternate"] = (
+        "Prepare Additional Batch"
+    )
+    batches_requested: int = Field(default=1, ge=0, le=20)
+    manager_note: str = Field(default="", max_length=240)
