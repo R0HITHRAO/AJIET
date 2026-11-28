@@ -112,6 +112,21 @@ export const api = {
       method: 'PATCH',
     }),
   getRedistributions: (opts = {}) => request('/redistributions', opts),
+  getKitchenAlerts: (opts = {}) => request('/kitchen-alerts', opts),
+  createKitchenAlert: (payload) =>
+    request('/kitchen-alerts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  respondKitchenAlert: (alertId, payload) =>
+    request(`/kitchen-alerts/${encodeURIComponent(alertId)}/respond`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    }),
+  resolveKitchenAlert: (alertId) =>
+    request(`/kitchen-alerts/${encodeURIComponent(alertId)}/resolve`, { method: 'PATCH' }),
   dispatchRedistribution: (payload) =>
     request('/redistributions/dispatch', {
       method: 'POST',
