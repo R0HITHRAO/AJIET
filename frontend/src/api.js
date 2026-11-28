@@ -30,9 +30,9 @@ async function request(path, options = {}) {
 }
 
 export const api = {
-  health: () => request('/health'),
-  dashboardOverview: () => request('/dashboard/overview'),
-  getMenu: (mealSlot) => request(`/menu${mealSlot ? `?meal_slot=${encodeURIComponent(mealSlot)}` : ''}`),
+  health: (opts = {}) => request('/health', opts),
+  dashboardOverview: (opts = {}) => request('/dashboard/overview', opts),
+  getMenu: (mealSlot, opts = {}) => request(`/menu${mealSlot ? `?meal_slot=${encodeURIComponent(mealSlot)}` : ''}`, opts),
   createMenuItem: (payload) =>
     request('/menu', {
       method: 'POST',
@@ -44,7 +44,7 @@ export const api = {
       `/menu/${encodeURIComponent(menuItemId)}?remove_history=${removeHistory ? 'true' : 'false'}&retrain=${retrain ? 'true' : 'false'}`,
       { method: 'DELETE' }
     ),
-  getIngredients: () => request('/ingredients'),
+  getIngredients: (opts = {}) => request('/ingredients', opts),
   updateIngredient: (id, stockQty) =>
     request(`/ingredients/${id}`, {
       method: 'PATCH',
@@ -72,10 +72,10 @@ export const api = {
       body: JSON.stringify(payload),
       signal,
     }),
-  getMealLogs: (limitOrOpts = 80, mealSlot = '') => {
+  getMealLogs: (limitOrOpts = 80, mealSlot = '', fetchOpts = {}) => {
     const limit = typeof limitOrOpts === 'object' && limitOrOpts !== null ? (limitOrOpts.limit ?? 80) : limitOrOpts;
     const slot = typeof limitOrOpts === 'object' && limitOrOpts !== null ? (limitOrOpts.mealSlot ?? '') : mealSlot;
-    return request(`/meal-logs?limit=${limit}${slot ? `&meal_slot=${encodeURIComponent(slot)}` : ''}`);
+    return request(`/meal-logs?limit=${limit}${slot ? `&meal_slot=${encodeURIComponent(slot)}` : ''}`, fetchOpts);
   },
   submitPostMealLog: (payload) =>
     request('/meal-logs', {
@@ -92,15 +92,15 @@ export const api = {
     });
   },
   retrainModels: () => request('/models/retrain', { method: 'POST' }),
-  getModelRuns: () => request('/models/runs'),
-  getSurplus: () => request('/surplus'),
+  getModelRuns: (opts = {}) => request('/models/runs', opts),
+  getSurplus: (opts = {}) => request('/surplus', opts),
   createSurplus: (payload) =>
     request('/surplus', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     }),
-  getNgos: () => request('/ngos'),
+  getNgos: (opts = {}) => request('/ngos', opts),
   createNgo: (payload) =>
     request('/ngos', {
       method: 'POST',
@@ -111,7 +111,7 @@ export const api = {
     request(`/ngos/${ngoId}/availability?is_available=${isAvailable ? 'true' : 'false'}`, {
       method: 'PATCH',
     }),
-  getRedistributions: () => request('/redistributions'),
+  getRedistributions: (opts = {}) => request('/redistributions', opts),
   dispatchRedistribution: (payload) =>
     request('/redistributions/dispatch', {
       method: 'POST',
