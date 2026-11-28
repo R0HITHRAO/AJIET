@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bar,
   BarChart,
   CartesianGrid,
+  LabelList,
   ResponsiveContainer,
   Tooltip,
   XAxis,
@@ -46,15 +47,29 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
     setSubTab(initialSubTab || 'log');
   }, [initialSubTab]);
 
+  const contextAbortRef = useRef(null);
+
   const loadContext = async () => {
-    const [mRes, rRes] = await Promise.all([api.getMenu(), api.getModelRuns()]);
-    setMenuItems(mRes.items || []);
-    setModelRuns(rRes.runs || []);
-    setMlSummary(rRes.current || null);
+    contextAbortRef.current?.abort();
+    const controller = new AbortController();
+    contextAbortRef.current = controller;
+    try {
+      const [mRes, rRes] = await Promise.all([
+        api.getMenu('', { signal: controller.signal }),
+        api.getModelRuns({ signal: controller.signal }),
+      ]);
+      if (controller.signal.aborted) return;
+      setMenuItems(mRes.items || []);
+      setModelRuns(rRes.runs || []);
+      setMlSummary(rRes.current || null);
+    } catch (err) {
+      if (err.name !== 'AbortError') setError(err.message);
+    }
   };
 
   useEffect(() => {
     loadContext();
+    return () => contextAbortRef.current?.abort();
   }, []);
 
   useEffect(() => {
@@ -85,42 +100,48 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
   useEffect(() => {
     const menuItemIds = menuItems.filter((item) => item.meal_slot === mealSlot).map((item) => item.menu_item_id);
     if (!menuItemIds.length) return undefined;
-    let active = true;
+    const controller = new AbortController();
     setPredictionLoading(true);
-    api
-      .forecast({
-        date: dateStr,
-        meal_slot: mealSlot,
-        expected_attendance: Number(expectedAttendance),
-        weather,
-        is_holiday: isHoliday,
-        special_event: specialEvent,
-        model_choice: 'optimal',
-        menu_item_ids: menuItemIds,
-      })
-      .then((forecast) => {
-        if (!active) return;
-        const predictionByItem = Object.fromEntries(
-          (forecast.items || []).map((item) => [item.menu_item_id, item.predicted_servings])
-        );
-        setPredictionModel(forecast.applied_model || forecast.model_choice);
-        setRows((previous) =>
-          previous.map((row) => ({
-            ...row,
-            predicted_servings: predictionByItem[row.menu_item_id] ?? null,
-          }))
-        );
-      })
-      .catch(() => {
-        if (!active) return;
-        setPredictionModel('Unavailable');
-        setRows((previous) => previous.map((row) => ({ ...row, predicted_servings: null })));
-      })
-      .finally(() => {
-        if (active) setPredictionLoading(false);
-      });
+    // Debounce forecast preview so typing attendance doesn't fire a POST per keystroke
+    const timer = setTimeout(() => {
+      api
+        .forecast(
+          {
+            date: dateStr,
+            meal_slot: mealSlot,
+            expected_attendance: Number(expectedAttendance),
+            weather,
+            is_holiday: isHoliday,
+            special_event: specialEvent,
+            model_choice: 'optimal',
+            menu_item_ids: menuItemIds,
+          },
+          { signal: controller.signal }
+        )
+        .then((forecast) => {
+          if (controller.signal.aborted) return;
+          const predictionByItem = Object.fromEntries(
+            (forecast.items || []).map((item) => [item.menu_item_id, item.predicted_servings])
+          );
+          setPredictionModel(forecast.applied_model || forecast.model_choice);
+          setRows((previous) =>
+            previous.map((row) => ({
+              ...row,
+              predicted_servings: predictionByItem[row.menu_item_id] ?? null,
+            }))
+          );
+          setPredictionLoading(false);
+        })
+        .catch((err) => {
+          if (err.name === 'AbortError' || controller.signal.aborted) return;
+          setPredictionModel('Unavailable');
+          setRows((previous) => previous.map((row) => ({ ...row, predicted_servings: null })));
+          setPredictionLoading(false);
+        });
+    }, 280);
     return () => {
-      active = false;
+      clearTimeout(timer);
+      controller.abort();
     };
   }, [dateStr, expectedAttendance, isHoliday, mealSlot, menuItems, specialEvent, weather]);
 
@@ -239,6 +260,7 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
   };
 
   const featureImp = mlSummary?.feature_importances?.slice(0, 7) || [];
+  const scenarioImpacts = mlSummary?.scenario_impacts || [];
   const mlMetrics = mlSummary?.metrics || {};
   const rf = mlMetrics.random_forest || {};
   const xgb = mlMetrics.xgboost || {};
@@ -251,30 +273,42 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
 
   return (
     <div className="space-y-6">
-      {/* Clean Segmented Sub-Navigation */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="segmented-track">
-          {[
-            { id: 'log', label: 'Log Post-Meal Actuals' },
-            { id: 'csv', label: 'CSV Import & Retrain' },
-            { id: 'diagnostics', label: 'AI Validation & Accuracy' },
-          ].map((t) => (
-            <button
-              key={t.id}
-              onClick={() => setSubTab(t.id)}
-              className={`segmented-pill ${
-                subTab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+      {/* Flagship Feedback & AI Header */}
+      <section className="module-banner">
+        <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-45" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-teal-300">
+              Continuous Learning &amp; Model Accuracy
+            </p>
+            <h2 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
+              Post-Meal Logging &amp; AI Validation
+            </h2>
+            <p className="text-xs text-slate-300">
+              Active Model: <strong className="text-white">v{mlSummary?.model_version ?? 1}</strong> ({selectedModel})
+              &bull; Training Rows: <strong className="text-white">{mlSummary?.training_samples?.toLocaleString() ?? '-'}</strong>
+              &bull; WAPE: <strong className="text-teal-300">{ens.wape_pct ?? '-'}%</strong>
+            </p>
+          </div>
+          <div className="inline-flex p-1 rounded-xl bg-white/10 border border-white/15 backdrop-blur-sm flex-wrap gap-1">
+            {[
+              { id: 'log', label: 'Log Post-Meal Actuals' },
+              { id: 'csv', label: 'CSV Import & Retrain' },
+              { id: 'diagnostics', label: 'AI Validation & Accuracy' },
+            ].map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setSubTab(t.id)}
+                className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  subTab === t.id ? 'bg-white text-emerald-950 shadow-sm' : 'text-emerald-100 hover:bg-white/10'
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+          </div>
         </div>
-
-        <span className="text-xs text-slate-500 font-medium">
-          Active Model: <strong className="text-emerald-700">v{mlSummary?.model_version ?? 1}</strong> ({selectedModel})
-        </span>
-      </div>
+      </section>
 
       {/* Tab 1: Post-Meal Logging */}
       {subTab === 'log' && (
@@ -358,7 +392,7 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
           </div>
 
           <div className="overflow-x-auto">
-            <table className="w-full text-xs text-left border-collapse">
+            <table className="w-full text-xs text-left border-collapse pro-table">
               <thead>
                 <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
                   <th className="py-2.5 pr-3">Dish</th>
@@ -561,22 +595,66 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
             </div>
           </div>
 
-          <div className="card-surface p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <BrainCircuit className="w-4 h-4 text-emerald-700" />
-              <h3 className="text-base font-bold text-slate-900">Top Demand Feature Drivers</h3>
+          <div className="card-surface p-6 space-y-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <BrainCircuit className="w-4 h-4 text-emerald-700" />
+                <h3 className="text-base font-bold text-slate-900">Top Demand Feature Drivers</h3>
+              </div>
+              <p className="text-xs text-slate-500 mt-0.5">
+                Model feature weights paired with real scenario demand shifts from your kitchen logs
+              </p>
             </div>
-            <div className="h-64">
+            <div className="h-60">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={featureImp} layout="vertical" margin={{ top: 4, right: 20, left: 28, bottom: 4 }}>
+                <BarChart data={featureImp} layout="vertical" margin={{ top: 4, right: 44, left: 28, bottom: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#e2e8f0" horizontal={false} />
                   <XAxis type="number" unit="%" tick={{ fontSize: 11, fill: '#64748b' }} />
                   <YAxis type="category" dataKey="feature" width={145} tick={{ fontSize: 11, fill: '#475569' }} />
-                  <Tooltip formatter={(v) => `${v}%`} />
-                  <Bar dataKey="importance_pct" name="Importance" fill="#059669" radius={[0, 6, 6, 0]} />
+                  <Tooltip
+                    formatter={(v, _name, item) => [
+                      item?.payload?.meaning ? `${v}% — ${item.payload.meaning}` : `${v}%`,
+                      'Driver Weight',
+                    ]}
+                  />
+                  <Bar dataKey="importance_pct" name="Importance" fill="#059669" radius={[0, 6, 6, 0]}>
+                    <LabelList
+                      dataKey="importance_pct"
+                      position="right"
+                      formatter={(v) => `${v}%`}
+                      style={{ fontSize: 11, fill: '#334155', fontWeight: 600 }}
+                    />
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
+
+            {scenarioImpacts.length > 0 && (
+              <div className="pt-3 border-t border-slate-100 space-y-2.5">
+                <p className="field-label">Observed Scenario Impact (vs. Regular Weekday)</p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                  {scenarioImpacts.map((sc) => {
+                    const badgeClass =
+                      sc.tone === 'positive'
+                        ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                        : sc.tone === 'info'
+                        ? 'bg-sky-50 text-sky-700 border-sky-200'
+                        : 'bg-amber-50 text-amber-800 border-amber-200';
+                    return (
+                      <div key={sc.scenario} className="p-2.5 rounded-xl bg-slate-50 border border-slate-200/80 space-y-1">
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-xs font-bold text-slate-800">{sc.scenario}</span>
+                          <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border stat-value ${badgeClass}`}>
+                            {sc.delta_label}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">{sc.detail}</p>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -604,7 +682,7 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
             </div>
 
             <div className="overflow-x-auto">
-              <table className="w-full text-xs text-left">
+              <table className="w-full text-xs text-left pro-table">
                 <thead>
                   <tr className="border-b border-slate-200 text-slate-400 uppercase">
                     <th className="py-2.5 font-semibold">Model</th>
@@ -680,7 +758,7 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
                       Errors by {title.toLowerCase()}
                     </h4>
                     <div className="max-h-64 overflow-auto border border-slate-200 rounded-xl">
-                      <table className="w-full text-xs text-left">
+                      <table className="w-full text-xs text-left pro-table">
                         <thead className="sticky top-0 bg-slate-50 text-[11px] uppercase text-slate-500">
                           <tr>
                             <th className="px-3 py-2 font-semibold">{title}</th>
