@@ -66,7 +66,7 @@ class LocalCollection:
     def _persist(self) -> None:
         tmp = self.path.with_suffix(".tmp")
         with tmp.open("w", encoding="utf-8") as f:
-            json.dump(self._docs, f, indent=2, default=str)
+            json.dump(self._docs, f, separators=(",", ":"), default=str)
         for attempt in range(5):
             try:
                 tmp.replace(self.path)
@@ -89,13 +89,14 @@ class LocalCollection:
         limit: int | None = None,
     ) -> list[dict[str, Any]]:
         with self._lock:
-            results = [copy.deepcopy(d) for d in self._docs if _matches_filter(d, filt)]
+            # Sort and slice references first so deepcopy only touches returned docs
+            matched = [d for d in self._docs if _matches_filter(d, filt)] if filt else list(self._docs)
             if sort_by:
                 field, direction = sort_by
-                results.sort(key=lambda x: (x.get(field) is None, x.get(field, "")), reverse=(direction < 0))
+                matched.sort(key=lambda x: (x.get(field) is None, x.get(field, "")), reverse=(direction < 0))
             if limit is not None and limit > 0:
-                results = results[:limit]
-            return results
+                matched = matched[:limit]
+            return [copy.deepcopy(d) for d in matched]
 
     def find_one(self, filt: dict[str, Any] | None = None) -> dict[str, Any] | None:
         with self._lock:
