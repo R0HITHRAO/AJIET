@@ -285,8 +285,8 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
               Post-Meal Logging &amp; AI Validation
             </h2>
             <p className="text-xs text-slate-300">
-              Active Model: <strong className="text-white">v{mlSummary?.model_version ?? 1}</strong> ({selectedModel})
-              &bull; Training Rows: <strong className="text-white">{mlSummary?.training_samples?.toLocaleString() ?? '-'}</strong>
+              Active Model: <strong className="text-white">v{mlSummary?.model_version ?? 1}</strong> ({selectedModel}){' '}
+              &bull; Training Rows: <strong className="text-white">{mlSummary?.training_samples?.toLocaleString() ?? '-'}</strong>{' '}
               &bull; WAPE: <strong className="text-teal-300">{ens.wape_pct ?? '-'}%</strong>
             </p>
           </div>
@@ -440,7 +440,7 @@ export default function PostMealFeedback({ overviewData, initialSubTab = 'log', 
                         <select
                           value={row.storage_type}
                           onChange={(e) => updateRow(idx, 'storage_type', e.target.value)}
-                          className="h-9 rounded-lg border border-slate-200 px-2 bg-white"
+                          className="h-9 min-w-[104px] whitespace-nowrap rounded-lg border border-slate-200 px-2.5 bg-white"
                         >
                           <option value="hot_hold">Hot Hold</option>
                           <option value="chilled">Chilled</option>
