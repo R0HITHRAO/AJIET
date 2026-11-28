@@ -11,6 +11,7 @@ from typing import Any
 
 from fastapi import FastAPI, File, Header, HTTPException, Query, Request, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.middleware.gzip import GZipMiddleware
 from fastapi.responses import FileResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -108,17 +109,41 @@ app = FastAPI(
 )
 
 
+KITCHEN_MANAGER_MUTATION_PREFIXES = (
+    "/api/menu",
+    "/api/ingredients",
+    "/api/meal-logs",
+    "/api/models/retrain",
+    "/api/admin/reset-demo",
+    "/api/auth/email-config",
+)
+
+
+def _enforce_role_permissions(method: str, path: str, user: dict[str, Any]) -> None:
+    if method in ("POST", "PATCH", "PUT", "DELETE") and path.startswith(KITCHEN_MANAGER_MUTATION_PREFIXES):
+        if user.get("role") not in ("Kitchen Manager", "Admin"):
+            raise HTTPException(
+                status_code=403,
+                detail="Access restricted: Kitchen Manager or Admin role required for this action.",
+            )
+
+
 @app.middleware("http")
 async def enforce_verified_user(request: Request, call_next):
     path = request.url.path
     if request.method != "OPTIONS" and path.startswith("/api/") and path not in PUBLIC_API_PATHS:
         try:
-            _resolve_verified_user(request.headers.get("authorization"))
+            user = _resolve_verified_user(request.headers.get("authorization"))
+            _enforce_role_permissions(request.method, path, user)
         except HTTPException as exc:
             return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
-    return await call_next(request)
+    response = await call_next(request)
+    if path.startswith("/assets/") and response.status_code == 200:
+        response.headers.setdefault("Cache-Control", "public, max-age=31536000, immutable")
+    return response
 
 
+app.add_middleware(GZipMiddleware, minimum_size=800)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -269,7 +294,7 @@ def register_user(req: RegisterRequest) -> dict[str, Any]:
         "email": email,
         "password_hash": hash_password(req.password),
         "role": req.role,
-        "organization": req.organization.strip() or "SMVITM Central Kitchen",
+        "organization": req.organization.strip() or "Central Kitchen",
         "verified": True,
         "created_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
     }
@@ -452,15 +477,17 @@ def dashboard_overview() -> dict[str, Any]:
     low_stock_count = sum(1 for ing in ingredients if float(ing["stock_qty"]) <= float(ing["reorder_level"]) * 1.2)
     sufficiency_rate = round((total_served / max(total_served + total_shortage, 1)) * 100.0, 1)
 
+    dishes_by_ingredient: dict[str, list[dict[str, str]]] = {}
+    for m in menu_items.values():
+        entry = {"menu_item_id": m["menu_item_id"], "name": m["name"], "meal_slot": m["meal_slot"]}
+        for ing_id in (m.get("recipe") or {}):
+            dishes_by_ingredient.setdefault(ing_id, []).append(entry)
+
     perishability_alerts = []
     for ing in ingredients:
         if int(ing.get("perishability_days", 99)) <= 4 and float(ing.get("stock_qty", 0)) > 0:
             ing_id = ing["ingredient_id"]
-            dishes_using = [
-                {"menu_item_id": m["menu_item_id"], "name": m["name"], "meal_slot": m["meal_slot"]}
-                for m in menu_items.values()
-                if ing_id in (m.get("recipe") or {})
-            ]
+            dishes_using = dishes_by_ingredient.get(ing_id, [])
             perishability_alerts.append(
                 {
                     "ingredient_id": ing_id,
@@ -628,6 +655,7 @@ def optimize_batch(req: BatchOptimizationRequest, save: bool = Query(default=Fal
             "model_version": forecast["model_version"],
             "metrics": forecast["metrics"],
         },
+        "forecast": forecast,
         "optimization": opt,
     }
     if save:
@@ -706,7 +734,6 @@ def submit_post_meal_log(req: PostMealLogRequest) -> dict[str, Any]:
             "rolling_7d_served": float(item_log.served_servings),
             "source": "post_meal_feedback",
         }
-        db_manager.collection("meal_logs").insert_one(log_doc)
         inserted_logs.append(log_doc)
 
         # Smart Surplus Detection when edible leftover >= 10 servings
@@ -740,8 +767,12 @@ def submit_post_meal_log(req: PostMealLogRequest) -> dict[str, Any]:
                 "created_at": datetime.now().isoformat(timespec="seconds"),
                 "notes": f"Auto-detected from {req.date} {req.meal_slot} post-meal feedback",
             }
-            db_manager.collection("surplus_items").insert_one(surplus_doc)
             detected_surplus.append(surplus_doc)
+
+    if inserted_logs:
+        db_manager.collection("meal_logs").insert_many(inserted_logs)
+    if detected_surplus:
+        db_manager.collection("surplus_items").insert_many(detected_surplus)
 
     retrain_run = None
     if req.auto_retrain:
@@ -1072,4 +1103,4 @@ if FRONTEND_DIST.exists():
         target = FRONTEND_DIST / full_path
         if full_path and target.exists() and target.is_file():
             return FileResponse(str(target))
-        return FileResponse(str(FRONTEND_DIST / "index.html"))
+        return FileResponse(str(FRONTEND_DIST / "index.html"), headers={"Cache-Control": "no-cache"})
