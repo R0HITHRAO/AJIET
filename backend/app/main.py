@@ -44,6 +44,8 @@ from .models import (
     ForecastRequest,
     ForgotPasswordRequest,
     IngredientUpdateRequest,
+    KitchenAlertCreateRequest,
+    KitchenAlertRespondRequest,
     LoginRequest,
     MenuItemCreateRequest,
     NGOCreateRequest,
@@ -120,12 +122,33 @@ KITCHEN_MANAGER_MUTATION_PREFIXES = (
 
 
 def _enforce_role_permissions(method: str, path: str, user: dict[str, Any]) -> None:
-    if method in ("POST", "PATCH", "PUT", "DELETE") and path.startswith(KITCHEN_MANAGER_MUTATION_PREFIXES):
-        if user.get("role") not in ("Kitchen Manager", "Admin"):
+    role = user.get("role")
+    # Kitchen dish shortage alerts: kitchen staff views/creates/resolves; only Manager/Admin responds with customer count
+    if path.startswith("/api/kitchen-alerts"):
+        if path.endswith("/respond") and method == "PATCH":
+            if role not in ("Kitchen Manager", "Admin"):
+                raise HTTPException(
+                    status_code=403,
+                    detail="Only Kitchen Manager or Admin can notify remaining customer counts.",
+                )
+            return
+        if role not in ("Kitchen Manager", "Chef", "Admin"):
             raise HTTPException(
                 status_code=403,
-                detail="Access restricted: Kitchen Manager or Admin role required for this action.",
+                detail="Access restricted to Kitchen staff (Chef, Kitchen Manager, or Admin).",
             )
+        return
+
+    if method not in ("POST", "PATCH", "PUT", "DELETE"):
+        return
+    # Chefs can submit end-of-service actuals and leftover safety handovers
+    if method == "POST" and path == "/api/meal-logs" and role in ("Kitchen Manager", "Chef", "Admin"):
+        return
+    if path.startswith(KITCHEN_MANAGER_MUTATION_PREFIXES) and role not in ("Kitchen Manager", "Admin"):
+        raise HTTPException(
+            status_code=403,
+            detail="Access restricted: Kitchen Manager or Admin role required for this action.",
+        )
 
 
 @app.middleware("http")
@@ -135,6 +158,7 @@ async def enforce_verified_user(request: Request, call_next):
         try:
             user = _resolve_verified_user(request.headers.get("authorization"))
             _enforce_role_permissions(request.method, path, user)
+            request.state.user = user
         except HTTPException as exc:
             return JSONResponse(status_code=exc.status_code, content={"detail": exc.detail})
     response = await call_next(request)
@@ -512,6 +536,9 @@ def dashboard_overview() -> dict[str, Any]:
             "eligible_surplus_servings_live": eligible_surplus_servings,
             "active_ngo_partners": sum(1 for n in ngos if n.get("is_available")),
             "low_stock_ingredients": low_stock_count,
+            "pending_kitchen_alerts": db_manager.collection("kitchen_alerts").count_documents(
+                {"status": "Pending Manager"}
+            ),
             "historical_logs_count": len(logs),
         },
         "daily_trend": daily_trend,
@@ -955,13 +982,16 @@ def get_surplus_matches(surplus_id: str) -> dict[str, Any]:
 @app.get("/api/ngos")
 def list_ngos() -> dict[str, Any]:
     ngos = db_manager.collection("ngos").find()
-    enriched = [
-        {
-            **n,
-            "distance_km": haversine_km(KITCHEN_LAT, KITCHEN_LON, float(n["lat"]), float(n["lon"])),
-        }
-        for n in ngos
-    ]
+    enriched = []
+    for n in ngos:
+        dist_km = haversine_km(KITCHEN_LAT, KITCHEN_LON, float(n["lat"]), float(n["lon"]))
+        enriched.append(
+            {
+                **n,
+                "distance_km": dist_km,
+                "eta_minutes": max(5, round(dist_km * 3.1 + 4)),
+            }
+        )
     enriched.sort(key=lambda x: x["distance_km"])
     return {"ngos": enriched}
 
@@ -1079,9 +1109,104 @@ def update_redistribution_status(
     return {"redistribution": col.find_one({"redistribution_id": redistribution_id})}
 
 
+@app.get("/api/kitchen-alerts")
+def list_kitchen_alerts() -> dict[str, Any]:
+    alerts = db_manager.collection("kitchen_alerts").find(sort_by=("created_at", -1), limit=40)
+    pending_count = sum(1 for a in alerts if a.get("status") == "Pending Manager")
+    active_count = sum(1 for a in alerts if a.get("status") in ("Pending Manager", "Responded"))
+    return {"alerts": alerts, "pending_count": pending_count, "active_count": active_count}
+
+
+@app.post("/api/kitchen-alerts")
+def create_kitchen_alert(req: KitchenAlertCreateRequest, request: Request) -> dict[str, Any]:
+    col = db_manager.collection("kitchen_alerts")
+    user = getattr(request.state, "user", {}) or {}
+    reporter = user.get("name", "Kitchen Chef")
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    existing = col.find_one(
+        {"menu_item_id": req.menu_item_id, "meal_slot": req.meal_slot, "status": "Pending Manager"}
+    )
+    if existing:
+        col.update_one(
+            {"alert_id": existing["alert_id"]},
+            {
+                "$set": {
+                    "remaining_servings": req.remaining_servings,
+                    "alert_level": req.alert_level,
+                    "note": req.note.strip(),
+                    "reported_by": reporter,
+                    "created_at": now,
+                }
+            },
+        )
+        return {"alert": col.find_one({"alert_id": existing["alert_id"]})}
+
+    alert_doc = {
+        "alert_id": f"alert_{uuid.uuid4().hex[:8]}",
+        "menu_item_id": req.menu_item_id,
+        "menu_item_name": req.menu_item_name,
+        "meal_slot": req.meal_slot,
+        "remaining_servings": req.remaining_servings,
+        "batch_size": req.batch_size,
+        "alert_level": req.alert_level,
+        "note": req.note.strip(),
+        "reported_by": reporter,
+        "status": "Pending Manager",
+        "remaining_customers": None,
+        "decision": None,
+        "batches_requested": 0,
+        "manager_note": "",
+        "responded_by": None,
+        "responded_at": None,
+        "created_at": now,
+    }
+    col.insert_one(alert_doc)
+    return {"alert": alert_doc}
+
+
+@app.patch("/api/kitchen-alerts/{alert_id}/respond")
+def respond_kitchen_alert(
+    alert_id: str, payload: KitchenAlertRespondRequest, request: Request
+) -> dict[str, Any]:
+    col = db_manager.collection("kitchen_alerts")
+    existing = col.find_one({"alert_id": alert_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Kitchen alert not found")
+    user = getattr(request.state, "user", {}) or {}
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    col.update_one(
+        {"alert_id": alert_id},
+        {
+            "$set": {
+                "status": "Responded",
+                "remaining_customers": payload.remaining_customers,
+                "decision": payload.decision,
+                "batches_requested": payload.batches_requested,
+                "manager_note": payload.manager_note.strip(),
+                "responded_by": user.get("name", "Kitchen Manager"),
+                "responded_at": now,
+            }
+        },
+    )
+    return {"alert": col.find_one({"alert_id": alert_id})}
+
+
+@app.patch("/api/kitchen-alerts/{alert_id}/resolve")
+def resolve_kitchen_alert(alert_id: str) -> dict[str, Any]:
+    col = db_manager.collection("kitchen_alerts")
+    existing = col.find_one({"alert_id": alert_id})
+    if not existing:
+        raise HTTPException(status_code=404, detail="Kitchen alert not found")
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    col.update_one({"alert_id": alert_id}, {"$set": {"status": "Resolved", "resolved_at": now}})
+    return {"alert": col.find_one({"alert_id": alert_id})}
+
+
 @app.post("/api/admin/reset-demo")
 def reset_demo() -> dict[str, Any]:
     counts = ensure_seeded(db_manager, force=True)
+    db_manager.collection("kitchen_alerts").delete_many({})
     run_info = forecast_engine.train(db_manager, reason="demo_reset")
     return {"status": "reset_complete", "counts": counts, "model_run": run_info}
 
