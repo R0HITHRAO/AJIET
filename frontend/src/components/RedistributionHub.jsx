@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { memo, useEffect, useMemo, useRef, useState } from 'react';
 import {
   CheckCircle2,
   Clock,
@@ -24,54 +24,54 @@ const AREA_COORDS = {
   Padubidri: { lat: 13.1394, lon: 74.7734 },
 };
 
-function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
+const ProximityRadar = memo(function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
   const maxKm = 25;
   const cx = 190;
   const cy = 140;
   const maxR = 104;
   const radiusForKm = (km) => maxR * Math.sqrt(Math.max(0.25, Math.min(km, maxKm)) / maxKm);
 
-  // Place each NGO using radial sqrt scaling and de-overlap label coordinates
-  const plotted = ngos.map((ngo) => {
-    const dLat = (ngo.lat - kitchen.lat) * 111.0;
-    const dLon = (ngo.lon - kitchen.lon) * 108.0;
-    const distKm = ngo.distance_km ?? Math.hypot(dLat, dLon);
-    const angle = Math.atan2(-dLat, dLon);
-    const r = radiusForKm(distKm);
-    const x = cx + Math.cos(angle) * r;
-    const y = cy + Math.sin(angle) * r;
-    const labelR = r + 15;
-    const lx = cx + Math.cos(angle) * labelR;
-    const ly = cy + Math.sin(angle) * labelR;
-    const anchor = Math.cos(angle) > 0.28 ? 'start' : Math.cos(angle) < -0.28 ? 'end' : 'middle';
-    return { ngo, distKm, x, y, lx, ly, anchor };
-  });
+  const { plotted, sortedNgos } = useMemo(() => {
+    const pts = ngos.map((ngo) => {
+      const dLat = (ngo.lat - kitchen.lat) * 111.0;
+      const dLon = (ngo.lon - kitchen.lon) * 108.0;
+      const distKm = ngo.distance_km ?? Math.hypot(dLat, dLon);
+      const angle = Math.atan2(-dLat, dLon);
+      const r = radiusForKm(distKm);
+      const x = cx + Math.cos(angle) * r;
+      const y = cy + Math.sin(angle) * r;
+      const labelR = r + 15;
+      const lx = cx + Math.cos(angle) * labelR;
+      const ly = cy + Math.sin(angle) * labelR;
+      const anchor = Math.cos(angle) > 0.28 ? 'start' : Math.cos(angle) < -0.28 ? 'end' : 'middle';
+      return { ngo, distKm, x, y, lx, ly, anchor };
+    });
 
-  // Simple vertical separation pass for labels that sit close horizontally
-  for (let i = 0; i < plotted.length; i += 1) {
-    for (let j = i + 1; j < plotted.length; j += 1) {
-      const a = plotted[i];
-      const b = plotted[j];
-      if (Math.abs(a.lx - b.lx) < 52 && Math.abs(a.ly - b.ly) < 14) {
-        if (a.ly <= b.ly) {
-          a.ly -= 7;
-          b.ly += 7;
-        } else {
-          a.ly += 7;
-          b.ly -= 7;
+    for (let i = 0; i < pts.length; i += 1) {
+      for (let j = i + 1; j < pts.length; j += 1) {
+        const a = pts[i];
+        const b = pts[j];
+        if (Math.abs(a.lx - b.lx) < 52 && Math.abs(a.ly - b.ly) < 14) {
+          if (a.ly <= b.ly) {
+            a.ly -= 7;
+            b.ly += 7;
+          } else {
+            a.ly += 7;
+            b.ly -= 7;
+          }
         }
       }
     }
-  }
 
-  const sortedNgos = [...plotted].sort((a, b) => a.distKm - b.distKm);
+    return { plotted: pts, sortedNgos: [...pts].sort((a, b) => a.distKm - b.distKm) };
+  }, [kitchen.lat, kitchen.lon, ngos]);
 
   return (
     <div className="card-surface p-4 bg-slate-900 text-white border-0 space-y-3">
       <div className="flex items-center justify-between">
-        <p className="text-[11px] font-bold uppercase tracking-wider text-emerald-300 flex items-center gap-1.5">
+        <p className="text-[11px] font-bold uppercase tracking-wider text-teal-300 flex items-center gap-1.5">
           <Navigation className="w-3.5 h-3.5" />
-          Udupi – Bantakal Zone
+          Service Zone Radar
         </p>
         <span className="text-[11px] text-slate-400">25 km radius</span>
       </div>
@@ -149,7 +149,7 @@ function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
             strokeWidth="3.5"
             paintOrder="stroke"
           >
-            SMVITM
+            Kitchen Hub
           </text>
         </svg>
       </div>
@@ -180,7 +180,7 @@ function ProximityRadar({ kitchen, ngos, highlightedNgoId }) {
       </div>
     </div>
   );
-}
+});
 
 function SafetyHandoverSlipModal({ slip, onClose }) {
   if (!slip) return null;
@@ -298,16 +298,22 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
     phone: '',
   });
 
+  const loadAbortRef = useRef(null);
+
   const loadAll = async () => {
+    loadAbortRef.current?.abort();
+    const controller = new AbortController();
+    loadAbortRef.current = controller;
     setLoading(true);
     setError('');
     try {
       const [sRes, nRes, rRes, mRes] = await Promise.all([
-        api.getSurplus(),
-        api.getNgos(),
-        api.getRedistributions(),
-        api.getMenu(),
+        api.getSurplus({ signal: controller.signal }),
+        api.getNgos({ signal: controller.signal }),
+        api.getRedistributions({ signal: controller.signal }),
+        api.getMenu('', { signal: controller.signal }),
       ]);
+      if (controller.signal.aborted) return false;
       const items = sRes.surplus_items || [];
       setSurplusList(items);
       setNgos(nRes.ngos || []);
@@ -320,6 +326,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
       }
       return true;
     } catch (err) {
+      if (err.name === 'AbortError') return false;
       setError(
         `Unable to load surplus and NGO data: ${
           err instanceof Error ? err.message : 'The server returned an unexpected response.'
@@ -327,15 +334,19 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
       );
       return false;
     } finally {
-      setLoading(false);
+      if (!controller.signal.aborted) setLoading(false);
     }
   };
 
   useEffect(() => {
     loadAll();
+    return () => loadAbortRef.current?.abort();
   }, []);
 
-  const selectedSurplus = surplusList.find((s) => s.surplus_id === selectedSurplusId) || null;
+  const selectedSurplus = useMemo(
+    () => surplusList.find((s) => s.surplus_id === selectedSurplusId) || null,
+    [surplusList, selectedSurplusId]
+  );
   const topRecommendedNgoId =
     selectedSurplus?.or_tools_recommended_ngo?.ngo_id || selectedSurplus?.top_matches?.[0]?.ngo_id;
 
@@ -415,9 +426,50 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
     <div className="space-y-6">
       <SafetyHandoverSlipModal slip={activeSlip} onClose={() => setActiveSlip(null)} />
 
-      {/* Clean Sub-Navigation + Contextual Action */}
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="segmented-track">
+      {/* Flagship Surplus & NGO Banner */}
+      <section className="module-banner space-y-4">
+        <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-45" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-teal-300">
+              FSSAI Safety Gate &bull; OR-Tools Geo-Matching
+            </p>
+            <h2 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
+              Surplus Rescue &amp; NGO Dispatch Network
+            </h2>
+            <p className="text-xs text-slate-300">
+              Eligible Surplus:{' '}
+              <strong className="text-white stat-value">
+                {surplusList
+                  .filter((s) => s.status === 'Eligible')
+                  .reduce((sum, s) => sum + (s.servings_available || 0), 0)}{' '}
+                servings
+              </strong>{' '}
+              &bull; {ngos.filter((n) => n.is_available).length} active NGOs &bull; {redistributions.length} dispatches
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2">
+            {subTab === 'ngos' && (
+              <button
+                onClick={() => setShowAddNgo(!showAddNgo)}
+                className="h-10 px-3.5 rounded-xl bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs font-semibold inline-flex items-center gap-1.5 transition"
+              >
+                <Plus className="w-4 h-4" />
+                Add NGO Partner
+              </button>
+            )}
+            <button
+              onClick={() => setShowAddSurplus(!showAddSurplus)}
+              className="h-10 px-4 rounded-xl bg-white text-slate-950 hover:bg-teal-50 text-xs sm:text-sm font-bold inline-flex items-center gap-2 shadow-sm transition"
+            >
+              <Plus className="w-4 h-4 text-teal-700" />
+              Log Surplus Batch
+            </button>
+          </div>
+        </div>
+
+        <div className="relative inline-flex flex-wrap gap-1 rounded-xl p-1 bg-white/10 border border-white/15">
           {[
             { id: 'matching', label: `Matching Queue (${surplusList.length})` },
             { id: 'tracker', label: `Dispatch Tracker (${redistributions.length})` },
@@ -426,28 +478,15 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
             <button
               key={t.id}
               onClick={() => setSubTab(t.id)}
-              className={`segmented-pill ${
-                subTab === t.id ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
+              className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition ${
+                subTab === t.id ? 'bg-white text-slate-950 shadow-sm' : 'text-slate-200 hover:text-white'
               }`}
             >
               {t.label}
             </button>
           ))}
         </div>
-
-        <div className="flex items-center gap-2">
-          {subTab === 'ngos' && (
-            <button onClick={() => setShowAddNgo(!showAddNgo)} className="btn-secondary">
-              <Plus className="w-4 h-4" />
-              Add NGO Partner
-            </button>
-          )}
-          <button onClick={() => setShowAddSurplus(!showAddSurplus)} className="btn-primary">
-            <Plus className="w-4 h-4" />
-            Log Surplus Batch
-          </button>
-        </div>
-      </div>
+      </section>
 
       {/* Add NGO Partner Form */}
       {showAddNgo && (
@@ -676,10 +715,10 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
                 <div
                   key={s.surplus_id}
                   onClick={() => setSelectedSurplusId(s.surplus_id)}
-                  className={`card-surface p-4 cursor-pointer transition border ${
+                  className={`card-interactive p-4 cursor-pointer ${
                     isSelected
-                      ? 'border-emerald-600 ring-2 ring-emerald-500/15'
-                      : 'border-slate-200 hover:border-slate-300'
+                      ? 'border-emerald-600 ring-2 ring-emerald-500/20 bg-emerald-50/30'
+                      : 'border-slate-200/90 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-2">
@@ -850,7 +889,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
       {subTab === 'tracker' && (
         <div className="card-surface p-6 overflow-x-auto">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Redistribution Dispatch &amp; Delivery Log</h3>
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-xs text-left pro-table">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
                 <th className="py-2.5">Dish</th>
@@ -917,7 +956,7 @@ export default function RedistributionHub({ kitchenInfo, onDataUpdated }) {
       {subTab === 'ngos' && (
         <div className="card-surface p-6 overflow-x-auto">
           <h3 className="text-sm font-bold text-slate-900 mb-4">Registered NGOs, Food Banks &amp; Shelters</h3>
-          <table className="w-full text-xs text-left">
+          <table className="w-full text-xs text-left pro-table">
             <thead>
               <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
                 <th className="py-2.5">Organization</th>
