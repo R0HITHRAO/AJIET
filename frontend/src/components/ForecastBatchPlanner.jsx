@@ -101,6 +101,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
     api.getMealLogs(400, '', { signal: controller.signal }).then((res) => {
       const grouped = {};
       for (const log of res.logs || []) {
+        if (log.is_holiday) continue;
         const slot = log.meal_slot;
         const att = Number(log.actual_attendance || log.expected_attendance || 0);
         if (!slot || att <= 0) continue;
