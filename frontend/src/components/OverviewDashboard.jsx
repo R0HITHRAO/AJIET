@@ -36,7 +36,13 @@ const SLOT_META = {
   Dinner: { icon: Moon, time: '19:30 – 21:30', badge: 'text-indigo-700 bg-indigo-50 border-indigo-200/80' },
 };
 
-export default memo(function OverviewDashboard({ data, onNavigate, onSelectSlot }) {
+export default memo(function OverviewDashboard({
+  data,
+  pendingAlertsCount = 0,
+  onNavigate,
+  onSelectSlot,
+  onOpenKitchenAlerts,
+}) {
   const [chartView, setChartView] = useState('trend');
 
   if (!data) {
@@ -347,6 +353,28 @@ export default memo(function OverviewDashboard({ data, onNavigate, onSelectSlot 
           </div>
 
           <div className="space-y-3">
+            {pendingAlertsCount > 0 && (
+              <button
+                onClick={() => onOpenKitchenAlerts?.()}
+                className="w-full p-4 rounded-xl bg-amber-50/90 hover:bg-amber-100/80 border border-amber-300 border-l-4 border-l-amber-600 text-left flex items-center justify-between hover:shadow-md hover:-translate-y-0.5 transition"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="w-9 h-9 rounded-xl bg-amber-200/80 text-amber-800 flex items-center justify-center shrink-0 animate-pulse">
+                    <AlertTriangle className="w-4 h-4" />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-amber-950">
+                      {pendingAlertsCount} Chef Dish-Shortage Alert{pendingAlertsCount > 1 ? 's' : ''}
+                    </p>
+                    <p className="text-xs text-amber-800">
+                      Click to notify Chef with remaining customer count
+                    </p>
+                  </div>
+                </div>
+                <ArrowRight className="w-4 h-4 text-amber-700" />
+              </button>
+            )}
+
             <button
               onClick={() => onNavigate('redistribution')}
               className="w-full p-4 rounded-xl bg-slate-50/80 hover:bg-emerald-50/70 border border-slate-200/90 border-l-4 border-l-emerald-600 text-left flex items-center justify-between hover:shadow-md hover:-translate-y-0.5 transition"
