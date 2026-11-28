@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   AlertCircle,
   CheckCircle2,
@@ -51,7 +51,10 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
   const [error, setError] = useState('');
   const requestSeqRef = useRef(0);
   const abortRef = useRef(null);
+  const menuCacheRef = useRef({});
   const initializedRef = useRef(false);
+
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   const runPlan = async (save = false, targetForm = form, targetExcluded = excludedIds, menuOverride = null) => {
     const reqId = ++requestSeqRef.current;
@@ -63,7 +66,11 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
     setError('');
     if (save) setSavedMsg('');
     try {
-      const menuList = menuOverride || (await api.getMenu(targetForm.meal_slot)).items || [];
+      let menuList = menuOverride || menuCacheRef.current[targetForm.meal_slot];
+      if (!menuList) {
+        menuList = (await api.getMenu(targetForm.meal_slot, { signal: controller.signal })).items || [];
+        menuCacheRef.current[targetForm.meal_slot] = menuList;
+      }
       if (reqId !== requestSeqRef.current || controller.signal.aborted) return;
       setSlotMenu(menuList);
       const activeIds = menuList
@@ -71,10 +78,9 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
         .filter((id) => !targetExcluded.includes(id));
 
       const payload = { ...targetForm, menu_item_ids: activeIds };
-      const [fcRes, optRes] = await Promise.all([
-        api.forecast(payload, { signal: controller.signal }),
-        api.optimizeBatch(payload, save, { signal: controller.signal }),
-      ]);
+      // Single backend call returns both ML forecast items and OR-Tools batch optimization
+      const optRes = await api.optimizeBatch(payload, save, { signal: controller.signal });
+      const fcRes = optRes.forecast || (await api.forecast(payload, { signal: controller.signal }));
       if (reqId !== requestSeqRef.current || controller.signal.aborted) return;
       setForecast(fcRes);
       setOptResult(optRes);
@@ -91,7 +97,8 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
   };
 
   useEffect(() => {
-    api.getMealLogs(400).then((res) => {
+    const controller = new AbortController();
+    api.getMealLogs(400, '', { signal: controller.signal }).then((res) => {
       const grouped = {};
       for (const log of res.logs || []) {
         const slot = log.meal_slot;
@@ -108,6 +115,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
       }
       setSlotAttendance(dynamicDefaults);
     }).catch(() => {});
+    return () => controller.abort();
   }, []);
 
   useEffect(() => {
@@ -178,6 +186,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
     try {
       const res = await api.deleteMenuItem(menuItemId, true, true);
       const nextMenu = slotMenu.filter((m) => m.menu_item_id !== menuItemId);
+      menuCacheRef.current[form.meal_slot] = nextMenu;
       const nextExcluded = excludedIds.filter((id) => id !== menuItemId);
       setSlotMenu(nextMenu);
       setExcludedIds(nextExcluded);
@@ -202,44 +211,88 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
 
   const opt = optResult?.optimization;
   const sum = opt?.summary || {};
-  const fcLookup = Object.fromEntries((forecast?.items || []).map((i) => [i.menu_item_id, i]));
-  const skippedItems = slotMenu.filter((m) => excludedIds.includes(m.menu_item_id));
+  const fcLookup = useMemo(
+    () => Object.fromEntries((forecast?.items || []).map((i) => [i.menu_item_id, i])),
+    [forecast]
+  );
+  const skippedItems = useMemo(
+    () => slotMenu.filter((m) => excludedIds.includes(m.menu_item_id)),
+    [slotMenu, excludedIds]
+  );
 
-  const extraFiredServings = (opt?.items || []).reduce(
-    (acc, it) => acc + (firedReserves[it.menu_item_id] || 0) * it.batch_size,
-    0
+  const extraFiredServings = useMemo(
+    () => (opt?.items || []).reduce((acc, it) => acc + (firedReserves[it.menu_item_id] || 0) * it.batch_size, 0),
+    [opt, firedReserves]
   );
 
   return (
     <div className="space-y-6">
+      {/* Flagship Meal Planner Banner */}
+      <section className="module-banner">
+        <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-45" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1.5">
+            <div className="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-teal-300">
+              <Cpu className="w-3.5 h-3.5 text-teal-300" />
+              Two-Stage OR-Tools Kitchen Planner
+            </div>
+            <h2 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
+              {form.meal_slot} Demand &amp; Batch Schedule
+            </h2>
+            <div className="flex flex-wrap items-center gap-3 text-xs text-slate-300">
+              <span>
+                Active Model:{' '}
+                <strong className="text-white">
+                  {form.model_choice === 'optimal' && forecast?.applied_model
+                    ? `Optimal → ${MODEL_LABELS[forecast.applied_model] || forecast.applied_model}`
+                    : MODEL_LABELS[forecast?.applied_model || form.model_choice] || form.model_choice}
+                </strong>
+              </span>
+              <span className="text-white/30">&bull;</span>
+              <span>
+                Solver: <strong className="text-teal-300">{opt?.solver_status || 'READY'}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2.5">
+            <button
+              onClick={() => runPlan(true)}
+              disabled={loading}
+              className="h-10 px-4 rounded-xl bg-white/10 hover:bg-white/15 border border-white/20 text-white text-xs sm:text-sm font-semibold inline-flex items-center gap-2 backdrop-blur-sm transition disabled:opacity-50"
+            >
+              <Save className="w-4 h-4" />
+              Save Plan
+            </button>
+            <button
+              onClick={() => runPlan(false)}
+              disabled={loading}
+              className="h-10 px-4 rounded-xl bg-white text-emerald-950 hover:bg-emerald-50 text-xs sm:text-sm font-bold inline-flex items-center gap-2 shadow-sm transition disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4 text-emerald-700" />
+              {loading ? 'Optimizing...' : 'Update Batch Plan'}
+            </button>
+          </div>
+        </div>
+      </section>
+
       {/* Top Meal Slot Pills + Parameters */}
       <section className="card-surface p-6 space-y-5">
         <div className="flex flex-wrap items-center justify-between gap-4">
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="segmented-track flex-wrap">
             {MEAL_SLOTS.map((slot) => (
               <button
                 key={slot}
                 onClick={() => handleSlotChange(slot)}
-                className={`px-4 py-2 rounded-xl text-sm font-semibold transition ${
+                className={`segmented-pill px-4 py-2 text-xs sm:text-sm ${
                   form.meal_slot === slot
-                    ? 'bg-emerald-700 text-white shadow-sm'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200/70'
+                    ? 'bg-white text-emerald-900 shadow-sm ring-1 ring-emerald-900/5'
+                    : 'text-slate-600 hover:text-slate-900'
                 }`}
               >
                 {slot}
               </button>
             ))}
-          </div>
-
-          <div className="flex items-center gap-2.5">
-            <button onClick={() => runPlan(true)} disabled={loading} className="btn-secondary">
-              <Save className="w-4 h-4" />
-              Save Plan
-            </button>
-            <button onClick={() => runPlan(false)} disabled={loading} className="btn-primary">
-              <Sparkles className="w-4 h-4" />
-              {loading ? 'Optimizing...' : 'Update Batch Plan'}
-            </button>
           </div>
         </div>
 
@@ -352,8 +405,9 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
       {opt && (
         <>
           <section className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div className="card-surface p-5">
-              <p className="text-xs font-semibold text-slate-500">Active Cooked Batches</p>
+            <div className="stat-card p-5 overflow-hidden">
+              <div className="h-1 -mx-5 -mt-5 mb-3.5 bg-gradient-to-r from-emerald-600 to-teal-400" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Active Cooked Batches</p>
               <p className="mt-1.5 text-2xl font-extrabold text-emerald-700 stat-value">
                 {((sum.total_initial_servings ?? 0) + extraFiredServings).toLocaleString()} serv
               </p>
@@ -361,22 +415,25 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
                 {Math.max(0, (sum.total_reserve_servings ?? 0) - extraFiredServings).toLocaleString()} standby reserve remaining
               </p>
             </div>
-            <div className="card-surface p-5">
-              <p className="text-xs font-semibold text-slate-500">Waste Prevented</p>
+            <div className="stat-card p-5 overflow-hidden">
+              <div className="h-1 -mx-5 -mt-5 mb-3.5 bg-gradient-to-r from-slate-700 to-slate-400" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Waste Prevented</p>
               <p className="mt-1.5 text-2xl font-extrabold text-slate-900 stat-value">
                 {sum.waste_saved_kg ?? 0} kg
               </p>
               <p className="text-xs text-slate-400 mt-1">{sum.waste_reduction_pct ?? 0}% less than single-batch</p>
             </div>
-            <div className="card-surface p-5">
-              <p className="text-xs font-semibold text-slate-500">Meal Savings</p>
+            <div className="stat-card p-5 overflow-hidden">
+              <div className="h-1 -mx-5 -mt-5 mb-3.5 bg-gradient-to-r from-amber-500 to-orange-400" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Meal Savings</p>
               <p className="mt-1.5 text-2xl font-extrabold text-slate-900 stat-value">
                 ₹{Math.round(sum.cost_saved_inr || 0).toLocaleString('en-IN')}
               </p>
               <p className="text-xs text-slate-400 mt-1">CO₂ avoided: {sum.co2_saved_kg ?? 0} kg</p>
             </div>
-            <div className="card-surface p-5">
-              <p className="text-xs font-semibold text-slate-500">Meal Sufficiency</p>
+            <div className="stat-card p-5 overflow-hidden">
+              <div className="h-1 -mx-5 -mt-5 mb-3.5 bg-gradient-to-r from-sky-600 to-cyan-400" />
+              <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">Meal Sufficiency</p>
               <p className="mt-1.5 text-2xl font-extrabold text-sky-700 stat-value">
                 {sum.meal_sufficiency_pct ?? 100}%
               </p>
@@ -461,7 +518,7 @@ export default function ForecastBatchPlanner({ initialSlot = 'Lunch', onDataUpda
                     const isConfirming = confirmDeleteId === item.menu_item_id;
 
                     return (
-                      <div key={item.menu_item_id} className="card-surface p-5 space-y-3.5">
+                      <div key={item.menu_item_id} className="card-interactive p-5 space-y-3.5">
                         <div className="flex items-start justify-between gap-2">
                           <div>
                             <h4 className="font-bold text-slate-900 text-sm">{item.name}</h4>
