@@ -43,6 +43,21 @@ FRIENDLY_FEATURE_MAP = {
     "weather": "Weather Condition",
 }
 
+FEATURE_MEANINGS = {
+    "expected_attendance": "Scales overall kitchen prep volume to expected headcount",
+    "temperature_c": "Shifts demand between warm gravies and chilled/curd dishes",
+    "menu_item_id": "Captures dish-specific student preference and batch demand",
+    "rolling_7d_served": "Tracks recent 7-day eating momentum per dish",
+    "special_event": "Adjusts for festival drops and Tech Fest / exam spikes",
+    "weather": "Accounts for rainy-day turnout dips and comfort-food swings",
+    "popularity_score": "Baseline popularity share across meal slots",
+    "day_of_week": "Captures Monday–Sunday weekly dining rhythm",
+    "is_holiday": "Handles steep drops on public and academic holidays",
+    "is_weekend": "Handles Saturday/Sunday hostel departures",
+    "meal_slot": "Separates Breakfast, Lunch, Snacks, and Dinner turnout",
+    "uptake_rate": "Historical proportion of diners choosing this dish",
+}
+
 
 class DemandForecastEngine:
     """Dual ML demand forecaster using Scikit-learn Random Forest & XGBoost."""
@@ -57,6 +72,7 @@ class DemandForecastEngine:
         self.xgb_model: XGBRegressor | None = None
         self.metrics: dict[str, Any] = {}
         self.feature_importances: list[dict[str, Any]] = []
+        self.scenario_impacts: list[dict[str, Any]] = []
         self.weights: dict[str, float] = {"random_forest": 0.45, "xgboost": 0.55}
         self.model_version: int = 0
         self.trained_at: str | None = None
@@ -220,9 +236,95 @@ class DemandForecastEngine:
                 "feature": FRIENDLY_FEATURE_MAP.get(k, k),
                 "raw_key": k,
                 "importance_pct": round((v / total) * 100.0, 2),
+                "meaning": FEATURE_MEANINGS.get(k, ""),
             }
             for k, v in sorted(grouped.items(), key=lambda kv: kv[1], reverse=True)
         ]
+
+    @staticmethod
+    def _compute_scenario_impacts(logs: list[dict[str, Any]]) -> list[dict[str, Any]]:
+        """Derive empirical demand and turnout shifts per real-world scenario from historical logs."""
+        if not logs:
+            return []
+        frame = pd.DataFrame(logs)
+        is_hol = frame.get("is_holiday", pd.Series(False, index=frame.index)).fillna(False).astype(bool)
+        is_wknd = frame.get("is_weekend", pd.Series(False, index=frame.index)).fillna(False).astype(bool)
+        event_col = frame.get("special_event", pd.Series("None", index=frame.index)).fillna("None").astype(str)
+        weather_col = frame.get("weather", pd.Series("Cloudy", index=frame.index)).fillna("Cloudy").astype(str)
+
+        regular = frame[(~is_hol) & (~is_wknd) & (event_col == "None")]
+        if regular.empty:
+            regular = frame
+        base_served = float(regular["served_servings"].mean() or 1.0)
+        impacts: list[dict[str, Any]] = []
+
+        boost_events = {
+            "Tech Fest",
+            "Hackathon",
+            "Parent Meet",
+            "Sports Day",
+            "Campus_Fest",
+            "VTU_Internal_Exams",
+            "Midterm_Exams",
+        }
+        event_df = frame[event_col.isin(boost_events)]
+        if not event_df.empty:
+            avg_ev = float(event_df["served_servings"].mean())
+            delta = round(((avg_ev / base_served) - 1.0) * 100.0, 1)
+            impacts.append(
+                {
+                    "scenario": "Campus Events & Exams",
+                    "delta_label": f"{delta:+.1f}% servings",
+                    "tone": "positive" if delta >= 0 else "warning",
+                    "detail": f"{int(round(avg_ev))} vs {int(round(base_served))} avg serv • Prep reserve batches",
+                }
+            )
+
+        if "actual_attendance" in regular.columns and "expected_attendance" in regular.columns:
+            reg_copy = regular.copy()
+            reg_copy["turnout_ratio"] = reg_copy["actual_attendance"] / reg_copy["expected_attendance"].clip(lower=1)
+            rain_wk = reg_copy[weather_col.loc[reg_copy.index] == "Rainy"]
+            clear_wk = reg_copy[weather_col.loc[reg_copy.index].isin(["Sunny", "Cloudy"])]
+            if not rain_wk.empty and not clear_wk.empty:
+                r_pct = float(rain_wk["turnout_ratio"].mean() * 100.0)
+                c_pct = float(clear_wk["turnout_ratio"].mean() * 100.0)
+                diff = round(r_pct - c_pct, 1)
+                impacts.append(
+                    {
+                        "scenario": "Rainy Weekdays",
+                        "delta_label": f"{diff:+.1f}% turnout",
+                        "tone": "info",
+                        "detail": f"{r_pct:.1f}% vs {c_pct:.1f}% sunny turnout • Hot snacks hold steady",
+                    }
+                )
+
+        wknd_df = frame[is_wknd & (~is_hol)]
+        if not wknd_df.empty:
+            avg_wk = float(wknd_df["served_servings"].mean())
+            delta = round(((avg_wk / base_served) - 1.0) * 100.0, 1)
+            impacts.append(
+                {
+                    "scenario": "Weekends (Non-Holiday)",
+                    "delta_label": f"{delta:+.1f}% servings",
+                    "tone": "warning" if delta < 0 else "positive",
+                    "detail": f"{int(round(avg_wk))} vs {int(round(base_served))} avg serv • Hostel departures reduce volume",
+                }
+            )
+
+        hol_df = frame[is_hol]
+        if not hol_df.empty:
+            avg_hl = float(hol_df["served_servings"].mean())
+            delta = round(((avg_hl / base_served) - 1.0) * 100.0, 1)
+            impacts.append(
+                {
+                    "scenario": "Public & Campus Holidays",
+                    "delta_label": f"{delta:+.1f}% servings",
+                    "tone": "warning" if delta < 0 else "positive",
+                    "detail": f"{int(round(avg_hl))} vs {int(round(base_served))} avg serv • Cook lean initial batch",
+                }
+            )
+
+        return impacts
 
     def train(self, db: DatabaseManager, reason: str = "startup") -> dict[str, Any]:
         logs = db.collection("meal_logs").find()
@@ -355,6 +457,7 @@ class DemandForecastEngine:
         self.weights = {"random_forest": w_rf, "xgboost": w_xgb}
         self.metrics = model_metrics
         self.feature_importances = self._compute_feature_importances()
+        self.scenario_impacts = self._compute_scenario_impacts(logs)
 
         joblib.dump(
             {
@@ -364,6 +467,7 @@ class DemandForecastEngine:
                 "metrics": self.metrics,
                 "weights": self.weights,
                 "feature_importances": self.feature_importances,
+                "scenario_impacts": self.scenario_impacts,
                 "model_version": self.model_version,
                 "trained_at": self.trained_at,
                 "training_samples": self.training_samples,
@@ -397,6 +501,7 @@ class DemandForecastEngine:
                 self.metrics = bundle["metrics"]
                 self.weights = bundle["weights"]
                 self.feature_importances = bundle.get("feature_importances", [])
+                self.scenario_impacts = bundle.get("scenario_impacts", [])
                 self.model_version = bundle.get("model_version", 1)
                 self.trained_at = bundle.get("trained_at")
                 self.training_samples = bundle.get("training_samples", 0)
@@ -606,6 +711,7 @@ class DemandForecastEngine:
             "weights": self.weights,
             "metrics": self.metrics,
             "feature_importances": self.feature_importances,
+            "scenario_impacts": self.scenario_impacts,
         }
 
 
