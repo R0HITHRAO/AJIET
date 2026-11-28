@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import {
   Bar,
   BarChart,
@@ -110,12 +110,24 @@ export default function WhatIfSimulator() {
   };
 
   useEffect(() => {
-    Promise.all([api.getMenu(), api.getIngredients()]).then(([mRes, iRes]) => {
-      setMenuItems(mRes.items || []);
-      setIngredients(iRes.items || []);
-    });
+    const controller = new AbortController();
+    Promise.all([
+      api.getMenu('', { signal: controller.signal }),
+      api.getIngredients({ signal: controller.signal }),
+    ])
+      .then(([mRes, iRes]) => {
+        if (controller.signal.aborted) return;
+        setMenuItems(mRes.items || []);
+        setIngredients(iRes.items || []);
+      })
+      .catch((err) => {
+        if (err.name !== 'AbortError') setError(err.message);
+      });
     runSimulation(simReq);
-    return () => abortRef.current?.abort();
+    return () => {
+      controller.abort();
+      abortRef.current?.abort();
+    };
   }, []);
 
   useEffect(() => {
@@ -145,50 +157,93 @@ export default function WhatIfSimulator() {
     setSimReq(updated);
   };
 
-  const slotItems = menuItems.filter((m) => m.meal_slot === simReq.meal_slot);
-  const keyIngredients = ingredients.filter((i) =>
-    ['ing_rice', 'ing_paneer', 'ing_toor_dal', 'ing_mixed_veg'].includes(i.ingredient_id)
+  const slotItems = useMemo(
+    () => menuItems.filter((m) => m.meal_slot === simReq.meal_slot),
+    [menuItems, simReq.meal_slot]
+  );
+  const keyIngredients = useMemo(
+    () =>
+      ingredients.filter((i) =>
+        ['ing_rice', 'ing_paneer', 'ing_toor_dal', 'ing_mixed_veg'].includes(i.ingredient_id)
+      ),
+    [ingredients]
   );
 
   const baseSum = result?.baseline?.optimization?.summary || {};
   const simSum = result?.simulated?.optimization?.summary || {};
   const deltas = result?.deltas || {};
 
-  const chartData = result
-    ? [
-        {
-          metric: 'Predicted Demand',
-          Baseline: baseSum.total_predicted_servings || 0,
-          Simulated: simSum.total_predicted_servings || 0,
-        },
-        {
-          metric: 'Initial Batch',
-          Baseline: baseSum.total_initial_servings || 0,
-          Simulated: simSum.total_initial_servings || 0,
-        },
-        {
-          metric: 'Reserve Batch',
-          Baseline: baseSum.total_reserve_servings || 0,
-          Simulated: simSum.total_reserve_servings || 0,
-        },
-      ]
-    : [];
+  const chartData = useMemo(
+    () =>
+      result
+        ? [
+            {
+              metric: 'Predicted Demand',
+              Baseline: baseSum.total_predicted_servings || 0,
+              Simulated: simSum.total_predicted_servings || 0,
+            },
+            {
+              metric: 'Initial Batch',
+              Baseline: baseSum.total_initial_servings || 0,
+              Simulated: simSum.total_initial_servings || 0,
+            },
+            {
+              metric: 'Reserve Batch',
+              Baseline: baseSum.total_reserve_servings || 0,
+              Simulated: simSum.total_reserve_servings || 0,
+            },
+          ]
+        : [],
+    [result, baseSum, simSum]
+  );
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-      {/* Left Column: Ordered Scenario Builder */}
-      <aside className="lg:col-span-4 card-surface p-5 space-y-5">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-bold text-slate-900">Scenario Builder</h3>
+    <div className="space-y-6">
+      {/* Flagship Simulator Banner */}
+      <section className="module-banner">
+        <div className="absolute inset-0 hero-grid-overlay pointer-events-none opacity-45" />
+        <div className="relative flex flex-wrap items-center justify-between gap-4">
+          <div className="space-y-1">
+            <p className="text-[11px] font-bold uppercase tracking-wider text-teal-300">
+              AI Scenario Sandbox &bull; Forecast + OR-Tools
+            </p>
+            <h2 className="font-display text-xl sm:text-2xl font-extrabold tracking-tight">
+              What-If Kitchen Simulator ({simReq.meal_slot})
+            </h2>
+            <p className="text-xs text-slate-300">
+              Base {simReq.base_attendance} diners → Simulated{' '}
+              <strong className="text-white">
+                {Math.round(simReq.base_attendance * (1 + simReq.attendance_delta_pct / 100))} diners
+              </strong>{' '}
+              &bull; {simReq.weather} &bull; {simReq.special_event}
+            </p>
+          </div>
+
           <button
             onClick={() => runSimulation(simReq)}
             disabled={loading}
-            className="btn-primary h-9 px-3.5 text-xs"
+            className="h-10 px-4 rounded-xl bg-white text-slate-950 hover:bg-teal-50 text-xs sm:text-sm font-bold inline-flex items-center gap-2 shadow-sm transition disabled:opacity-50"
           >
-            {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
-            Simulate
+            {loading ? <RefreshCw className="w-4 h-4 animate-spin text-teal-700" /> : <Play className="w-4 h-4 text-teal-700" />}
+            {loading ? 'Simulating...' : 'Run Simulation'}
           </button>
         </div>
+      </section>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+        {/* Left Column: Ordered Scenario Builder */}
+        <aside className="lg:col-span-4 card-surface p-5 space-y-5">
+          <div className="flex items-center justify-between">
+            <h3 className="text-sm font-bold text-slate-900">Scenario Controls</h3>
+            <button
+              onClick={() => runSimulation(simReq)}
+              disabled={loading}
+              className="btn-primary h-9 px-3.5 text-xs"
+            >
+              {loading ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <Play className="w-3.5 h-3.5" />}
+              Simulate
+            </button>
+          </div>
 
         {/* Presets */}
         <div>
@@ -198,7 +253,7 @@ export default function WhatIfSimulator() {
               <button
                 key={p.name}
                 onClick={() => applyPreset(p)}
-                className="text-left text-xs font-semibold px-3 py-2 rounded-xl bg-slate-50 hover:bg-emerald-50 hover:text-emerald-800 border border-slate-200 transition"
+                className="text-left text-xs font-semibold px-3 py-2.5 rounded-xl bg-white hover:bg-emerald-50/75 text-slate-700 hover:text-emerald-900 border border-slate-200/90 hover:border-emerald-300 shadow-2xs transition"
               >
                 {p.name}
               </button>
@@ -224,7 +279,7 @@ export default function WhatIfSimulator() {
               step="5"
               value={simReq.attendance_delta_pct}
               onChange={(e) => setSimReq({ ...simReq, attendance_delta_pct: Number(e.target.value) })}
-              className="w-full accent-emerald-700"
+              className="w-full accent-teal-600"
             />
           </div>
 
@@ -364,7 +419,8 @@ export default function WhatIfSimulator() {
           <>
             {/* Delta Strip */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-              <div className="card-surface p-4">
+              <div className="stat-card p-4 overflow-hidden">
+                <div className="h-1 -mx-4 -mt-4 mb-3 bg-gradient-to-r from-slate-700 to-slate-400" />
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Demand Shift</p>
                 <p className="mt-1.5 text-xl font-extrabold text-slate-900 stat-value">
                   {deltas.predicted_servings_delta >= 0 ? '+' : ''}
@@ -374,7 +430,8 @@ export default function WhatIfSimulator() {
                   {baseSum.total_predicted_servings} → {simSum.total_predicted_servings}
                 </p>
               </div>
-              <div className="card-surface p-4">
+              <div className="stat-card p-4 overflow-hidden">
+                <div className="h-1 -mx-4 -mt-4 mb-3 bg-gradient-to-r from-emerald-600 to-teal-400" />
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Initial Batch</p>
                 <p className="mt-1.5 text-xl font-extrabold text-emerald-700 stat-value">
                   {deltas.initial_prep_delta >= 0 ? '+' : ''}
@@ -384,7 +441,8 @@ export default function WhatIfSimulator() {
                   {baseSum.total_initial_servings} → {simSum.total_initial_servings}
                 </p>
               </div>
-              <div className="card-surface p-4">
+              <div className="stat-card p-4 overflow-hidden">
+                <div className="h-1 -mx-4 -mt-4 mb-3 bg-gradient-to-r from-amber-500 to-orange-400" />
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Waste Delta</p>
                 <p className="mt-1.5 text-xl font-extrabold text-slate-900 stat-value">
                   {deltas.waste_kg_delta >= 0 ? '+' : ''}
@@ -394,7 +452,8 @@ export default function WhatIfSimulator() {
                   Simulated: {simSum.expected_waste_kg_optimized} kg
                 </p>
               </div>
-              <div className="card-surface p-4">
+              <div className="stat-card p-4 overflow-hidden">
+                <div className="h-1 -mx-4 -mt-4 mb-3 bg-gradient-to-r from-sky-600 to-cyan-400" />
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">Sufficiency</p>
                 <p className="mt-1.5 text-xl font-extrabold text-sky-700 stat-value">
                   {simSum.meal_sufficiency_pct}%
@@ -440,8 +499,13 @@ export default function WhatIfSimulator() {
 
             {/* Dish Output Table */}
             <div className="card-surface p-6 overflow-x-auto">
-              <h3 className="text-sm font-bold text-slate-900 mb-3">Simulated Batch Output by Dish</h3>
-              <table className="w-full text-xs text-left">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h3 className="text-sm font-bold text-slate-900">Simulated Batch Output by Dish</h3>
+                  <p className="text-xs text-slate-500 mt-0.5">OR-Tools optimized Stage-1 and Standby Reserve split</p>
+                </div>
+              </div>
+              <table className="w-full text-xs text-left pro-table">
                 <thead>
                   <tr className="border-b border-slate-200 text-[11px] text-slate-400 uppercase">
                     <th className="py-2.5 pr-3">Dish</th>
@@ -476,6 +540,7 @@ export default function WhatIfSimulator() {
             </div>
           </>
         )}
+      </div>
       </div>
     </div>
   );
