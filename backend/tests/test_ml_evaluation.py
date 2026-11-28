@@ -98,3 +98,15 @@ def test_optimal_model_choice_picks_best_reliable_slot_model():
 
     engine.metrics["validation"]["reliable_ml_models"] = {"ensemble": False, "xgboost": False, "random_forest": False}
     assert engine._resolve_model_choice("optimal", "Lunch") == "baseline"
+
+
+def test_scenario_impacts_reports_holiday_and_event_deltas():
+    logs = [
+        {"is_holiday": False, "is_weekend": False, "special_event": "None", "weather": "Sunny", "expected_attendance": 100, "actual_attendance": 100, "served_servings": 100},
+        {"is_holiday": True, "is_weekend": False, "special_event": "None", "weather": "Sunny", "expected_attendance": 100, "actual_attendance": 70, "served_servings": 65},
+        {"is_holiday": False, "is_weekend": False, "special_event": "Tech Fest", "weather": "Cloudy", "expected_attendance": 100, "actual_attendance": 120, "served_servings": 125},
+    ]
+    impacts = DemandForecastEngine._compute_scenario_impacts(logs)
+    by_name = {item["scenario"]: item for item in impacts}
+    assert by_name["Campus Events & Exams"]["delta_label"] == "+25.0% servings"
+    assert by_name["Public & Campus Holidays"]["delta_label"] == "-35.0% servings"
